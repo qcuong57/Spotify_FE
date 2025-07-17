@@ -2,13 +2,14 @@ import axios from "axios";
 import { getAccessToken } from "./token";
 
 const axiosCustom = axios.create({
-  baseURL: "http://127.0.0.1:8000",
+  baseURL: import.meta.env.VITE_API_URL, // ✅ Đọc từ biến môi trường
   headers: {
     "Content-Type": "application/json",
   },
+  withCredentials: true, // ✅ Nếu backend set cookie (nếu không thì bỏ)
 });
 
-// Request interceptor - automatically add authentication token to requests
+// Request interceptor
 axiosCustom.interceptors.request.use(
   (config) => {
     const token = getAccessToken();
@@ -20,13 +21,11 @@ axiosCustom.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response interceptor - handle common response scenarios
+// Response interceptor
 axiosCustom.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Handle unauthorized errors (401)
     if (error.response && error.response.status === 401) {
-      // You might want to redirect to login or refresh token
       console.log("Authentication error");
     }
     return Promise.reject(error);
