@@ -18,7 +18,7 @@ const HomePage = () => {
         <div className="flex flex-1 flex-col h-screen bg-black">
             <Header setCurrentView={setCurrentView} setListSongsDetail={setListSongsDetail}/>
             <div className="flex flex-row flex-1 overflow-hidden">
-                <Libraries setCurrentView={setCurrentView} currentView={currentView} />
+                {/* <Libraries setCurrentView={setCurrentView} currentView={currentView} /> */}
                 {currentView === "main" ? <MainContent setCurrentView={setCurrentView} setListSongsDetail={setListSongsDetail} /> : currentView === "listSongs" ? <ListSongs listSongs={listSongsDetail}/> : <MyLibrary playlist={currentView} setCurrentView={setCurrentView} />}
                 {songDescriptionAvailable && <SongDescription />}
             </div>
