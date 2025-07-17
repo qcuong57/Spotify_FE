@@ -4,84 +4,78 @@ import { useAudio } from "../../../utils/audioContext";
 import ContextMenu from "./_ContextMenu";
 import { formatTime } from "../../../utils/timeFormat";
 
-const Song = ({ song, playlist, deleteSong, songs, index }) => {
-    const [contextMenu, setContextMenu] = useState(null);
-    const { setNewPlaylist } = useAudio();
-    const [duration, setDuration] = useState(0);
-    const videoRef = useRef(null);
+const Song = ({
+  song,
+  contextMenu,
+  setContextMenu,
+  handleCloseContextMenu,
+  list,
+}) => {
+  const {
+    setCurrentSong,
+    currentSong,
+    audio,
+    setAudio,
+    setIsPlaying,
+    setNewPlaylist,
+  } = useAudio();
 
-    const onPlaySong = () => {
-        setNewPlaylist(songs, index);
-    };
-
-    // Xử lý sự kiện chuột phải
-    const handleContextMenu = (e) => {
-        e.preventDefault();
-        setContextMenu({
-            x: e.clientX,
-            y: e.clientY,
-        });
-    };
-
-    // Đóng context menu
-    const handleCloseContextMenu = () => {
-        setContextMenu(null);
-    };
-
-    // Xử lý khi click ra ngoài để đóng menu
-    const handleClickOutside = () => {
-        if (contextMenu) {
-            handleCloseContextMenu();
-        }
-    };
-
-    // Gắn sự kiện click ngoài vào document
-    useEffect(() => {
-        document.addEventListener("click", handleClickOutside);
-        return () => {
-            document.removeEventListener("click", handleClickOutside);
-        };
-    }, [contextMenu]);
-
-    // Lấy duration của bài hát
-    useEffect(() => {
-        if (videoRef.current) {
-            videoRef.current.onloadedmetadata = () => {
-                setDuration(Math.round(videoRef.current.duration));
-            };
-        }
-    }, [song.url_video]);
-
-    const handleDelete = () => {
-        deleteSong(song.id); 
-        handleCloseContextMenu();
-    };
-
-    return (
-        <div className="grid grid-cols-[16px_4fr_2fr_1fr] gap-4 items-center hover:bg-white/10 rounded-md p-2 group mt-4 cursor-pointer" onContextMenu={handleContextMenu} onClick={onPlaySong}>
-            <div className="text-gray-400">{index + 1}</div>
-            <div className="flex items-center gap-3">
-                <img src={song.image} alt={song.song_name} className="w-10 h-10" />
-                <div>
-                    <p className="text-white">{song.song_name}</p>
-                    <p className="text-sm text-gray-400">{song.singer_name}</p>
-                </div>
-            </div>
-            <div className="text-gray-400">{song.song_name}</div>
-            <div className="text-gray-400 text-right">{formatTime(duration)}</div>
-
-            {contextMenu && (
-                <ContextMenu
-                    x={contextMenu.x}
-                    y={contextMenu.y}
-                    deleteSong={handleDelete}
-                    song={song}
-                    onClose={handleCloseContextMenu}
-                />
-            )}
-            <video ref={videoRef} src={song.url_video} style={{ display: "none" }} />
-        </div>
+  const playAudio = () => {
+    setNewPlaylist(
+      list,
+      list.findIndex((s) => s.id === song.id)
     );
-};
+  };
 
+  const handleContextMenu = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setContextMenu({
+      x: e.clientX,
+      y: e.clientY,
+      songId: song.id,
+    });
+  };
+
+  return (
+    <div
+      className="group hover:bg-gradient-to-b from-[#131313] to-[#272727] text-white cursor-pointer p-2 md:p-3 rounded-md transition-all duration-300"
+      onContextMenu={handleContextMenu}
+    >
+      <div className="relative">
+        <img
+          className="w-full aspect-square rounded-lg object-cover object-center"
+          src={song.image}
+          alt={song.song_name}
+        />
+        <button
+          className="absolute bottom-2 right-2 bg-green-500 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110 hover:bg-green-400"
+          onClick={(e) => {
+            e.stopPropagation();
+            playAudio();
+          }}
+        >
+          <IconPlayerPlayFilled className="w-8 h-8 md:w-10 md:h-10 p-2 text-black" />
+        </button>
+      </div>
+      <div className="mt-2">
+        <h3 className="text-sm md:text-base font-medium truncate">
+          {song.song_name}
+        </h3>
+        <span className="text-xs md:text-sm text-gray-400 truncate block">
+          {song.singer_name}
+        </span>
+      </div>
+
+      {contextMenu && contextMenu.songId === song.id && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          song={song}
+          onClose={handleCloseContextMenu}
+        />
+      )}
+    </div>
+  );
+};
 export default Song;

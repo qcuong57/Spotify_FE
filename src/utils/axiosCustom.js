@@ -2,11 +2,11 @@ import axios from "axios";
 import { getAccessToken } from "./token";
 
 const axiosCustom = axios.create({
-  baseURL: import.meta.env.VITE_API_URL, // ✅ Đọc từ biến môi trường
+  baseURL: import.meta.env.VITE_API_URL,
   headers: {
     "Content-Type": "application/json",
   },
-  withCredentials: true, // ✅ Nếu backend set cookie (nếu không thì bỏ)
+  withCredentials: true,
 });
 
 // Request interceptor

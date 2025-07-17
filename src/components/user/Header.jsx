@@ -1,8 +1,11 @@
+// Header.jsx - Responsive version
 import {
   IconHome,
   IconSearch,
   IconArticle,
   IconLogout,
+  IconMenu2,
+  IconX,
 } from "@tabler/icons-react";
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -11,13 +14,13 @@ import ProfilePopup from "./ProfilePopup";
 
 const Header = ({ setCurrentView, setListSongsDetail }) => {
   const navigate = useNavigate();
-
   const [user, setUser] = useState(null);
   const [searchText, setSearchText] = useState("");
   const [showProfilePopup, setShowProfilePopup] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [showMobileSearch, setShowMobileSearch] = useState(false);
 
   useEffect(() => {
-    // Lấy thông tin người dùng từ localStorage khi component mount
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
       setUser(JSON.parse(storedUser));
@@ -25,17 +28,15 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
   }, []);
 
   const handleLogout = () => {
-    // Xóa token và thông tin người dùng khỏi localStorage
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
     localStorage.removeItem("user");
-    // Đặt lại trạng thái user
     setUser(null);
-    // Điều hướng về trang đăng nhập thay vì làm mới trang
     navigate("/login");
   };
 
   const handleSearchChange = async () => {
+    if (!searchText.trim()) return;
     try {
       const response = await searchSongs(searchText);
       const data = {
@@ -44,6 +45,7 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
       };
       setListSongsDetail(data);
       setCurrentView("listSongs");
+      setShowMobileSearch(false);
     } catch (error) {
       console.error("Error fetching songs:", error);
     }
@@ -58,87 +60,197 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
   };
 
   return (
-    <div className="flex h-[10vh] flex-row items-center text-white bg-black">
-      <div className="flex flex-1 flex-row w-full items-center">
-        <img
-          className="h-14 cursor-pointer"
-          src="https://getheavy.com/wp-content/uploads/2019/12/spotify2019-830x350.jpg"
-          onClick={() => setCurrentView("main")}
-        />
-        <IconHome
-          stroke={2}
-          className="mx-2 bg-[#272727] cursor-pointer size-11 border-none bg p-2 rounded-full"
-          onClick={() => setCurrentView("main")}
-        />
+    <>
+      <div className="flex h-16 md:h-20 flex-row items-center text-white bg-black px-4 md:px-6">
+        <div className="flex flex-1 flex-row items-center">
+          <img
+            className="h-8 md:h-12 cursor-pointer mr-3 md:mr-4"
+            src="https://ih1.redbubble.net/image.5763379245.4315/bg,f8f8f8-flat,750x,075,f-pad,750x1000,f8f8f8.jpg"
+            onClick={() => setCurrentView("main")}
+          />
+          <IconHome
+            stroke={2}
+            className="bg-[#272727] cursor-pointer w-8 h-8 md:w-10 md:h-10 p-2 rounded-full hover:bg-[#242424] transition-colors"
+            onClick={() => setCurrentView("main")}
+          />
 
-        <div className="flex flex-1 flex-row bg-[rgb(39,39,39)] px-4 py-2 items-center rounded-full">
+          {/* Desktop Search */}
+          <div className="hidden md:flex flex-1 flex-row bg-[#272727] mx-4 px-4 py-2 items-center rounded-full max-w-md">
+            <IconSearch
+              stroke={2}
+              className="w-5 h-5 md:w-6 md:h-6 cursor-pointer text-gray-400"
+              onClick={handleSearchChange}
+            />
+            <input
+              type="text"
+              placeholder="Tìm kiếm bài hát..."
+              className="flex-1 mx-2 bg-[#272727] border-none outline-none text-sm text-white placeholder-gray-400"
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleSearchChange();
+                }
+              }}
+            />
+          </div>
+
+          {/* Mobile Search Icon */}
           <IconSearch
             stroke={2}
-            className="size-7 cursor-pointer"
-            onClick={handleSearchChange}
-          />
-          <input
-            type="text"
-            className="flex-1 mx-2 bg-[#272727] border-r border-white"
-            value={searchText} // Liên kết giá trị input với state
-            onChange={(e) => setSearchText(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                handleSearchChange();
-              }
-            }}
+            className="md:hidden w-6 h-6 cursor-pointer text-gray-400 hover:text-white ml-auto mr-3"
+            onClick={() => setShowMobileSearch(true)}
           />
         </div>
-      </div>
-      <div className="flex flex-row flex-1 items-center justify-end">
-        <div className="flex flex-row mx-4 items-center">
+
+        {/* Desktop Menu */}
+        <div className="hidden md:flex flex-row items-center gap-4">
           {user ? (
             <>
               <img
-                src={user.avatar || "https://via.placeholder.com/30"}
+                src={user.avatar || "https://via.placeholder.com/32"}
                 alt="User avatar"
-                className="w-8 h-8 rounded-full mr-2"
+                className="w-8 h-8 rounded-full"
               />
               <span
-                className="text-md mx-2 font-bold text-white cursor-pointer hover:underline"
+                className="text-sm font-bold text-white cursor-pointer hover:underline"
                 onClick={toggleProfilePopup}
               >
                 {user.first_name || "User"}
               </span>
               <button
                 onClick={handleLogout}
-                className="flex items-center text-md mx-2 font-bold text-gray-400 cursor-pointer hover:text-white"
+                className="flex items-center text-sm font-bold text-gray-400 cursor-pointer hover:text-white transition-colors"
               >
-                <IconLogout stroke={2} className="size-6 mr-1" />
+                <IconLogout stroke={2} className="w-5 h-5 mr-1" />
                 Đăng xuất
               </button>
-
-              {showProfilePopup && (
-                <ProfilePopup
-                  user={user}
-                  onClose={toggleProfilePopup}
-                  onUpdate={handleProfileUpdate}
-                />
-              )}
             </>
           ) : (
             <>
               <Link to="/signup">
-                <span className="text-md mx-2 font-bold text-gray-400 cursor-pointer hover:text-white">
+                <span className="text-sm font-bold text-gray-400 cursor-pointer hover:text-white transition-colors">
                   Đăng ký
                 </span>
               </Link>
               <Link to="/login">
-                <span className="py-3 px-4 ml-2 rounded-full bg-white text-black cursor-pointer">
+                <span className="py-2 px-4 rounded-full bg-white text-black text-sm cursor-pointer hover:bg-gray-200 transition-colors">
                   Đăng nhập
                 </span>
               </Link>
             </>
           )}
         </div>
+
+        {/* Mobile Menu Button */}
+        <IconMenu2
+          stroke={2}
+          className="md:hidden w-6 h-6 cursor-pointer text-gray-400 hover:text-white"
+          onClick={() => setShowMobileMenu(true)}
+        />
       </div>
-    </div>
+
+      {/* Mobile Search Modal */}
+      {showMobileSearch && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 md:hidden">
+          <div className="bg-[#131313] p-4">
+            <div className="flex items-center mb-4">
+              <IconX
+                stroke={2}
+                className="w-6 h-6 cursor-pointer text-white mr-3"
+                onClick={() => setShowMobileSearch(false)}
+              />
+              <div className="flex-1 bg-[#272727] px-4 py-2 rounded-full flex items-center">
+                <IconSearch stroke={2} className="w-5 h-5 text-gray-400 mr-2" />
+                <input
+                  type="text"
+                  placeholder="Tìm kiếm bài hát..."
+                  className="flex-1 bg-[#272727] border-none outline-none text-sm text-white placeholder-gray-400"
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      handleSearchChange();
+                    }
+                  }}
+                  autoFocus
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mobile Menu */}
+      {showMobileMenu && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 md:hidden">
+          <div className="bg-[#131313] h-full w-64 p-4">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-bold text-white">Menu</h2>
+              <IconX
+                stroke={2}
+                className="w-6 h-6 cursor-pointer text-white"
+                onClick={() => setShowMobileMenu(false)}
+              />
+            </div>
+            <div className="flex flex-col space-y-4">
+              {user ? (
+                <>
+                  <div className="flex items-center p-3 bg-[#272727] rounded-lg">
+                    <img
+                      src={user.avatar || "https://via.placeholder.com/32"}
+                      alt="User avatar"
+                      className="w-8 h-8 rounded-full mr-3"
+                    />
+                    <span
+                      className="text-sm font-bold text-white cursor-pointer"
+                      onClick={() => {
+                        toggleProfilePopup();
+                        setShowMobileMenu(false);
+                      }}
+                    >
+                      {user.first_name || "User"}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      handleLogout();
+                      setShowMobileMenu(false);
+                    }}
+                    className="flex items-center p-3 text-sm font-bold text-gray-400 cursor-pointer hover:text-white hover:bg-[#272727] rounded-lg transition-colors"
+                  >
+                    <IconLogout stroke={2} className="w-5 h-5 mr-3" />
+                    Đăng xuất
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link to="/signup" onClick={() => setShowMobileMenu(false)}>
+                    <span className="block p-3 text-sm font-bold text-gray-400 cursor-pointer hover:text-white hover:bg-[#272727] rounded-lg transition-colors">
+                      Đăng ký
+                    </span>
+                  </Link>
+                  <Link to="/login" onClick={() => setShowMobileMenu(false)}>
+                    <span className="block p-3 text-sm font-bold bg-white text-black rounded-lg cursor-pointer hover:bg-gray-200 transition-colors text-center">
+                      Đăng nhập
+                    </span>
+                  </Link>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Profile Popup */}
+      {showProfilePopup && (
+        <ProfilePopup
+          user={user}
+          onClose={toggleProfilePopup}
+          onUpdate={handleProfileUpdate}
+        />
+      )}
+    </>
   );
 };
-
 export default Header;
