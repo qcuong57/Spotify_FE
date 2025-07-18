@@ -81,9 +81,7 @@ const Banner = ({ onClose }) => {
               {/* Icon */}
               <div className="flex justify-center">
                 <div className="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center text-3xl animate-pulse">
-                  <img
-                    src="https://i.pinimg.com/736x/48/eb/2a/48eb2a522aba3081d8258babe67a3473.jpg"
-                  />
+                  <img src="https://i.pinimg.com/736x/48/eb/2a/48eb2a522aba3081d8258babe67a3473.jpg" />
                 </div>
               </div>
 
@@ -98,7 +96,7 @@ const Banner = ({ onClose }) => {
                 trang sau 1-2 phút.
               </p>
               <p className="text-white text-sm sm:text-base opacity-90 leading-relaxed max-w-xs mx-auto">
-                Xin cám ơn!
+                UIA Cường. Xin cám ơn!
               </p>
             </div>
           </div>
