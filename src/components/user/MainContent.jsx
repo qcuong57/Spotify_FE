@@ -1,4 +1,3 @@
-// MainContent.jsx - Responsive version
 import React, { useEffect, useState } from "react";
 import { getAllSongs } from "../../services/SongsService";
 import { getAllGenres } from "../../services/genresService";

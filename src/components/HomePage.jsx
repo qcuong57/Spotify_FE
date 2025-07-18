@@ -55,7 +55,7 @@ const HomePage = () => {
         {songDescriptionAvailable && <SongDescription />}
       </div>
       {currentSong && <PlayerControls />}
-      <ChatManager />
+      <ChatManager className="fixed bottom-4 right-4 w-[320px] max-w-xs z-30" />
     </div>
   );
 };

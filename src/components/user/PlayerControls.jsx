@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import {
   IconCirclePlus,
   IconPlayerSkipBackFilled,
@@ -9,6 +9,7 @@ import {
   IconVolume3,
   IconDownload,
   IconArticle,
+  IconRepeat,
 } from "@tabler/icons-react";
 import { Menu, Button, Anchor } from "@mantine/core";
 import { useAudio } from "../../utils/audioContext";
@@ -31,6 +32,7 @@ const PlayerControls = () => {
     setSongDescriptionAvailable,
     playBackSong,
   } = useAudio();
+  const [isRepeat, setIsRepeat] = useState(false);
   const progressRef = useRef(null);
 
   const togglePlayPause = () => {
@@ -63,6 +65,11 @@ const PlayerControls = () => {
     setSongDescriptionAvailable(true);
   };
 
+  const handleRepeatToggle = () => {
+    setIsRepeat(!isRepeat);
+    audio.loop = !isRepeat;
+  };
+
   return (
     currentSong !== null && (
       <div className="border-t bg-black py-2 items-center border-gray-800 px-2 sm:px-4">
@@ -72,44 +79,51 @@ const PlayerControls = () => {
             <img
               src={currentSong.image}
               alt="Song cover"
-              className="h-10 w-10 sm:h-14 sm:w-14 rounded-md mr-2 sm:mr-4"
+              className="h-12 w-12 sm:h-16 sm:w-16 rounded-lg object-cover mr-3 sm:mr-4 shadow-md"
             />
             <div className="truncate">
-              <h4 className="text-white text-xs sm:text-sm">{currentSong.song_name}</h4>
-              <p className="text-[10px] sm:text-xs text-gray-400">{currentSong.singer_name}</p>
+              <h4 className="text-white text-sm sm:text-base font-medium">{currentSong.song_name}</h4>
+              <p className="text-xs sm:text-sm text-gray-400">{currentSong.singer_name}</p>
             </div>
           </div>
 
           {/* Playback Controls */}
           <div className="flex flex-col items-center w-full sm:w-1/2">
-            <div className="flex items-center gap-4 mb-2">
+            <div className="flex items-center gap-3 sm:gap-4 mb-2">
               <IconPlayerSkipBackFilled
                 stroke={2}
-                className="cursor-pointer text-white size-5 sm:size-6"
+                className="cursor-pointer text-white size-5 sm:size-6 hover:text-gray-300 transition-colors"
                 onClick={playBackSong}
               />
-              <button className="rounded-full p-2" onClick={togglePlayPause}>
+              <button className="rounded-full p-2 hover:bg-gray-800 transition-colors" onClick={togglePlayPause}>
                 {isPlaying ? (
-                  <IconPlayerPauseFilled className="text-white w-5 h-5 sm:w-6 sm:h-6" />
+                  <IconPlayerPauseFilled className="text-white w-6 h-6 sm:w-8 sm:h-8" />
                 ) : (
-                  <IconPlayerPlayFilled className="text-white w-5 h-5 sm:w-6 sm:h-6" />
+                  <IconPlayerPlayFilled className="text-white w-6 h-6 sm:w-8 sm:h-8" />
                 )}
               </button>
               <IconPlayerSkipForwardFilled
-                className="text-white size-5 sm:size-6 cursor-pointer"
-                onClick={playNextSong}
+                className="text-white size-5 sm:size-6 cursor-pointer hover:text-gray-300 transition-colors"
+                onClick={isRepeat ? () => {} : playNextSong}
+              />
+              <IconRepeat
+                stroke={2}
+                className={`size-5 sm:size-6 cursor-pointer transition-colors ${
+                  isRepeat ? "text-blue-500" : "text-white hover:text-gray-300"
+                }`}
+                onClick={handleRepeatToggle}
               />
             </div>
             <div className="w-full flex items-center gap-2">
-              <span className="text-[10px] sm:text-xs text-gray-400">{formatTime(currentTime)}</span>
+              <span className="text-xs sm:text-sm text-gray-400">{formatTime(currentTime)}</span>
               <div
-                className="h-1 flex-1 bg-gray-600 rounded-full cursor-pointer"
+                className="h-1.5 flex-1 bg-gray-600 rounded-full cursor-pointer hover:bg-gray-500 transition-colors"
                 ref={progressRef}
                 onClick={handleProgressClick}
               >
-                <div className="h-1 bg-white rounded-full" style={{ width: `${progressPercent}%` }}></div>
+                <div className="h-1.5 bg-blue-500 rounded-full transition-all" style={{ width: `${progressPercent}%` }}></div>
               </div>
-              <span className="text-[10px] sm:text-xs text-gray-400">{formatTime(duration)}</span>
+              <span className="text-xs sm:text-sm text-gray-400">{formatTime(duration)}</span>
             </div>
           </div>
 
@@ -117,7 +131,7 @@ const PlayerControls = () => {
           <div className="flex items-center gap-2 w-full sm:w-1/4 justify-end mt-2 sm:mt-0">
             <IconArticle
               stroke={2}
-              className="size-5 sm:size-6 cursor-pointer text-white"
+              className="size-5 sm:size-6 cursor-pointer text-white hover:text-gray-300 transition-colors"
               onClick={handleAvailable}
             />
             <Menu shadow="md">
@@ -141,9 +155,9 @@ const PlayerControls = () => {
             </Menu>
             <div onClick={() => setIsMute(!isMute)}>
               {isMute ? (
-                <IconVolume3 stroke={2} className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 cursor-pointer" />
+                <IconVolume3 stroke={2} className="w-5 h-5 sm:w-6 sm:h-6 text-gray-400 cursor-pointer hover:text-white transition-colors" />
               ) : (
-                <IconVolume stroke={2} className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 cursor-pointer" />
+                <IconVolume stroke={2} className="w-5 h-5 sm:w-6 sm:h-6 text-gray-400 cursor-pointer hover:text-white transition-colors" />
               )}
             </div>
             <input
@@ -152,7 +166,7 @@ const PlayerControls = () => {
               max="100"
               value={volume}
               onChange={handleVolumeChange}
-              className="w-16 sm:w-24"
+              className="w-16 sm:w-24 accent-blue-500"
             />
           </div>
         </div>

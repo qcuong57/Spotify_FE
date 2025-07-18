@@ -32,10 +32,10 @@ const ListSongs = ({ listSongs }) => {
     <div className="bg-[#131313] text-white flex-1 mr-2 sm:mr-0 rounded-lg overflow-y-auto">
       <h3 className="p-3 font-bold text-xl sm:text-2xl">{listSongs.title}</h3>
       <div
-        className={`${
+        className={`grid gap-4 p-4 ${
           songDescriptionAvailable
-            ? "flex flex-col sm:grid sm:grid-cols-4 gap-4 p-4"
-            : "flex flex-col sm:grid sm:grid-cols-6 gap-4 p-4"
+            ? "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
+            : "grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6"
         }`}
       >
         {listSongs.songs.length > 0 &&

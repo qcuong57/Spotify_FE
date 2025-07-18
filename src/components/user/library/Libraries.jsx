@@ -1,20 +1,15 @@
-// Libraries.jsx - Responsive version with close button
 import { useState, useEffect } from "react";
 import {
   createPlaylistService,
   getUserPlaylistByIdService,
   searchPlaylistsService,
-  getPlaylistByIdService,
 } from "../../../services/playlistService";
 import {
   IconPlus,
-  IconWorld,
-  IconArrowRight,
-  IconArrowLeft,
   IconSearch,
   IconX,
+  IconMusic,
 } from "@tabler/icons-react";
-import { IconMusic } from "@tabler/icons-react";
 import { usePlayList } from "../../../utils/playlistContext.jsx";
 
 const Library = ({ playlist, setCurrentView }) => {
@@ -24,7 +19,7 @@ const Library = ({ playlist, setCurrentView }) => {
         playlist.is_liked_song
           ? "bg-gradient-to-br from-[#450af5] to-[#8e8ee5]"
           : "bg-gradient-to-br from-[#2c2c2c] to-[#1a1a1a]"
-      }`}
+      } hover:bg-gray-700 transition-colors`}
     >
       <div className="flex items-center gap-3 md:gap-4 flex-1 min-w-0">
         {playlist.is_liked_song ? (
@@ -42,7 +37,7 @@ const Library = ({ playlist, setCurrentView }) => {
           <img
             src={playlist.image}
             alt={playlist.title}
-            className="w-10 h-10 md:w-12 md:h-12 rounded-md object-cover flex-shrink-0"
+            className="w-10 h-10 md:w-12 md:h-12 rounded-lg object-cover flex-shrink-0 shadow-md"
           />
         ) : (
           <div className="p-2 rounded bg-gradient-to-br from-[#333333] to-[#121212] flex items-center justify-center flex-shrink-0">
@@ -54,7 +49,7 @@ const Library = ({ playlist, setCurrentView }) => {
         )}
         <div className="min-w-0 flex-1">
           <h3
-            className="text-sm md:text-base font-bold cursor-pointer truncate"
+            className="text-sm md:text-base font-bold cursor-pointer truncate hover:text-blue-400 transition-colors"
             onClick={() => setCurrentView(playlist)}
           >
             {playlist.title}
@@ -68,10 +63,9 @@ const Library = ({ playlist, setCurrentView }) => {
   );
 };
 
-const Libraries = ({ setCurrentView, currentView, onClose }) => {
+const Libraries = ({ setCurrentView, onClose }) => {
   const [loading, setLoading] = useState(false);
   const [currentPlayList, setCurrentPlayList] = useState([]);
-  const [widthContainer, setWidthContainer] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   const [user, setUser] = useState(null);
   const { setPlaylists, refreshKeyPlayLists } = usePlayList();
@@ -160,11 +154,7 @@ const Libraries = ({ setCurrentView, currentView, onClose }) => {
   };
 
   return (
-    <div
-      className={`flex w-full flex-col bg-[#131313] px-2 md:px-4 mx-0 md:mx-2 text-white rounded-lg transition-all duration-300 relative ${
-        widthContainer ? "md:w-[820px]" : "md:w-[420px]"
-      }`}
-    >
+    <div className="flex w-full flex-col bg-[#131313] px-2 md:px-4 mx-0 md:mx-2 text-white rounded-lg relative md:w-[420px]">
       {/* Close Button */}
       <button
         onClick={onClose}
@@ -179,56 +169,31 @@ const Libraries = ({ setCurrentView, currentView, onClose }) => {
 
       <div className="flex flex-row justify-between items-center pt-4 pb-6 px-2 pr-10">
         <span className="text-base md:text-lg font-bold">Thư viện</span>
-        <div className="flex items-center gap-2">
-          <button
-            className="bg-[#272727] flex items-center justify-center h-9 md:h-10 px-3 md:px-4 rounded-full cursor-pointer hover:bg-[#242424] transition-colors"
-            onClick={() => handleCreatePlaylist()}
-          >
-            <IconPlus stroke={2} className="w-4 h-4 md:w-5 md:h-5 mr-1" />
-            <span className="text-sm md:text-base font-bold text-gray-300 hidden xs:inline">
-              Tạo
-            </span>
-          </button>
-          <button className="hidden md:flex ml-1 cursor-pointer w-9 h-9 md:w-10 md:h-10 justify-center items-center rounded-full text-gray-400 hover:bg-[#242424] transition-colors">
-            {!widthContainer ? (
-              <IconArrowRight
-                stroke={2}
-                className="w-6 h-6 md:w-7 md:h-7"
-                onClick={() => setWidthContainer(!widthContainer)}
-              />
-            ) : (
-              <IconArrowLeft
-                stroke={2}
-                className="w-6 h-6 md:w-7 md:h-7"
-                onClick={() => setWidthContainer(!widthContainer)}
-              />
-            )}
-          </button>
-        </div>
+        <button
+          className="bg-[#272727] flex items-center justify-center h-9 md:h-10 px-3 md:px-4 rounded-full cursor-pointer hover:bg-[#242424] transition-colors"
+          onClick={() => handleCreatePlaylist()}
+        >
+          <IconPlus stroke={2} className="w-4 h-4 md:w-5 md:h-5 mr-1" />
+          <span className="text-sm md:text-base font-bold text-gray-300 hidden xs:inline">
+            Tạo
+          </span>
+        </button>
       </div>
 
       {/* Search Section */}
       <div className="mb-4">
-        {widthContainer || window.innerWidth < 768 ? (
-          <div className="flex flex-1 flex-row bg-[#272727] mb-3 px-4 py-2 items-center rounded-full">
-            <IconSearch
-              stroke={2}
-              className="w-5 h-5 md:w-6 md:h-6 text-gray-400"
-            />
-            <input
-              onChange={(e) => setSearchValue(e.target.value)}
-              type="text"
-              placeholder="Tìm kiếm playlist..."
-              className="flex-1 mx-2 bg-[#272727] border-none outline-none text-sm text-white placeholder-gray-400"
-            />
-          </div>
-        ) : (
+        <div className="flex flex-1 flex-row bg-[#272727] mb-3 px-4 py-2 items-center rounded-full">
           <IconSearch
             stroke={2}
-            className="w-6 h-6 md:w-7 md:h-7 mt-2 mb-5 cursor-pointer text-gray-400 hover:text-white transition-colors"
-            onClick={() => setWidthContainer(!widthContainer)}
+            className="w-5 h-5 md:w-6 md:h-6 text-gray-400"
           />
-        )}
+          <input
+            onChange={(e) => setSearchValue(e.target.value)}
+            type="text"
+            placeholder="Tìm kiếm playlist..."
+            className="flex-1 mx-2 bg-[#272727] border-none outline-none text-sm text-white placeholder-gray-400"
+          />
+        </div>
       </div>
 
       {/* Playlists List */}
