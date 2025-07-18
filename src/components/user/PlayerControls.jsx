@@ -77,21 +77,69 @@ const PlayerControls = () => {
     }
   };
 
-  const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
+  // Validate duration and currentTime before calculating progress
+  const isValidDuration = duration && !isNaN(duration) && duration > 0;
+  const isValidCurrentTime =
+    currentTime && !isNaN(currentTime) && currentTime >= 0;
+  const progressPercent =
+    isValidDuration && isValidCurrentTime ? (currentTime / duration) * 100 : 0;
 
   const handleProgressClick = (e) => {
-    if (progressRef.current && duration > 0) {
+    // Check if duration is valid before proceeding
+    if (!progressRef.current || !isValidDuration) {
+      console.log("Invalid duration or ref not available:", {
+        duration,
+        isValidDuration,
+      });
+      return;
+    }
+
+    try {
       const rect = progressRef.current.getBoundingClientRect();
       const clientX = e.clientX || (e.touches && e.touches[0]?.clientX);
+
+      if (!clientX) {
+        console.log("No clientX available");
+        return;
+      }
+
       const clickX = clientX - rect.left;
       const width = rect.width;
-      const newTime = (clickX / width) * duration;
-      setPlaybackTime(Math.round(newTime));
+
+      // Validate calculations
+      if (width <= 0) {
+        console.log("Invalid width:", width);
+        return;
+      }
+
+      const percentage = clickX / width;
+      const newTime = percentage * duration;
+
+      // Validate newTime before setting
+      if (isNaN(newTime) || newTime < 0) {
+        console.log("Invalid newTime calculated:", newTime);
+        return;
+      }
+
+      // Clamp newTime to valid range
+      const clampedTime = Math.max(0, Math.min(newTime, duration));
+
+      console.log("Setting playback time:", clampedTime);
+      setPlaybackTime(Math.round(clampedTime));
+    } catch (error) {
+      console.error("Error in handleProgressClick:", error);
     }
   };
 
   const handleProgressMouseDown = (e) => {
     e.preventDefault();
+
+    // Only allow dragging if duration is valid
+    if (!isValidDuration) {
+      console.log("Cannot drag: invalid duration");
+      return;
+    }
+
     setIsDragging(true);
     handleProgressClick(e);
     // Disable body scroll on desktop
@@ -101,6 +149,13 @@ const PlayerControls = () => {
   const handleProgressTouchStart = (e) => {
     e.preventDefault();
     e.stopPropagation();
+
+    // Only allow dragging if duration is valid
+    if (!isValidDuration) {
+      console.log("Cannot drag: invalid duration");
+      return;
+    }
+
     setIsDragging(true);
     handleProgressClick(e);
     // Disable body scroll on mobile
@@ -109,27 +164,57 @@ const PlayerControls = () => {
   };
 
   const handleProgressMouseMove = (e) => {
-    if (isDragging && progressRef.current && duration > 0) {
+    if (!isDragging || !progressRef.current || !isValidDuration) {
+      return;
+    }
+
+    try {
       e.preventDefault();
       const rect = progressRef.current.getBoundingClientRect();
       const clickX = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
       const width = rect.width;
-      const newTime = (clickX / width) * duration;
-      setPlaybackTime(Math.round(newTime));
+
+      if (width <= 0) return;
+
+      const percentage = clickX / width;
+      const newTime = percentage * duration;
+
+      if (isNaN(newTime) || newTime < 0) return;
+
+      const clampedTime = Math.max(0, Math.min(newTime, duration));
+      setPlaybackTime(Math.round(clampedTime));
+    } catch (error) {
+      console.error("Error in handleProgressMouseMove:", error);
     }
   };
 
   const handleProgressTouchMove = (e) => {
-    if (isDragging && progressRef.current && duration > 0) {
+    if (!isDragging || !progressRef.current || !isValidDuration) {
+      return;
+    }
+
+    try {
       e.preventDefault();
       e.stopPropagation();
       const rect = progressRef.current.getBoundingClientRect();
       const clientX = e.touches[0]?.clientX;
+
       if (!clientX) return;
+
       const clickX = Math.max(0, Math.min(clientX - rect.left, rect.width));
       const width = rect.width;
-      const newTime = (clickX / width) * duration;
-      setPlaybackTime(Math.round(newTime));
+
+      if (width <= 0) return;
+
+      const percentage = clickX / width;
+      const newTime = percentage * duration;
+
+      if (isNaN(newTime) || newTime < 0) return;
+
+      const clampedTime = Math.max(0, Math.min(newTime, duration));
+      setPlaybackTime(Math.round(clampedTime));
+    } catch (error) {
+      console.error("Error in handleProgressTouchMove:", error);
     }
   };
 
@@ -163,7 +248,7 @@ const PlayerControls = () => {
       window.removeEventListener("touchmove", handleProgressTouchMove);
       window.removeEventListener("touchend", handleProgressTouchEnd);
     };
-  }, [isDragging]);
+  }, [isDragging, isValidDuration]);
 
   // Handle audio ended event for repeat functionality
   React.useEffect(() => {
@@ -173,10 +258,13 @@ const PlayerControls = () => {
 
         if (repeatMode === "one") {
           setTimeout(() => {
-            audio.currentTime = 0;
-            setPlaybackTime(0);
-            audio.play().catch(console.error);
-            setIsPlaying(true);
+            // Validate audio state before repeating
+            if (audio && !isNaN(audio.duration) && audio.duration > 0) {
+              audio.currentTime = 0;
+              setPlaybackTime(0);
+              audio.play().catch(console.error);
+              setIsPlaying(true);
+            }
           }, 100);
         } else if (repeatMode === "all") {
           setTimeout(() => {
@@ -196,14 +284,21 @@ const PlayerControls = () => {
 
   // Alternative approach - check if song is about to end
   React.useEffect(() => {
-    if (audio && duration > 0 && currentTime > 0) {
+    if (audio && isValidDuration && isValidCurrentTime) {
       if (duration - currentTime <= 0.5 && duration - currentTime > 0) {
         if (repeatMode === "one") {
           console.log("Song about to end, preparing to repeat");
         }
       }
     }
-  }, [currentTime, duration, repeatMode, audio]);
+  }, [
+    currentTime,
+    duration,
+    repeatMode,
+    audio,
+    isValidDuration,
+    isValidCurrentTime,
+  ]);
 
   const handleAvailable = () => {
     setSongDescriptionAvailable(true);
@@ -234,6 +329,7 @@ const PlayerControls = () => {
                 display: "flex",
                 alignItems: "center",
                 WebkitTapHighlightColor: "transparent",
+                opacity: isValidDuration ? 1 : 0.5, // Visual feedback for invalid state
               }}
             >
               <div
@@ -462,6 +558,9 @@ const PlayerControls = () => {
                 onClick={handleProgressClick}
                 onMouseDown={handleProgressMouseDown}
                 onTouchStart={handleProgressTouchStart}
+                style={{
+                  opacity: isValidDuration ? 1 : 0.5, // Visual feedback for invalid state
+                }}
               >
                 <div
                   className="h-1 bg-white rounded-full relative group-hover:bg-green-500 transition-colors"
