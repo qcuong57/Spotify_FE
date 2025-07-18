@@ -12,6 +12,8 @@ import {
   IconHeart,
   IconHeartFilled,
   IconDotsVertical,
+  IconRepeat,
+  IconRepeatOnce,
 } from "@tabler/icons-react";
 import { Menu, Button, Anchor } from "@mantine/core";
 import { useAudio } from "../../utils/audioContext";
@@ -37,6 +39,7 @@ const PlayerControls = () => {
   const progressRef = useRef(null);
   const [isLiked, setIsLiked] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [repeatMode, setRepeatMode] = useState("off"); // "off", "all", "one"
 
   const togglePlayPause = () => {
     setIsPlaying(!isPlaying);
@@ -54,6 +57,24 @@ const PlayerControls = () => {
 
   const toggleLike = () => {
     setIsLiked(!isLiked);
+  };
+
+  const toggleRepeat = () => {
+    const modes = ["off", "all", "one"];
+    const currentIndex = modes.indexOf(repeatMode);
+    const nextIndex = (currentIndex + 1) % modes.length;
+    setRepeatMode(modes[nextIndex]);
+  };
+
+  const getRepeatIcon = () => {
+    switch (repeatMode) {
+      case "one":
+        return <IconRepeatOnce size={18} className="text-green-500" />;
+      case "all":
+        return <IconRepeat size={18} className="text-green-500" />;
+      default:
+        return <IconRepeat size={18} />;
+    }
   };
 
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
@@ -112,6 +133,51 @@ const PlayerControls = () => {
       window.removeEventListener("mouseup", handleMouseUp);
     };
   }, [isDragging]);
+
+  // Handle audio ended event for repeat functionality
+  React.useEffect(() => {
+    if (audio) {
+      const handleEnded = () => {
+        console.log("Audio ended, repeat mode:", repeatMode);
+        
+        if (repeatMode === "one") {
+          // Repeat current song
+          setTimeout(() => {
+            audio.currentTime = 0;
+            setPlaybackTime(0);
+            audio.play().catch(console.error);
+            setIsPlaying(true);
+          }, 100);
+        } else if (repeatMode === "all") {
+          // Play next song (or first song if at end of playlist)
+          setTimeout(() => {
+            playNextSong();
+          }, 100);
+        } else {
+          // Off mode - stop playing
+          setIsPlaying(false);
+        }
+      };
+
+      audio.addEventListener("ended", handleEnded);
+      return () => {
+        audio.removeEventListener("ended", handleEnded);
+      };
+    }
+  }, [audio, repeatMode, playNextSong, setIsPlaying, setPlaybackTime]);
+
+  // Alternative approach - check if song is about to end
+  React.useEffect(() => {
+    if (audio && duration > 0 && currentTime > 0) {
+      // Check if song is within 0.5 seconds of ending
+      if (duration - currentTime <= 0.5 && duration - currentTime > 0) {
+        if (repeatMode === "one") {
+          // Prepare for repeat
+          console.log("Song about to end, preparing to repeat");
+        }
+      }
+    }
+  }, [currentTime, duration, repeatMode, audio]);
 
   const handleAvailable = () => {
     setSongDescriptionAvailable(true);
@@ -202,6 +268,17 @@ const PlayerControls = () => {
                 </button>
               </Menu.Target>
               <Menu.Dropdown className="bg-gray-800 border-gray-700">
+                <Menu.Item
+                  className="text-white hover:bg-gray-700"
+                  onClick={toggleRepeat}
+                >
+                  <div className="flex items-center gap-2">
+                    {getRepeatIcon()}
+                    <span>
+                      Repeat: {repeatMode === "off" ? "Off" : repeatMode === "all" ? "All" : "One"}
+                    </span>
+                  </div>
+                </Menu.Item>
                 <Menu.Item
                   className="text-white hover:bg-gray-700"
                   onClick={toggleLike}
@@ -308,6 +385,16 @@ const PlayerControls = () => {
                 onClick={playNextSong}
               >
                 <IconPlayerSkipForwardFilled size={20} />
+              </button>
+
+              <button
+                className={`transition-colors ${
+                  repeatMode !== "off" ? "text-green-500" : "text-gray-400 hover:text-white"
+                }`}
+                onClick={toggleRepeat}
+                title={`Repeat: ${repeatMode === "off" ? "Off" : repeatMode === "all" ? "All" : "One"}`}
+              >
+                {getRepeatIcon()}
               </button>
             </div>
 

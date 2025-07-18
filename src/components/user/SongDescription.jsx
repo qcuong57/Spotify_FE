@@ -16,6 +16,7 @@ const SongDescription = () => {
     isPlaying,
     currentTime,
     setSongDescriptionAvailable,
+    repeatMode, // Add this from audio context
   } = useAudio();
   const videoRef = useRef(null);
   const hlsRef = useRef(null);
@@ -103,11 +104,27 @@ const SongDescription = () => {
       console.warn("Video failed to load");
     };
 
-    // Handle video ended
+    // Handle video ended - sync with audio repeat mode
     const handleVideoEnded = () => {
       if (isVideoFullscreen) {
         setIsVideoFullscreen(false);
       }
+      
+      // Handle repeat mode for video
+      if (repeatMode === "one") {
+        // Reset video to beginning for repeat
+        videoElement.currentTime = 0;
+        if (isPlaying) {
+          const playPromise = videoElement.play();
+          if (playPromise !== undefined) {
+            playPromise.catch((error) => {
+              console.warn("Video repeat failed:", error);
+              setVideoError(true);
+            });
+          }
+        }
+      }
+      // For "all" and "off" modes, let the audio context handle the logic
     };
 
     // Add event listeners
@@ -204,7 +221,7 @@ const SongDescription = () => {
       videoElement.removeEventListener("error", handleVideoError);
       videoElement.removeEventListener("ended", handleVideoEnded);
     };
-  }, [currentSong, isPlaying, isVideoFullscreen, audio, setIsPlaying, isIOS]);
+  }, [currentSong, isPlaying, isVideoFullscreen, audio, setIsPlaying, isIOS, repeatMode]);
 
   // Sync video with audio - but not when in fullscreen
   useEffect(() => {
@@ -237,24 +254,61 @@ const SongDescription = () => {
     }
   }, [currentTime, videoError, isVideoFullscreen]);
 
-  // Stop video when audio ends
+  // Handle audio events - but don't interfere with repeat logic
   useEffect(() => {
     const videoElement = videoRef.current;
     if (!videoElement || !audio) return;
 
     const handleAudioEnded = () => {
-      videoElement.pause();
-      videoElement.currentTime = 0;
-      setIsPlaying(false);
-      setIsVideoFullscreen(false);
+      // Only handle video-specific cleanup, let PlayerControls handle repeat logic
+      if (repeatMode === "one") {
+        // Reset video to beginning for repeat
+        videoElement.currentTime = 0;
+      } else if (repeatMode === "off") {
+        // Only stop if repeat is off
+        videoElement.pause();
+        videoElement.currentTime = 0;
+        setIsVideoFullscreen(false);
+      }
+      // For "all" mode, let the audio context handle song switching
+    };
+
+    // Handle when audio starts playing a new song
+    const handleAudioPlay = () => {
+      if (videoElement && !isVideoFullscreen) {
+        videoElement.currentTime = audio.currentTime;
+      }
+    };
+
+    // Handle when audio is paused
+    const handleAudioPause = () => {
+      if (videoElement && !isVideoFullscreen) {
+        videoElement.pause();
+      }
+    };
+
+    // Handle when audio time is updated (seeking)
+    const handleAudioTimeUpdate = () => {
+      if (videoElement && !isVideoFullscreen && !videoError) {
+        const timeDiff = Math.abs(videoElement.currentTime - audio.currentTime);
+        if (timeDiff > 1) {
+          videoElement.currentTime = audio.currentTime;
+        }
+      }
     };
 
     audio.addEventListener("ended", handleAudioEnded);
+    audio.addEventListener("play", handleAudioPlay);
+    audio.addEventListener("pause", handleAudioPause);
+    audio.addEventListener("timeupdate", handleAudioTimeUpdate);
 
     return () => {
       audio.removeEventListener("ended", handleAudioEnded);
+      audio.removeEventListener("play", handleAudioPlay);
+      audio.removeEventListener("pause", handleAudioPause);
+      audio.removeEventListener("timeupdate", handleAudioTimeUpdate);
     };
-  }, [audio, setIsPlaying]);
+  }, [audio, setIsPlaying, repeatMode, isVideoFullscreen, videoError]);
 
   const handleClose = () => {
     // If video is in fullscreen, exit it first
