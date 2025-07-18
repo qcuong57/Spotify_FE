@@ -65,7 +65,7 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
         <div className="flex flex-1 flex-row items-center">
           <img
             className="h-8 md:h-12 cursor-pointer mr-3 md:mr-4"
-            src="https://ih1.redbubble.net/image.5763379245.4315/bg,f8f8f8-flat,750x,075,f-pad,750x1000,f8f8f8.jpg"
+            src="https://i.pinimg.com/736x/48/eb/2a/48eb2a522aba3081d8258babe67a3473.jpg"
             onClick={() => setCurrentView("main")}
           />
           <div className="flex items-center gap-2">

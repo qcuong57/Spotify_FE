@@ -82,7 +82,8 @@ const PlayerControls = () => {
   const handleProgressClick = (e) => {
     if (progressRef.current && duration > 0) {
       const rect = progressRef.current.getBoundingClientRect();
-      const clickX = e.clientX - rect.left;
+      const clientX = e.clientX || (e.touches && e.touches[0]?.clientX);
+      const clickX = clientX - rect.left;
       const width = rect.width;
       const newTime = (clickX / width) * duration;
       setPlaybackTime(Math.round(newTime));
@@ -90,12 +91,26 @@ const PlayerControls = () => {
   };
 
   const handleProgressMouseDown = (e) => {
+    e.preventDefault();
     setIsDragging(true);
     handleProgressClick(e);
+    // Disable body scroll on desktop
+    document.body.style.overflow = "hidden";
+  };
+
+  const handleProgressTouchStart = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+    handleProgressClick(e);
+    // Disable body scroll on mobile
+    document.body.style.overflow = "hidden";
+    document.body.style.touchAction = "none";
   };
 
   const handleProgressMouseMove = (e) => {
     if (isDragging && progressRef.current && duration > 0) {
+      e.preventDefault();
       const rect = progressRef.current.getBoundingClientRect();
       const clickX = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
       const width = rect.width;
@@ -104,33 +119,49 @@ const PlayerControls = () => {
     }
   };
 
+  const handleProgressTouchMove = (e) => {
+    if (isDragging && progressRef.current && duration > 0) {
+      e.preventDefault();
+      e.stopPropagation();
+      const rect = progressRef.current.getBoundingClientRect();
+      const clientX = e.touches[0]?.clientX;
+      if (!clientX) return;
+      const clickX = Math.max(0, Math.min(clientX - rect.left, rect.width));
+      const width = rect.width;
+      const newTime = (clickX / width) * duration;
+      setPlaybackTime(Math.round(newTime));
+    }
+  };
+
   const handleProgressMouseUp = () => {
     setIsDragging(false);
+    // Re-enable body scroll
+    document.body.style.overflow = "";
   };
 
-  // Add event listeners for mouse move and up on window
-  const handleMouseMove = (e) => {
-    if (isDragging) {
-      handleProgressMouseMove(e);
-    }
+  const handleProgressTouchEnd = () => {
+    setIsDragging(false);
+    // Re-enable body scroll
+    document.body.style.overflow = "";
+    document.body.style.touchAction = "";
   };
 
-  const handleMouseUp = () => {
-    if (isDragging) {
-      handleProgressMouseUp();
-    }
-  };
-
-  // Add event listeners when dragging starts
+  // Add event listeners for mouse and touch events
   React.useEffect(() => {
     if (isDragging) {
-      window.addEventListener("mousemove", handleMouseMove);
-      window.addEventListener("mouseup", handleMouseUp);
+      window.addEventListener("mousemove", handleProgressMouseMove);
+      window.addEventListener("mouseup", handleProgressMouseUp);
+      window.addEventListener("touchmove", handleProgressTouchMove, {
+        passive: false,
+      });
+      window.addEventListener("touchend", handleProgressTouchEnd);
     }
 
     return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", handleMouseUp);
+      window.removeEventListener("mousemove", handleProgressMouseMove);
+      window.removeEventListener("mouseup", handleProgressMouseUp);
+      window.removeEventListener("touchmove", handleProgressTouchMove);
+      window.removeEventListener("touchend", handleProgressTouchEnd);
     };
   }, [isDragging]);
 
@@ -139,9 +170,8 @@ const PlayerControls = () => {
     if (audio) {
       const handleEnded = () => {
         console.log("Audio ended, repeat mode:", repeatMode);
-        
+
         if (repeatMode === "one") {
-          // Repeat current song
           setTimeout(() => {
             audio.currentTime = 0;
             setPlaybackTime(0);
@@ -149,12 +179,10 @@ const PlayerControls = () => {
             setIsPlaying(true);
           }, 100);
         } else if (repeatMode === "all") {
-          // Play next song (or first song if at end of playlist)
           setTimeout(() => {
             playNextSong();
           }, 100);
         } else {
-          // Off mode - stop playing
           setIsPlaying(false);
         }
       };
@@ -169,10 +197,8 @@ const PlayerControls = () => {
   // Alternative approach - check if song is about to end
   React.useEffect(() => {
     if (audio && duration > 0 && currentTime > 0) {
-      // Check if song is within 0.5 seconds of ending
       if (duration - currentTime <= 0.5 && duration - currentTime > 0) {
         if (repeatMode === "one") {
-          // Prepare for repeat
           console.log("Song about to end, preparing to repeat");
         }
       }
@@ -186,26 +212,41 @@ const PlayerControls = () => {
   if (!currentSong) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-black border-t border-gray-800 px-2 sm:px-4 py-2 sm:py-3 z-50">
+    <div className="fixed bottom-0 left-0 right-0 bg-black border-t border-gray-800 px-2 sm:px-4 py-2 sm:py-3 z-50 pb-safe">
       <div className="flex items-center justify-between max-w-full mx-auto">
         {/* Mobile Layout - Stack vertically on very small screens */}
         <div className="flex flex-col w-full sm:hidden">
           {/* Progress Bar - Mobile Top */}
-          <div className="w-full flex items-center gap-2 mb-2">
+          <div className="w-full flex items-center gap-2 mb-3 px-2">
             <span className="text-xs text-gray-400 font-medium min-w-[32px] text-right">
               {formatTime(currentTime)}
             </span>
             <div
-              className="h-1 flex-1 bg-gray-600 rounded-full cursor-pointer group relative"
+              className="h-3 flex-1 bg-gray-600 rounded-full cursor-pointer group relative"
               ref={progressRef}
               onClick={handleProgressClick}
               onMouseDown={handleProgressMouseDown}
+              onTouchStart={handleProgressTouchStart}
+              style={{
+                touchAction: "none",
+                minHeight: "24px",
+                padding: "4px 0",
+                display: "flex",
+                alignItems: "center",
+                WebkitTapHighlightColor: "transparent",
+              }}
             >
               <div
-                className="h-1 bg-white rounded-full relative group-hover:bg-green-500 transition-colors"
+                className="h-3 bg-white rounded-full relative group-hover:bg-green-500 transition-colors pointer-events-none"
                 style={{ width: `${progressPercent}%` }}
               >
-                <div className="absolute right-0 top-1/2 transform -translate-y-1/2 w-3 h-3 bg-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"></div>
+                <div
+                  className="absolute right-0 top-1/2 transform -translate-y-1/2 w-5 h-5 bg-white rounded-full shadow-lg border-2 border-gray-800"
+                  style={{
+                    opacity: isDragging ? 1 : 0,
+                    transition: "opacity 0.2s",
+                  }}
+                ></div>
               </div>
             </div>
             <span className="text-xs text-gray-400 font-medium min-w-[32px]">
@@ -214,7 +255,7 @@ const PlayerControls = () => {
           </div>
 
           {/* Main Controls - Mobile Bottom */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between pb-2">
             {/* Song Info - Mobile */}
             <div className="flex items-center gap-2 flex-1 min-w-0">
               <img
@@ -235,14 +276,14 @@ const PlayerControls = () => {
             {/* Playback Controls - Mobile */}
             <div className="flex items-center gap-2 mx-4">
               <button
-                className="text-gray-400 hover:text-white transition-colors"
+                className="text-gray-400 hover:text-white transition-colors p-1 touch-manipulation"
                 onClick={playBackSong}
               >
                 <IconPlayerSkipBackFilled size={18} />
               </button>
 
               <button
-                className="bg-white rounded-full p-2 hover:scale-105 transition-transform shadow-lg"
+                className="bg-white rounded-full p-2 hover:scale-105 transition-transform shadow-lg touch-manipulation"
                 onClick={togglePlayPause}
               >
                 {isPlaying ? (
@@ -253,7 +294,7 @@ const PlayerControls = () => {
               </button>
 
               <button
-                className="text-gray-400 hover:text-white transition-colors"
+                className="text-gray-400 hover:text-white transition-colors p-1 touch-manipulation"
                 onClick={playNextSong}
               >
                 <IconPlayerSkipForwardFilled size={18} />
@@ -263,7 +304,7 @@ const PlayerControls = () => {
             {/* Mobile Menu */}
             <Menu shadow="md" position="top">
               <Menu.Target>
-                <button className="text-gray-400 hover:text-white transition-colors p-2">
+                <button className="text-gray-400 hover:text-white transition-colors p-2 touch-manipulation">
                   <IconDotsVertical size={18} />
                 </button>
               </Menu.Target>
@@ -275,7 +316,12 @@ const PlayerControls = () => {
                   <div className="flex items-center gap-2">
                     {getRepeatIcon()}
                     <span>
-                      Repeat: {repeatMode === "off" ? "Off" : repeatMode === "all" ? "All" : "One"}
+                      Repeat:{" "}
+                      {repeatMode === "off"
+                        ? "Off"
+                        : repeatMode === "all"
+                        ? "All"
+                        : "One"}
                     </span>
                   </div>
                 </Menu.Item>
@@ -389,10 +435,18 @@ const PlayerControls = () => {
 
               <button
                 className={`transition-colors ${
-                  repeatMode !== "off" ? "text-green-500" : "text-gray-400 hover:text-white"
+                  repeatMode !== "off"
+                    ? "text-green-500"
+                    : "text-gray-400 hover:text-white"
                 }`}
                 onClick={toggleRepeat}
-                title={`Repeat: ${repeatMode === "off" ? "Off" : repeatMode === "all" ? "All" : "One"}`}
+                title={`Repeat: ${
+                  repeatMode === "off"
+                    ? "Off"
+                    : repeatMode === "all"
+                    ? "All"
+                    : "One"
+                }`}
               >
                 {getRepeatIcon()}
               </button>
@@ -407,6 +461,7 @@ const PlayerControls = () => {
                 ref={progressRef}
                 onClick={handleProgressClick}
                 onMouseDown={handleProgressMouseDown}
+                onTouchStart={handleProgressTouchStart}
               >
                 <div
                   className="h-1 bg-white rounded-full relative group-hover:bg-green-500 transition-colors"
@@ -486,6 +541,16 @@ const PlayerControls = () => {
       </div>
 
       <style jsx>{`
+        /* Safe area support for iPhone */
+        .pb-safe {
+          padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        /* Improve touch interaction */
+        .touch-manipulation {
+          touch-action: manipulation;
+        }
+
         .slider::-webkit-slider-thumb {
           appearance: none;
           width: 12px;
@@ -514,6 +579,12 @@ const PlayerControls = () => {
 
         .slider:hover::-moz-range-thumb {
           opacity: 1;
+        }
+
+        /* Prevent scrolling when dragging progress bar */
+        body.dragging {
+          overflow: hidden;
+          touch-action: none;
         }
       `}</style>
     </div>
