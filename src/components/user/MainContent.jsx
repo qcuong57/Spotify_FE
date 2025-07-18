@@ -9,6 +9,7 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
   const [genres, setGenres] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   const handleCloseContextMenu = () => {
     setContextMenu(null);
@@ -37,10 +38,10 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
       try {
         setLoading(true);
         setError(null);
-        
+
         const [songsResponse, genresResponse] = await Promise.all([
           getAllSongs(),
-          getAllGenres()
+          getAllGenres(),
         ]);
 
         if (songsResponse?.data?.results) {
@@ -61,18 +62,25 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
     fetchAllSongs();
   }, []);
 
-  const handleAllSongs = (songs, title) => {
+  const handleAllSongs = async (songs, title) => {
     if (!Array.isArray(songs)) {
       console.warn("Invalid songs data:", songs);
       return;
     }
 
-    const data = {
-      songs: songs,
-      title: title || "Songs",
-    };
-    setListSongsDetail(data);
-    setCurrentView("listSongs");
+    // Start transition animation
+    setIsTransitioning(true);
+
+    // Add a slight delay for smooth transition
+    setTimeout(() => {
+      const data = {
+        songs: songs,
+        title: title || "Songs",
+      };
+      setListSongsDetail(data);
+      setCurrentView("listSongs");
+      setIsTransitioning(false);
+    }, 300);
   };
 
   if (loading) {
@@ -94,8 +102,8 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <p className="text-red-400 mb-2">{error}</p>
-            <button 
-              onClick={() => window.location.reload()} 
+            <button
+              onClick={() => window.location.reload()}
               className="text-green-500 hover:text-green-400 underline"
             >
               Retry
@@ -107,68 +115,175 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
   }
 
   return (
-    <div className="bg-[#131313] text-white p-3 md:p-4 mr-0 md:mr-2 rounded-lg flex-1 overflow-y-auto space-y-8 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent pb-8">
-      
+    <div
+      className={`
+      bg-[#131313] text-white p-3 md:p-4 mr-0 md:mr-2 rounded-lg flex-1 overflow-y-auto 
+      space-y-8 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent pb-8
+      transition-all duration-500 ease-out transform
+      ${
+        isTransitioning
+          ? "opacity-60 scale-[0.98] blur-sm"
+          : "opacity-100 scale-100 blur-none"
+      }
+    `}
+    >
       {/* All Songs Section */}
       {allSongs.length > 0 && (
-        <div>
+        <div
+          className={`transition-all duration-700 ease-out ${
+            isTransitioning
+              ? "opacity-40 translate-y-4"
+              : "opacity-100 translate-y-0"
+          }`}
+        >
           <div className="flex flex-row justify-between items-center mb-6">
-            <h2 className="text-2xl md:text-3xl font-bold cursor-pointer hover:underline">
+            <h2 className="text-2xl md:text-3xl font-bold cursor-pointer hover:underline transition-all duration-300 hover:text-green-400 hover:scale-105">
               Tất cả bài hát
             </h2>
             <button
-              className="text-sm font-semibold text-gray-400 cursor-pointer hover:text-white hover:underline transition-colors px-4 py-2 rounded-full hover:bg-gray-800"
+              className={`
+                text-sm font-semibold px-6 py-3 rounded-full
+                transition-all duration-300 ease-out
+                ${
+                  isTransitioning
+                    ? "pointer-events-none opacity-50 bg-green-600 text-white"
+                    : "text-gray-400 hover:text-white hover:bg-green-600"
+                }
+              `}
               onClick={() => handleAllSongs(allSongs, "Tất cả bài hát")}
+              disabled={isTransitioning}
             >
-              Hiện tất cả
+              {isTransitioning ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span>Đang tải...</span>
+                </div>
+              ) : (
+                <span className="flex items-center gap-2">
+                  <span>Hiện tất cả</span>
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </span>
+              )}
             </button>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 gap-y-6">
-            {allSongs.slice(0, 12).map((song) => (
-              <Song
+            {allSongs.slice(0, 12).map((song, index) => (
+              <div
                 key={song.id}
-                song={song}
-                contextMenu={contextMenu}
-                setContextMenu={setContextMenu}
-                handleCloseContextMenu={handleCloseContextMenu}
-                list={allSongs} // Pass the array directly
-              />
+                className={`transition-all duration-500 ease-out ${
+                  isTransitioning
+                    ? "opacity-20 translate-y-8 scale-95"
+                    : "opacity-100 translate-y-0 scale-100"
+                }`}
+                style={{ transitionDelay: `${index * 50}ms` }}
+              >
+                <Song
+                  song={song}
+                  contextMenu={contextMenu}
+                  setContextMenu={setContextMenu}
+                  handleCloseContextMenu={handleCloseContextMenu}
+                  list={allSongs}
+                />
+              </div>
             ))}
           </div>
         </div>
       )}
-      
+
       {/* Genres Sections */}
       {genres.length > 0 &&
-        genres.map((genre) => {
-          // Ensure genre has songs and it's an array
-          if (!genre.songs || !Array.isArray(genre.songs) || genre.songs.length === 0) {
+        genres.map((genre, genreIndex) => {
+          if (
+            !genre.songs ||
+            !Array.isArray(genre.songs) ||
+            genre.songs.length === 0
+          ) {
             return null;
           }
 
           return (
-            <div key={genre.id}>
+            <div
+              key={genre.id}
+              className={`transition-all duration-700 ease-out ${
+                isTransitioning
+                  ? "opacity-40 translate-y-4"
+                  : "opacity-100 translate-y-0"
+              }`}
+              style={{ transitionDelay: `${genreIndex * 100}ms` }}
+            >
               <div className="flex flex-row justify-between items-center mb-6">
-                <h2 className="text-2xl md:text-3xl font-bold cursor-pointer hover:underline">
+                <h2 className="text-2xl md:text-3xl font-bold cursor-pointer hover:underline transition-all duration-300 hover:text-green-400 hover:scale-105">
                   {genre.name}
                 </h2>
                 <button
-                  className="text-sm font-semibold text-gray-400 cursor-pointer hover:text-white hover:underline transition-colors px-4 py-2 rounded-full hover:bg-gray-800"
+                  className={`
+                    text-sm font-semibold px-6 py-3 rounded-full
+                    transition-all duration-300 ease-out
+                    ${
+                      isTransitioning
+                        ? "pointer-events-none opacity-50 bg-green-600 text-white"
+                        : "text-gray-400 hover:text-white hover:bg-green-600"
+                    }
+                  `}
                   onClick={() => handleAllSongs(genre.songs, genre.name)}
+                  disabled={isTransitioning}
                 >
-                  Hiện tất cả
+                  {isTransitioning ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>Đang tải...</span>
+                    </div>
+                  ) : (
+                    <span className="flex items-center gap-2">
+                      <span>Hiện tất cả</span>
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 5l7 7-7 7"
+                        />
+                      </svg>
+                    </span>
+                  )}
                 </button>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 gap-y-6">
-                {genre.songs.slice(0, 12).map((song) => (
-                  <Song
+                {genre.songs.slice(0, 12).map((song, index) => (
+                  <div
                     key={`${genre.id}-${song.id}`}
-                    song={song}
-                    contextMenu={contextMenu}
-                    setContextMenu={setContextMenu}
-                    handleCloseContextMenu={handleCloseContextMenu}
-                    list={genre.songs} // Pass the songs array directly
-                  />
+                    className={`transition-all duration-500 ease-out ${
+                      isTransitioning
+                        ? "opacity-20 translate-y-8 scale-95"
+                        : "opacity-100 translate-y-0 scale-100"
+                    }`}
+                    style={{ transitionDelay: `${index * 50}ms` }}
+                  >
+                    <Song
+                      song={song}
+                      contextMenu={contextMenu}
+                      setContextMenu={setContextMenu}
+                      handleCloseContextMenu={handleCloseContextMenu}
+                      list={genre.songs}
+                    />
+                  </div>
                 ))}
               </div>
             </div>
@@ -177,7 +292,7 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
 
       {/* Empty State */}
       {allSongs.length === 0 && genres.length === 0 && !loading && (
-        <div className="flex flex-col items-center justify-center h-64 text-gray-400">
+        <div className="flex flex-col items-center justify-center h-64 text-gray-400 transition-all duration-500 ease-out">
           <p className="text-xl mb-2">No songs available</p>
           <p className="text-sm">Check back later for new content</p>
         </div>

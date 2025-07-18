@@ -68,11 +68,17 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
             src="https://ih1.redbubble.net/image.5763379245.4315/bg,f8f8f8-flat,750x,075,f-pad,750x1000,f8f8f8.jpg"
             onClick={() => setCurrentView("main")}
           />
-          <IconHome
-            stroke={2}
-            className="bg-[#272727] cursor-pointer w-8 h-8 md:w-10 md:h-10 p-2 rounded-full hover:bg-[#242424] transition-colors"
-            onClick={() => setCurrentView("main")}
-          />
+          <div className="flex items-center gap-2">
+            <h4 className="text-2xl font-extrabold bg-gradient-to-r from-[#1DB954] via-[#1ed760] to-[#1DB954] text-transparent bg-clip-text drop-shadow-md">
+              Spoticuong
+            </h4>
+
+            <IconHome
+              stroke={2}
+              className="bg-[#272727] cursor-pointer w-8 h-8 md:w-10 md:h-10 p-2 rounded-full hover:bg-[#242424] transition-colors"
+              onClick={() => setCurrentView("main")}
+            />
+          </div>
 
           {/* Desktop Search */}
           <div className="hidden md:flex flex-1 flex-row bg-[#272727] mx-4 px-4 py-2 items-center rounded-full max-w-md">

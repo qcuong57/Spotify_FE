@@ -16,13 +16,25 @@ const SongDescription = () => {
     isPlaying,
     currentTime,
     setSongDescriptionAvailable,
-    repeatMode, // Add this from audio context
+    repeatMode,
   } = useAudio();
   const videoRef = useRef(null);
   const hlsRef = useRef(null);
   const [isLiked, setIsLiked] = useState(false);
   const [videoError, setVideoError] = useState(false);
   const [isVideoFullscreen, setIsVideoFullscreen] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
+
+  // Animation effect when component mounts or song changes
+  useEffect(() => {
+    // Reset visibility to trigger animation
+    setIsVisible(false);
+    const timer = setTimeout(() => {
+      setIsVisible(true);
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [currentSong]); // Trigger on currentSong change
 
   // Check if device is iOS
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
@@ -39,7 +51,6 @@ const SongDescription = () => {
         }
       } else {
         if (isPlaying && !videoError && !isVideoFullscreen) {
-          // Only try to play if user has interacted with the page and not in fullscreen
           const playPromise = videoElement.play();
           if (playPromise !== undefined) {
             playPromise.catch((error) => {
@@ -51,35 +62,30 @@ const SongDescription = () => {
       }
     };
 
-    // Handle fullscreen events - iOS specific
-    const handleFullscreenEnter = (e) => {
+    const handleFullscreenEnter = () => {
       console.log("Video entering fullscreen");
       setIsVideoFullscreen(true);
       if (isIOS) {
-        // On iOS, when video goes fullscreen, we pause the audio
         audio.pause();
         setIsPlaying(false);
       }
     };
 
-    const handleFullscreenExit = (e) => {
+    const handleFullscreenExit = () => {
       console.log("Video exiting fullscreen");
       setIsVideoFullscreen(false);
       if (isIOS) {
-        // On iOS, when exiting fullscreen, we resume audio if it was playing
         if (isPlaying) {
           audio.play();
         }
       }
     };
 
-    // Prevent context menu on video
     const handleContextMenu = (e) => {
       e.preventDefault();
       return false;
     };
 
-    // Handle video play/pause sync with audio
     const handleVideoPlay = () => {
       if (!isPlaying && !isVideoFullscreen) {
         videoElement.pause();
@@ -87,7 +93,6 @@ const SongDescription = () => {
     };
 
     const handleVideoPause = () => {
-      // If video is paused but audio should be playing, resume audio
       if (isPlaying && !isVideoFullscreen) {
         const playPromise = videoElement.play();
         if (playPromise !== undefined) {
@@ -104,15 +109,12 @@ const SongDescription = () => {
       console.warn("Video failed to load");
     };
 
-    // Handle video ended - sync with audio repeat mode
     const handleVideoEnded = () => {
       if (isVideoFullscreen) {
         setIsVideoFullscreen(false);
       }
       
-      // Handle repeat mode for video
       if (repeatMode === "one") {
-        // Reset video to beginning for repeat
         videoElement.currentTime = 0;
         if (isPlaying) {
           const playPromise = videoElement.play();
@@ -124,17 +126,11 @@ const SongDescription = () => {
           }
         }
       }
-      // For "all" and "off" modes, let the audio context handle the logic
     };
 
-    // Add event listeners
     document.addEventListener("visibilitychange", handleVisibilityChange);
-    
-    // iOS fullscreen events
     videoElement.addEventListener("webkitbeginfullscreen", handleFullscreenEnter);
     videoElement.addEventListener("webkitendfullscreen", handleFullscreenExit);
-    
-    // Standard fullscreen events
     videoElement.addEventListener("fullscreenchange", () => {
       if (document.fullscreenElement === videoElement) {
         handleFullscreenEnter();
@@ -149,23 +145,19 @@ const SongDescription = () => {
     videoElement.addEventListener("error", handleVideoError);
     videoElement.addEventListener("ended", handleVideoEnded);
 
-    // Set up mobile attributes - More restrictive for iOS
     videoElement.playsInline = true;
     videoElement.setAttribute("playsinline", "true");
     videoElement.setAttribute("webkit-playsinline", "true");
     videoElement.muted = true;
     videoElement.controls = false;
     
-    // Additional iOS-specific attributes
     if (isIOS) {
       videoElement.setAttribute("x-webkit-airplay", "allow");
       videoElement.setAttribute("preload", "none");
     }
 
-    // Reset video error state
     setVideoError(false);
 
-    // Handle HLS or direct MP4
     if (
       currentSong.url_video &&
       currentSong.url_video.endsWith(".m3u8") &&
@@ -254,40 +246,33 @@ const SongDescription = () => {
     }
   }, [currentTime, videoError, isVideoFullscreen]);
 
-  // Handle audio events - but don't interfere with repeat logic
+  // Handle audio events
   useEffect(() => {
     const videoElement = videoRef.current;
     if (!videoElement || !audio) return;
 
     const handleAudioEnded = () => {
-      // Only handle video-specific cleanup, let PlayerControls handle repeat logic
       if (repeatMode === "one") {
-        // Reset video to beginning for repeat
         videoElement.currentTime = 0;
       } else if (repeatMode === "off") {
-        // Only stop if repeat is off
         videoElement.pause();
         videoElement.currentTime = 0;
         setIsVideoFullscreen(false);
       }
-      // For "all" mode, let the audio context handle song switching
     };
 
-    // Handle when audio starts playing a new song
     const handleAudioPlay = () => {
       if (videoElement && !isVideoFullscreen) {
         videoElement.currentTime = audio.currentTime;
       }
     };
 
-    // Handle when audio is paused
     const handleAudioPause = () => {
       if (videoElement && !isVideoFullscreen) {
         videoElement.pause();
       }
     };
 
-    // Handle when audio time is updated (seeking)
     const handleAudioTimeUpdate = () => {
       if (videoElement && !isVideoFullscreen && !videoError) {
         const timeDiff = Math.abs(videoElement.currentTime - audio.currentTime);
@@ -311,6 +296,8 @@ const SongDescription = () => {
   }, [audio, setIsPlaying, repeatMode, isVideoFullscreen, videoError]);
 
   const handleClose = () => {
+    setIsClosing(true);
+    
     // If video is in fullscreen, exit it first
     if (isVideoFullscreen && videoRef.current) {
       if (document.exitFullscreen) {
@@ -321,14 +308,17 @@ const SongDescription = () => {
         videoRef.current.webkitExitFullscreen();
       }
     }
-    setSongDescriptionAvailable(false);
+    
+    // Delay closing to allow animation to complete
+    setTimeout(() => {
+      setSongDescriptionAvailable(false);
+    }, 300);
   };
 
   const handleLike = () => {
     setIsLiked(!isLiked);
   };
 
-  // Handle video click - prevent fullscreen on iOS
   const handleVideoClick = (e) => {
     if (isIOS) {
       e.preventDefault();
@@ -340,9 +330,17 @@ const SongDescription = () => {
   if (!currentSong) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black flex flex-col md:relative md:inset-auto md:bg-transparent md:max-w-[400px] md:bg-[#131313] md:shadow-lg md:rounded-lg">
+    <div 
+      className={`fixed inset-0 z-50 bg-black flex flex-col md:relative md:inset-auto md:bg-transparent md:max-w-[400px] md:bg-[#131313] md:shadow-lg md:rounded-lg transition-all duration-300 ease-out ${
+        isVisible && !isClosing 
+          ? 'translate-y-0 opacity-100 md:translate-x-0' 
+          : 'translate-y-full opacity-0 md:translate-y-0 md:translate-x-full'
+      }`}
+    >
       {/* Mobile Header */}
-      <div className="flex items-center justify-between p-4 md:hidden">
+      <div className={`flex items-center justify-between p-4 md:hidden transition-all duration-300 delay-100 ${
+        isVisible && !isClosing ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
+      }`}>
         <button
           onClick={handleClose}
           className="p-2 rounded-full hover:bg-gray-800 transition-colors"
@@ -352,11 +350,13 @@ const SongDescription = () => {
         <span className="text-sm text-gray-400 font-medium">
           {isVideoFullscreen ? "Video Playing" : "Now Playing"}
         </span>
-        <div className="w-10" /> {/* Spacer */}
+        <div className="w-10" />
       </div>
 
       {/* Desktop Header */}
-      <div className="hidden md:flex items-center justify-between p-4 border-b border-gray-700">
+      <div className={`hidden md:flex items-center justify-between p-4 border-b border-gray-700 transition-all duration-300 delay-100 ${
+        isVisible && !isClosing ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
+      }`}>
         <h2 className="text-lg font-semibold text-white">Now Playing</h2>
         <button
           onClick={handleClose}
@@ -369,7 +369,9 @@ const SongDescription = () => {
       {/* Content */}
       <div className="flex-1 p-4 md:p-6 flex flex-col">
         {/* Video Container */}
-        <div className="relative w-full mb-6 md:mb-4">
+        <div className={`relative w-full mb-6 md:mb-4 transition-all duration-500 delay-200 ${
+          isVisible && !isClosing ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
+        }`}>
           <div className="relative aspect-video bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg overflow-hidden shadow-2xl">
             {currentSong.url_video && !videoError ? (
               <>
@@ -385,7 +387,6 @@ const SongDescription = () => {
                   onClick={handleVideoClick}
                   onTouchStart={isIOS ? (e) => e.preventDefault() : undefined}
                 />
-                {/* iOS specific overlay to prevent accidental fullscreen */}
                 {isIOS && (
                   <div
                     className="absolute inset-0 bg-transparent"
@@ -397,7 +398,6 @@ const SongDescription = () => {
                 )}
               </>
             ) : (
-              // Fallback to album art if video fails or unavailable
               <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-600 to-blue-600">
                 <img
                   src={currentSong.image}
@@ -414,7 +414,9 @@ const SongDescription = () => {
 
         {/* Song Info */}
         <div className="flex-1 flex flex-col justify-center md:justify-start">
-          <div className="text-center md:text-left mb-6 md:mb-4">
+          <div className={`text-center md:text-left mb-6 md:mb-4 transition-all duration-500 delay-300 ${
+            isVisible && !isClosing ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
+          }`}>
             <h3 className="text-2xl md:text-xl font-bold text-white leading-tight mb-2">
               {currentSong.song_name || "Unknown Title"}
             </h3>
@@ -441,7 +443,9 @@ const SongDescription = () => {
           </div>
 
           {/* Mobile Instructions */}
-          <div className="text-center md:hidden mt-auto">
+          <div className={`text-center md:hidden mt-auto transition-all duration-500 delay-400 ${
+            isVisible && !isClosing ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
+          }`}>
             <p className="text-sm text-gray-500">
               {isVideoFullscreen ? "Exit fullscreen to control playback" : "Swipe down to close"}
             </p>
