@@ -13,7 +13,7 @@ import { IconMenu2 } from "@tabler/icons-react";
 const HomePage = () => {
   const [currentView, setCurrentView] = useState("main");
   const [listSongsDetail, setListSongsDetail] = useState([]);
-  const [showLibraries, setShowLibraries] = useState(true);
+  const [showLibraries, setShowLibraries] = useState(false); // Changed to false by default
   const { currentSong, songDescriptionAvailable } = useAudio();
 
   return (
@@ -55,7 +55,7 @@ const HomePage = () => {
         {songDescriptionAvailable && <SongDescription />}
       </div>
       {currentSong && <PlayerControls />}
-      <ChatManager className="fixed bottom-4 right-4 w-[320px] max-w-xs z-30" />
+      {/* <ChatManager className="fixed bottom-4 right-4 w-[320px] max-w-xs z-30" /> */}
     </div>
   );
 };

@@ -1,6 +1,6 @@
+import React from "react";
 import { useRef, useState } from "react";
 import {
-  IconCirclePlus,
   IconPlayerSkipBackFilled,
   IconPlayerSkipForwardFilled,
   IconPlayerPlayFilled,
@@ -9,7 +9,9 @@ import {
   IconVolume3,
   IconDownload,
   IconArticle,
-  IconRepeat,
+  IconHeart,
+  IconHeartFilled,
+  IconDotsVertical,
 } from "@tabler/icons-react";
 import { Menu, Button, Anchor } from "@mantine/core";
 import { useAudio } from "../../utils/audioContext";
@@ -32,8 +34,9 @@ const PlayerControls = () => {
     setSongDescriptionAvailable,
     playBackSong,
   } = useAudio();
-  const [isRepeat, setIsRepeat] = useState(false);
   const progressRef = useRef(null);
+  const [isLiked, setIsLiked] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
   const togglePlayPause = () => {
     setIsPlaying(!isPlaying);
@@ -49,6 +52,10 @@ const PlayerControls = () => {
     setVolume(newVolume);
   };
 
+  const toggleLike = () => {
+    setIsLiked(!isLiked);
+  };
+
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   const handleProgressClick = (e) => {
@@ -61,117 +68,368 @@ const PlayerControls = () => {
     }
   };
 
+  const handleProgressMouseDown = (e) => {
+    setIsDragging(true);
+    handleProgressClick(e);
+  };
+
+  const handleProgressMouseMove = (e) => {
+    if (isDragging && progressRef.current && duration > 0) {
+      const rect = progressRef.current.getBoundingClientRect();
+      const clickX = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+      const width = rect.width;
+      const newTime = (clickX / width) * duration;
+      setPlaybackTime(Math.round(newTime));
+    }
+  };
+
+  const handleProgressMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  // Add event listeners for mouse move and up on window
+  const handleMouseMove = (e) => {
+    if (isDragging) {
+      handleProgressMouseMove(e);
+    }
+  };
+
+  const handleMouseUp = () => {
+    if (isDragging) {
+      handleProgressMouseUp();
+    }
+  };
+
+  // Add event listeners when dragging starts
+  React.useEffect(() => {
+    if (isDragging) {
+      window.addEventListener("mousemove", handleMouseMove);
+      window.addEventListener("mouseup", handleMouseUp);
+    }
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isDragging]);
+
   const handleAvailable = () => {
     setSongDescriptionAvailable(true);
   };
 
-  const handleRepeatToggle = () => {
-    setIsRepeat(!isRepeat);
-    audio.loop = !isRepeat;
-  };
+  if (!currentSong) return null;
 
   return (
-    currentSong !== null && (
-      <div className="border-t bg-black py-2 items-center border-gray-800 px-2 sm:px-4">
-        <div className="flex flex-col sm:flex-row items-center justify-between mx-auto">
-          {/* Currently Playing */}
-          <div className="flex items-center w-full sm:w-1/4 mb-2 sm:mb-0">
-            <img
-              src={currentSong.image}
-              alt="Song cover"
-              className="h-12 w-12 sm:h-16 sm:w-16 rounded-lg object-cover mr-3 sm:mr-4 shadow-md"
-            />
-            <div className="truncate">
-              <h4 className="text-white text-sm sm:text-base font-medium">{currentSong.song_name}</h4>
-              <p className="text-xs sm:text-sm text-gray-400">{currentSong.singer_name}</p>
+    <div className="fixed bottom-0 left-0 right-0 bg-black border-t border-gray-800 px-2 sm:px-4 py-2 sm:py-3 z-50">
+      <div className="flex items-center justify-between max-w-full mx-auto">
+        {/* Mobile Layout - Stack vertically on very small screens */}
+        <div className="flex flex-col w-full sm:hidden">
+          {/* Progress Bar - Mobile Top */}
+          <div className="w-full flex items-center gap-2 mb-2">
+            <span className="text-xs text-gray-400 font-medium min-w-[32px] text-right">
+              {formatTime(currentTime)}
+            </span>
+            <div
+              className="h-1 flex-1 bg-gray-600 rounded-full cursor-pointer group relative"
+              ref={progressRef}
+              onClick={handleProgressClick}
+              onMouseDown={handleProgressMouseDown}
+            >
+              <div
+                className="h-1 bg-white rounded-full relative group-hover:bg-green-500 transition-colors"
+                style={{ width: `${progressPercent}%` }}
+              >
+                <div className="absolute right-0 top-1/2 transform -translate-y-1/2 w-3 h-3 bg-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"></div>
+              </div>
             </div>
+            <span className="text-xs text-gray-400 font-medium min-w-[32px]">
+              {formatTime(duration)}
+            </span>
           </div>
 
-          {/* Playback Controls */}
-          <div className="flex flex-col items-center w-full sm:w-1/2">
-            <div className="flex items-center gap-3 sm:gap-4 mb-2">
-              <IconPlayerSkipBackFilled
-                stroke={2}
-                className="cursor-pointer text-white size-5 sm:size-6 hover:text-gray-300 transition-colors"
-                onClick={playBackSong}
+          {/* Main Controls - Mobile Bottom */}
+          <div className="flex items-center justify-between">
+            {/* Song Info - Mobile */}
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <img
+                src={currentSong.image}
+                alt="Song cover"
+                className="h-10 w-10 rounded-lg shadow-lg object-cover flex-shrink-0"
               />
-              <button className="rounded-full p-2 hover:bg-gray-800 transition-colors" onClick={togglePlayPause}>
+              <div className="min-w-0 flex-1">
+                <h4 className="text-white text-sm font-medium truncate hover:underline cursor-pointer">
+                  {currentSong.song_name}
+                </h4>
+                <p className="text-xs text-gray-400 truncate hover:underline cursor-pointer hover:text-white">
+                  {currentSong.singer_name}
+                </p>
+              </div>
+            </div>
+
+            {/* Playback Controls - Mobile */}
+            <div className="flex items-center gap-2 mx-4">
+              <button
+                className="text-gray-400 hover:text-white transition-colors"
+                onClick={playBackSong}
+              >
+                <IconPlayerSkipBackFilled size={18} />
+              </button>
+
+              <button
+                className="bg-white rounded-full p-2 hover:scale-105 transition-transform shadow-lg"
+                onClick={togglePlayPause}
+              >
                 {isPlaying ? (
-                  <IconPlayerPauseFilled className="text-white w-6 h-6 sm:w-8 sm:h-8" />
+                  <IconPlayerPauseFilled className="text-black w-4 h-4" />
                 ) : (
-                  <IconPlayerPlayFilled className="text-white w-6 h-6 sm:w-8 sm:h-8" />
+                  <IconPlayerPlayFilled className="text-black w-4 h-4 ml-0.5" />
                 )}
               </button>
-              <IconPlayerSkipForwardFilled
-                className="text-white size-5 sm:size-6 cursor-pointer hover:text-gray-300 transition-colors"
-                onClick={isRepeat ? () => {} : playNextSong}
-              />
-              <IconRepeat
-                stroke={2}
-                className={`size-5 sm:size-6 cursor-pointer transition-colors ${
-                  isRepeat ? "text-blue-500" : "text-white hover:text-gray-300"
-                }`}
-                onClick={handleRepeatToggle}
-              />
-            </div>
-            <div className="w-full flex items-center gap-2">
-              <span className="text-xs sm:text-sm text-gray-400">{formatTime(currentTime)}</span>
-              <div
-                className="h-1.5 flex-1 bg-gray-600 rounded-full cursor-pointer hover:bg-gray-500 transition-colors"
-                ref={progressRef}
-                onClick={handleProgressClick}
-              >
-                <div className="h-1.5 bg-blue-500 rounded-full transition-all" style={{ width: `${progressPercent}%` }}></div>
-              </div>
-              <span className="text-xs sm:text-sm text-gray-400">{formatTime(duration)}</span>
-            </div>
-          </div>
 
-          {/* Volume Control */}
-          <div className="flex items-center gap-2 w-full sm:w-1/4 justify-end mt-2 sm:mt-0">
-            <IconArticle
-              stroke={2}
-              className="size-5 sm:size-6 cursor-pointer text-white hover:text-gray-300 transition-colors"
-              onClick={handleAvailable}
-            />
-            <Menu shadow="md">
+              <button
+                className="text-gray-400 hover:text-white transition-colors"
+                onClick={playNextSong}
+              >
+                <IconPlayerSkipForwardFilled size={18} />
+              </button>
+            </div>
+
+            {/* Mobile Menu */}
+            <Menu shadow="md" position="top">
               <Menu.Target>
-                <Button variant="transparent" color="gray">
-                  <IconDownload size={16} sm:size-20 />
-                </Button>
+                <button className="text-gray-400 hover:text-white transition-colors p-2">
+                  <IconDotsVertical size={18} />
+                </button>
               </Menu.Target>
-              <Menu.Dropdown>
-                <Menu.Item>
-                  <Anchor href={currentSong.video_download_url} underline="never" size="sm">
+              <Menu.Dropdown className="bg-gray-800 border-gray-700">
+                <Menu.Item
+                  className="text-white hover:bg-gray-700"
+                  onClick={toggleLike}
+                >
+                  <div className="flex items-center gap-2">
+                    {isLiked ? (
+                      <IconHeartFilled size={16} className="text-green-500" />
+                    ) : (
+                      <IconHeart size={16} />
+                    )}
+                    <span>{isLiked ? "Unlike" : "Like"}</span>
+                  </div>
+                </Menu.Item>
+                <Menu.Item
+                  className="text-white hover:bg-gray-700"
+                  onClick={handleAvailable}
+                >
+                  <div className="flex items-center gap-2">
+                    <IconArticle size={16} />
+                    <span>Now Playing</span>
+                  </div>
+                </Menu.Item>
+                <Menu.Item className="text-white hover:bg-gray-700">
+                  <Anchor
+                    href={currentSong.video_download_url}
+                    underline="never"
+                    size="sm"
+                    className="text-white flex items-center gap-2"
+                  >
+                    <IconDownload size={16} />
                     Download video
                   </Anchor>
                 </Menu.Item>
-                <Menu.Item>
-                  <Anchor href={currentSong.audio_download_url} underline="never" size="sm">
+                <Menu.Item className="text-white hover:bg-gray-700">
+                  <Anchor
+                    href={currentSong.audio_download_url}
+                    underline="never"
+                    size="sm"
+                    className="text-white flex items-center gap-2"
+                  >
+                    <IconDownload size={16} />
                     Download audio
                   </Anchor>
                 </Menu.Item>
               </Menu.Dropdown>
             </Menu>
-            <div onClick={() => setIsMute(!isMute)}>
-              {isMute ? (
-                <IconVolume3 stroke={2} className="w-5 h-5 sm:w-6 sm:h-6 text-gray-400 cursor-pointer hover:text-white transition-colors" />
-              ) : (
-                <IconVolume stroke={2} className="w-5 h-5 sm:w-6 sm:h-6 text-gray-400 cursor-pointer hover:text-white transition-colors" />
-              )}
+          </div>
+        </div>
+
+        {/* Desktop Layout - Hidden on mobile */}
+        <div className="hidden sm:flex items-center justify-between w-full">
+          {/* Currently Playing - Left Section */}
+          <div className="flex items-center w-1/4 min-w-0">
+            <div className="flex items-center gap-3 md:gap-4 min-w-0">
+              <img
+                src={currentSong.image}
+                alt="Song cover"
+                className="h-12 w-12 md:h-14 md:w-14 rounded-lg shadow-lg object-cover flex-shrink-0"
+              />
+              <div className="min-w-0 flex-1">
+                <h4 className="text-white text-sm font-medium truncate hover:underline cursor-pointer">
+                  {currentSong.song_name}
+                </h4>
+                <p className="text-xs text-gray-400 truncate hover:underline cursor-pointer hover:text-white">
+                  {currentSong.singer_name}
+                </p>
+              </div>
+              <button
+                className="text-gray-400 hover:text-white transition-colors ml-2"
+                onClick={toggleLike}
+              >
+                {isLiked ? (
+                  <IconHeartFilled size={16} className="text-green-500" />
+                ) : (
+                  <IconHeart size={16} />
+                )}
+              </button>
             </div>
-            <input
-              type="range"
-              min="0"
-              max="100"
-              value={volume}
-              onChange={handleVolumeChange}
-              className="w-16 sm:w-24 accent-blue-500"
-            />
+          </div>
+
+          {/* Playback Controls - Center Section */}
+          <div className="flex flex-col items-center w-1/2 max-w-2xl">
+            <div className="flex items-center gap-4 mb-2">
+              <button
+                className="text-gray-400 hover:text-white transition-colors"
+                onClick={playBackSong}
+              >
+                <IconPlayerSkipBackFilled size={20} />
+              </button>
+
+              <button
+                className="bg-white rounded-full p-2 hover:scale-105 transition-transform shadow-lg"
+                onClick={togglePlayPause}
+              >
+                {isPlaying ? (
+                  <IconPlayerPauseFilled className="text-black w-5 h-5" />
+                ) : (
+                  <IconPlayerPlayFilled className="text-black w-5 h-5 ml-0.5" />
+                )}
+              </button>
+
+              <button
+                className="text-gray-400 hover:text-white transition-colors"
+                onClick={playNextSong}
+              >
+                <IconPlayerSkipForwardFilled size={20} />
+              </button>
+            </div>
+
+            <div className="w-full flex items-center gap-2">
+              <span className="text-xs text-gray-400 font-medium min-w-[40px] text-right">
+                {formatTime(currentTime)}
+              </span>
+              <div
+                className="h-1 flex-1 bg-gray-600 rounded-full cursor-pointer group relative"
+                ref={progressRef}
+                onClick={handleProgressClick}
+                onMouseDown={handleProgressMouseDown}
+              >
+                <div
+                  className="h-1 bg-white rounded-full relative group-hover:bg-green-500 transition-colors"
+                  style={{ width: `${progressPercent}%` }}
+                >
+                  <div className="absolute right-0 top-1/2 transform -translate-y-1/2 w-3 h-3 bg-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"></div>
+                </div>
+              </div>
+              <span className="text-xs text-gray-400 font-medium min-w-[40px]">
+                {formatTime(duration)}
+              </span>
+            </div>
+          </div>
+
+          {/* Volume Control - Right Section */}
+          <div className="flex items-center gap-2 md:gap-3 w-1/4 justify-end">
+            <button
+              className="text-gray-400 hover:text-white transition-colors"
+              onClick={handleAvailable}
+            >
+              <IconArticle size={18} />
+            </button>
+
+            <Menu shadow="md" position="top">
+              <Menu.Target>
+                <button className="text-gray-400 hover:text-white transition-colors">
+                  <IconDownload size={18} />
+                </button>
+              </Menu.Target>
+              <Menu.Dropdown className="bg-gray-800 border-gray-700">
+                <Menu.Item className="text-white hover:bg-gray-700">
+                  <Anchor
+                    href={currentSong.video_download_url}
+                    underline="never"
+                    size="sm"
+                    className="text-white"
+                  >
+                    Download video
+                  </Anchor>
+                </Menu.Item>
+                <Menu.Item className="text-white hover:bg-gray-700">
+                  <Anchor
+                    href={currentSong.audio_download_url}
+                    underline="never"
+                    size="sm"
+                    className="text-white"
+                  >
+                    Download audio
+                  </Anchor>
+                </Menu.Item>
+              </Menu.Dropdown>
+            </Menu>
+
+            <div className="hidden md:flex items-center gap-2">
+              <button
+                onClick={() => setIsMute(!isMute)}
+                className="text-gray-400 hover:text-white transition-colors flex-shrink-0"
+              >
+                {isMute ? <IconVolume3 size={18} /> : <IconVolume size={18} />}
+              </button>
+              <div className="w-20 lg:w-24 group flex items-center">
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={volume}
+                  onChange={handleVolumeChange}
+                  className="w-full h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer slider"
+                  style={{
+                    background: `linear-gradient(to right, #1db954 0%, #1db954 ${volume}%, #4d4d4d ${volume}%, #4d4d4d 100%)`,
+                  }}
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>
-    )
+
+      <style jsx>{`
+        .slider::-webkit-slider-thumb {
+          appearance: none;
+          width: 12px;
+          height: 12px;
+          border-radius: 50%;
+          background: #1db954;
+          cursor: pointer;
+          opacity: 0;
+          transition: opacity 0.2s;
+        }
+
+        .slider:hover::-webkit-slider-thumb {
+          opacity: 1;
+        }
+
+        .slider::-moz-range-thumb {
+          width: 12px;
+          height: 12px;
+          border-radius: 50%;
+          background: #1db954;
+          cursor: pointer;
+          border: none;
+          opacity: 0;
+          transition: opacity 0.2s;
+        }
+
+        .slider:hover::-moz-range-thumb {
+          opacity: 1;
+        }
+      `}</style>
+    </div>
   );
 };
 
