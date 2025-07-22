@@ -1,7 +1,9 @@
 # 🎵 Spotify Front-End
 
 A modern React-based web application that replicates the functionality and design of the Spotify music streaming service.
-🔗 Live Demo: https://spotify-fe-rho.vercel.app/
+
+## 🔗 Live Demo: https://spotify-fe-rho.vercel.app/
+
 ## 📖 Overview
 
 This project is a feature-rich Spotify clone built with React and Vite. It includes both user-facing and admin interfaces to manage music content, playlists, and users. The front-end communicates with a backend API to handle data storage and retrieval.
