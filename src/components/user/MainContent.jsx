@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { getAllSongs } from "../../services/SongsService";
+import { getAllSongs, getAllSongsWithPagination } from "../../services/SongsService";
 import { getAllGenres } from "../../services/genresService";
 import Song from "./_Song";
 
@@ -10,6 +10,7 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isLoadingAllSongs, setIsLoadingAllSongs] = useState(false);
 
   const handleCloseContextMenu = () => {
     setContextMenu(null);
@@ -83,6 +84,35 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
     }, 300);
   };
 
+  const handleLoadAllSongs = async () => {
+    try {
+      setIsLoadingAllSongs(true);
+      setIsTransitioning(true);
+      
+      // Fetch all songs with pagination
+      const allSongsResponse = await getAllSongsWithPagination();
+      
+      if (allSongsResponse?.data?.results) {
+        // Add a slight delay for smooth transition
+        setTimeout(() => {
+          const data = {
+            songs: allSongsResponse.data.results,
+            title: `Tất cả bài hát (${allSongsResponse.data.results.length} bài)`,
+          };
+          setListSongsDetail(data);
+          setCurrentView("listSongs");
+          setIsTransitioning(false);
+          setIsLoadingAllSongs(false);
+        }, 300);
+      }
+    } catch (error) {
+      console.error("Error loading all songs:", error);
+      setError("Failed to load all songs. Please try again.");
+      setIsTransitioning(false);
+      setIsLoadingAllSongs(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="bg-[#131313] text-white p-4 mr-0 md:mr-2 rounded-lg flex-1 overflow-y-auto">
@@ -145,18 +175,18 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
                 text-sm font-semibold px-6 py-3 rounded-full
                 transition-all duration-300 ease-out
                 ${
-                  isTransitioning
+                  isTransitioning || isLoadingAllSongs
                     ? "pointer-events-none opacity-50 bg-green-600 text-white"
                     : "text-gray-400 hover:text-white hover:bg-green-600"
                 }
               `}
-              onClick={() => handleAllSongs(allSongs, "Tất cả bài hát")}
-              disabled={isTransitioning}
+              onClick={handleLoadAllSongs}
+              disabled={isTransitioning || isLoadingAllSongs}
             >
-              {isTransitioning ? (
+              {isTransitioning || isLoadingAllSongs ? (
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  <span>Đang tải...</span>
+                  <span>Đang tải tất cả...</span>
                 </div>
               ) : (
                 <span className="flex items-center gap-2">
