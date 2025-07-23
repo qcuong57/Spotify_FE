@@ -61,6 +61,8 @@ export const createSong = async (songData) => {
   formData.append("song_name", songData.song_name);
   formData.append("singer_name", songData.singer_name);
   formData.append("genre", songData.genre_id);
+  // Thêm lyrics vào formData
+  if (songData.lyrics) formData.append("lyrics", songData.lyrics);
   if (songData.audio_file) formData.append("audio_file", songData.audio_file);
   if (songData.image_file) formData.append("image_file", songData.image_file);
   if (songData.video_file) formData.append("video_file", songData.video_file);
@@ -77,6 +79,8 @@ export const updateSong = async (id, songData, currentUrls) => {
   formData.append("song_name", songData.song_name);
   formData.append("singer_name", songData.singer_name);
   formData.append("genre", songData.genre_id);
+  // Thêm lyrics vào formData
+  if (songData.lyrics !== undefined) formData.append("lyrics", songData.lyrics);
   if (songData.audio_file) formData.append("audio_file", songData.audio_file);
   else if (currentUrls.url_audio)
     formData.append("url_audio", currentUrls.url_audio);
@@ -98,4 +102,14 @@ export const updateSong = async (id, songData, currentUrls) => {
 
 export const deleteSong = async (id) => {
   return await axiosCustom.delete(`/api/songs/${id}/`);
+};
+
+// Thêm function để lấy lyrics riêng (tùy chọn)
+export const getSongLyrics = async (id) => {
+  return await axiosCustom.get(`/api/songs/${id}/lyrics/`);
+};
+
+// Thêm function để cập nhật chỉ lyrics (tùy chọn)
+export const updateSongLyrics = async (id, lyrics) => {
+  return await axiosCustom.patch(`/api/songs/${id}/lyrics/`, { lyrics });
 };

@@ -1,12 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 import { useAudio } from "../../utils/audioContext";
 import Hls from "hls.js";
+import SyncedLyricsDisplay from "../../components/user/SyncedLyricsDisplay";
 import {
   IconX,
   IconChevronDown,
   IconHeart,
   IconHeartFilled,
+  IconMusic,
+  IconMicrophone,
+  IconChevronUp,
 } from "@tabler/icons-react";
+import { Box, Text } from "@mantine/core";
 
 const SongDescription = () => {
   const {
@@ -25,16 +30,16 @@ const SongDescription = () => {
   const [isVideoFullscreen, setIsVideoFullscreen] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
+  const [showLyrics, setShowLyrics] = useState(false);
 
   // Animation effect when component mounts or song changes
   useEffect(() => {
-    // Reset visibility to trigger animation
     setIsVisible(false);
     const timer = setTimeout(() => {
       setIsVisible(true);
     }, 50);
     return () => clearTimeout(timer);
-  }, [currentSong]); // Trigger on currentSong change
+  }, [currentSong]);
 
   // Check if device is iOS
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
@@ -113,7 +118,7 @@ const SongDescription = () => {
       if (isVideoFullscreen) {
         setIsVideoFullscreen(false);
       }
-      
+
       if (repeatMode === "one") {
         videoElement.currentTime = 0;
         if (isPlaying) {
@@ -129,7 +134,10 @@ const SongDescription = () => {
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
-    videoElement.addEventListener("webkitbeginfullscreen", handleFullscreenEnter);
+    videoElement.addEventListener(
+      "webkitbeginfullscreen",
+      handleFullscreenEnter
+    );
     videoElement.addEventListener("webkitendfullscreen", handleFullscreenExit);
     videoElement.addEventListener("fullscreenchange", () => {
       if (document.fullscreenElement === videoElement) {
@@ -150,7 +158,7 @@ const SongDescription = () => {
     videoElement.setAttribute("webkit-playsinline", "true");
     videoElement.muted = true;
     videoElement.controls = false;
-    
+
     if (isIOS) {
       videoElement.setAttribute("x-webkit-airplay", "allow");
       videoElement.setAttribute("preload", "none");
@@ -205,15 +213,29 @@ const SongDescription = () => {
         hlsRef.current = null;
       }
       document.removeEventListener("visibilitychange", handleVisibilityChange);
-      videoElement.removeEventListener("webkitbeginfullscreen", handleFullscreenEnter);
-      videoElement.removeEventListener("webkitendfullscreen", handleFullscreenExit);
+      videoElement.removeEventListener(
+        "webkitbeginfullscreen",
+        handleFullscreenEnter
+      );
+      videoElement.removeEventListener(
+        "webkitendfullscreen",
+        handleFullscreenExit
+      );
       videoElement.removeEventListener("contextmenu", handleContextMenu);
       videoElement.removeEventListener("play", handleVideoPlay);
       videoElement.removeEventListener("pause", handleVideoPause);
       videoElement.removeEventListener("error", handleVideoError);
       videoElement.removeEventListener("ended", handleVideoEnded);
     };
-  }, [currentSong, isPlaying, isVideoFullscreen, audio, setIsPlaying, isIOS, repeatMode]);
+  }, [
+    currentSong,
+    isPlaying,
+    isVideoFullscreen,
+    audio,
+    setIsPlaying,
+    isIOS,
+    repeatMode,
+  ]);
 
   // Sync video with audio - but not when in fullscreen
   useEffect(() => {
@@ -297,8 +319,7 @@ const SongDescription = () => {
 
   const handleClose = () => {
     setIsClosing(true);
-    
-    // If video is in fullscreen, exit it first
+
     if (isVideoFullscreen && videoRef.current) {
       if (document.exitFullscreen) {
         document.exitFullscreen();
@@ -308,8 +329,7 @@ const SongDescription = () => {
         videoRef.current.webkitExitFullscreen();
       }
     }
-    
-    // Delay closing to allow animation to complete
+
     setTimeout(() => {
       setSongDescriptionAvailable(false);
     }, 300);
@@ -327,20 +347,31 @@ const SongDescription = () => {
     }
   };
 
+  // Check if song has lyrics and timestamps
+  const hasLyrics = currentSong?.lyrics && currentSong.lyrics.trim().length > 0;
+  const hasTimestamps =
+    hasLyrics &&
+    currentSong.lyrics.includes("[") &&
+    currentSong.lyrics.includes("]");
+
   if (!currentSong) return null;
 
   return (
-    <div 
+    <div
       className={`fixed inset-0 z-50 bg-black flex flex-col md:relative md:inset-auto md:bg-transparent md:max-w-[400px] md:bg-[#131313] md:shadow-lg md:rounded-lg transition-all duration-300 ease-out ${
-        isVisible && !isClosing 
-          ? 'translate-y-0 opacity-100 md:translate-x-0' 
-          : 'translate-y-full opacity-0 md:translate-y-0 md:translate-x-full'
+        isVisible && !isClosing
+          ? "translate-y-0 opacity-100 md:translate-x-0"
+          : "translate-y-full opacity-0 md:translate-y-0 md:translate-x-full"
       }`}
     >
       {/* Mobile Header */}
-      <div className={`flex items-center justify-between p-4 md:hidden transition-all duration-300 delay-100 ${
-        isVisible && !isClosing ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
-      }`}>
+      <div
+        className={`flex items-center justify-between p-4 md:hidden transition-all duration-300 delay-100 ${
+          isVisible && !isClosing
+            ? "translate-y-0 opacity-100"
+            : "translate-y-4 opacity-0"
+        }`}
+      >
         <button
           onClick={handleClose}
           className="p-2 rounded-full hover:bg-gray-800 transition-colors"
@@ -354,9 +385,13 @@ const SongDescription = () => {
       </div>
 
       {/* Desktop Header */}
-      <div className={`hidden md:flex items-center justify-between p-4 border-b border-gray-700 transition-all duration-300 delay-100 ${
-        isVisible && !isClosing ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
-      }`}>
+      <div
+        className={`hidden md:flex items-center justify-between p-3 border-b border-gray-700 transition-all duration-300 delay-100 ${
+          isVisible && !isClosing
+            ? "translate-y-0 opacity-100"
+            : "translate-y-4 opacity-0"
+        }`}
+      >
         <h2 className="text-lg font-semibold text-white">Now Playing</h2>
         <button
           onClick={handleClose}
@@ -366,13 +401,21 @@ const SongDescription = () => {
         </button>
       </div>
 
-      {/* Content */}
-      <div className="flex-1 p-4 md:p-6 flex flex-col">
-        {/* Video Container */}
-        <div className={`relative w-full mb-6 md:mb-4 transition-all duration-500 delay-200 ${
-          isVisible && !isClosing ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
-        }`}>
-          <div className="relative aspect-video bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg overflow-hidden shadow-2xl">
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Video Container - Fixed height to leave space for lyrics */}
+        <div
+          className={`flex-shrink-0 p-3 md:p-4 transition-all duration-500 delay-200 ${
+            isVisible && !isClosing
+              ? "scale-100 opacity-100"
+              : "scale-95 opacity-0"
+          }`}
+        >
+          <div
+            className={`relative bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg overflow-hidden shadow-xl ${
+              showLyrics && hasLyrics ? "aspect-[16/9]" : "aspect-video"
+            }`}
+          >
             {currentSong.url_video && !videoError ? (
               <>
                 <video
@@ -412,45 +455,142 @@ const SongDescription = () => {
           </div>
         </div>
 
-        {/* Song Info */}
-        <div className="flex-1 flex flex-col justify-center md:justify-start">
-          <div className={`text-center md:text-left mb-6 md:mb-4 transition-all duration-500 delay-300 ${
-            isVisible && !isClosing ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
-          }`}>
-            <h3 className="text-2xl md:text-xl font-bold text-white leading-tight mb-2">
+        {/* Song Info - Compact version */}
+        <div
+          className={`flex-shrink-0 px-3 md:px-4 pb-2 transition-all duration-500 delay-300 ${
+            isVisible && !isClosing
+              ? "translate-y-0 opacity-100"
+              : "translate-y-4 opacity-0"
+          }`}
+        >
+          <div className="text-center md:text-left">
+            <h3
+              className={`font-bold text-white leading-tight mb-1 line-clamp-1 ${
+                showLyrics && hasLyrics ? "text-base" : "text-xl md:text-lg"
+              }`}
+            >
               {currentSong.song_name || "Unknown Title"}
             </h3>
-            <p className="text-lg md:text-base text-gray-400 mb-4">
+            <p
+              className={`text-gray-400 mb-2 line-clamp-1 ${
+                showLyrics && hasLyrics ? "text-xs" : "text-base md:text-sm"
+              }`}
+            >
               {currentSong.singer_name || "Unknown Artist"}
             </p>
 
             {/* Action Buttons */}
-            <div className="flex items-center justify-center md:justify-start space-x-4">
+            <div className="flex items-center justify-center md:justify-start space-x-3">
               <button
                 onClick={handleLike}
-                className="p-3 rounded-full hover:bg-gray-800 transition-colors"
+                className="p-2 rounded-full hover:bg-gray-800 transition-colors"
               >
                 {isLiked ? (
-                  <IconHeartFilled size={24} className="text-green-500" />
+                  <IconHeartFilled size={18} className="text-green-500" />
                 ) : (
                   <IconHeart
-                    size={24}
+                    size={18}
                     className="text-gray-400 hover:text-white"
                   />
                 )}
               </button>
+
+              {/* Lyrics Toggle */}
+              {hasLyrics && (
+                <button
+                  onClick={() => setShowLyrics(!showLyrics)}
+                  className={`p-2 rounded-full transition-colors ${
+                    showLyrics
+                      ? "bg-green-600 text-white"
+                      : "hover:bg-gray-800 text-gray-400 hover:text-white"
+                  }`}
+                  title={showLyrics ? "Hide Lyrics" : "Show Lyrics"}
+                >
+                  <IconMicrophone size={18} />
+                </button>
+              )}
             </div>
           </div>
+        </div>
 
-          {/* Mobile Instructions */}
-          <div className={`text-center md:hidden mt-auto transition-all duration-500 delay-400 ${
-            isVisible && !isClosing ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
-          }`}>
+        {/* Lyrics Display Area - Takes remaining space */}
+        {showLyrics && hasLyrics && (
+          <div
+            className={`flex-1 mx-3 md:mx-4 mb-3 md:mb-4 transition-all duration-500 delay-400 ${
+              isVisible && !isClosing
+                ? "translate-y-0 opacity-100"
+                : "translate-y-4 opacity-0"
+            }`}
+          >
+            <div
+              className="bg-black rounded-lg overflow-hidden"
+              style={{ height: "220px", width: "100%" }}
+            >
+              {hasTimestamps ? (
+                <SyncedLyricsDisplay
+                  lyricsText={currentSong.lyrics}
+                  audioElement={audio}
+                  isPlaying={isPlaying}
+                  className="h-full"
+                />
+              ) : (
+                <Box
+                  style={{
+                    height: "100%",
+                    width: "100%",
+                    overflowY: "auto",
+                    padding: "16px",
+                    scrollbarWidth: "none",
+                    msOverflowStyle: "none",
+                  }}
+                  className="no-scrollbar"
+                >
+                  <style jsx>{`
+                    .no-scrollbar::-webkit-scrollbar {
+                      display: none;
+                    }
+                  `}</style>
+                  <Text
+                    style={{
+                      color: "rgba(229, 231, 235, 0.8)",
+                      fontSize: "14px",
+                      fontWeight: 400,
+                      lineHeight: 1.5,
+                      textAlign: "center",
+                      wordWrap: "break-word",
+                    }}
+                  >
+                    {currentSong.lyrics.split("\n").map((line, index) => (
+                      <div
+                        key={`lyric-line-${index}`}
+                        style={{ marginBottom: "8px" }}
+                      >
+                        {line.trim() || <br />}
+                      </div>
+                    ))}
+                  </Text>
+                </Box>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Mobile Instructions - Only show when lyrics are not displayed */}
+        {(!showLyrics || !hasLyrics) && (
+          <div
+            className={`text-center md:hidden mt-auto p-4 transition-all duration-500 delay-400 ${
+              isVisible && !isClosing
+                ? "translate-y-0 opacity-100"
+                : "translate-y-4 opacity-0"
+            }`}
+          >
             <p className="text-sm text-gray-500">
-              {isVideoFullscreen ? "Exit fullscreen to control playback" : "Swipe down to close"}
+              {isVideoFullscreen
+                ? "Exit fullscreen to control playback"
+                : "Swipe down to close"}
             </p>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
