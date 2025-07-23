@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { getAllSongs, getAllSongsWithPagination } from "../../services/SongsService";
+import {
+  getAllSongs,
+  getAllSongsWithPagination,
+} from "../../services/SongsService";
 import { getAllGenres } from "../../services/genresService";
 import Song from "./_Song";
 
@@ -88,10 +91,10 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
     try {
       setIsLoadingAllSongs(true);
       setIsTransitioning(true);
-      
+
       // Fetch all songs with pagination
       const allSongsResponse = await getAllSongsWithPagination();
-      
+
       if (allSongsResponse?.data?.results) {
         // Add a slight delay for smooth transition
         setTimeout(() => {
@@ -115,7 +118,7 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
 
   if (loading) {
     return (
-      <div className="bg-[#131313] text-white p-4 mr-0 md:mr-2 rounded-lg flex-1 overflow-y-auto">
+      <div className="bg-[#131313] text-white p-4 mr-0 md:mr-2 rounded-lg flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-black scrollbar-track-gray-800 hover:scrollbar-thumb-gray-900">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mb-4"></div>
@@ -128,7 +131,7 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
 
   if (error) {
     return (
-      <div className="bg-[#131313] text-white p-4 mr-0 md:mr-2 rounded-lg flex-1 overflow-y-auto">
+      <div className="bg-[#131313] text-white p-4 mr-0 md:mr-2 rounded-lg flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-black scrollbar-track-gray-800 hover:scrollbar-thumb-gray-900">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <p className="text-red-400 mb-2">{error}</p>
@@ -148,7 +151,8 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
     <div
       className={`
       bg-[#131313] text-white p-3 md:p-4 mr-0 md:mr-2 rounded-lg flex-1 overflow-y-auto 
-      space-y-8 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent pb-8
+      space-y-8 scrollbar-thin scrollbar-thumb-black scrollbar-track-gray-800 
+      hover:scrollbar-thumb-gray-900 pb-8
       transition-all duration-500 ease-out transform
       ${
         isTransitioning
