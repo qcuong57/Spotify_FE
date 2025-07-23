@@ -26,100 +26,114 @@ import {
   IconMusic,
   IconClock,
   IconFileText,
+  IconTextCaption,
 } from "@tabler/icons-react";
 
 const LyricsEditor = ({ songData, onLyricsChange, audioUrl }) => {
   const [lyrics, setLyrics] = useState([]);
   const [rawLyrics, setRawLyrics] = useState("");
+  const [plainLyrics, setPlainLyrics] = useState(""); // New state for plain text lyrics
   const [currentTime, setCurrentTime] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [editingIndex, setEditingIndex] = useState(-1);
-  const [editorMode, setEditorMode] = useState("timeline"); // 'timeline' or 'raw'
+  const [editorMode, setEditorMode] = useState("timeline"); // Added 'plain' mode
   const audioRef = useRef(null);
 
-  // Parse lyrics từ format LRC hoặc text thường
-  const parseLyricsFromText = (lyricsText) => {
+  // Parse lyrics from LRC format or plain text
+  const parseLyricsFromText = (lyricsText, isPlainText = false) => {
     if (!lyricsText) return [];
 
     const lines = lyricsText.split("\n").filter((line) => line.trim() !== "");
     const parsedLines = [];
 
-    lines.forEach((line, index) => {
-      // Tìm tất cả timestamps trong một dòng - support multiple timestamps
-      const timestampRegex = /\[(\d{1,2}):(\d{2})(?:\.(\d{2}))?\]/g;
-      const timestamps = [];
-      let match;
-
-      // Extract all timestamps
-      while ((match = timestampRegex.exec(line)) !== null) {
-        const minutes = parseInt(match[1]);
-        const seconds = parseInt(match[2]);
-        const centiseconds = parseInt(match[3] || 0);
-        const timeInSeconds = minutes * 60 + seconds + centiseconds / 100;
-        timestamps.push(timeInSeconds);
-      }
-
-      if (timestamps.length > 0) {
-        // Lấy text sau tất cả timestamps
-        const textAfterTimestamps = line
-          .replace(/\[(\d{1,2}):(\d{2})(?:\.(\d{2}))?\]\s*/g, "")
-          .trim();
-
-        if (textAfterTimestamps) {
-          // Nếu có nhiều timestamps, chỉ lấy timestamp đầu tiên làm chính
-          // Các timestamp khác sẽ được giữ nguyên trong text
-          const mainTime = timestamps[0];
-          let finalText = textAfterTimestamps;
-
-          // Nếu có nhiều hơn 1 timestamp, thêm các timestamp còn lại vào đầu text
-          if (timestamps.length > 1) {
-            const additionalTimestamps = timestamps
-              .slice(1)
-              .map((time) => {
-                const mins = Math.floor(time / 60);
-                const secs = Math.floor(time % 60);
-                const centisecs = Math.floor((time % 1) * 100);
-                return `[${mins.toString().padStart(2, "0")}:${secs
-                  .toString()
-                  .padStart(2, "0")}.${centisecs.toString().padStart(2, "0")}]`;
-              })
-              .join(" ");
-            finalText = additionalTimestamps + " " + textAfterTimestamps;
-          }
-
+    if (isPlainText) {
+      // Handle plain text lyrics
+      lines.forEach((line, index) => {
+        if (line.trim()) {
           parsedLines.push({
-            time: mainTime,
-            text: finalText,
-            id: Date.now() + index + Math.random(), // Thêm random để tránh duplicate ID
-            hasMultipleTimestamps: timestamps.length > 1,
-            originalTimestamps: timestamps,
+            time: index * 4, // Default spacing for plain text
+            text: line.trim(),
+            id: Date.now() + index + Math.random(),
+            estimated: true,
+            isPlain: true, // Mark as plain text lyric
           });
         }
-      } else if (line.trim()) {
-        // CHỈ tạo timestamp ước tính khi KHÔNG có lyrics hiện tại
-        // hoặc khi đang parse từ raw text lần đầu
-        const estimatedTime = index * 4; // 4 giây mỗi dòng
-        parsedLines.push({
-          time: estimatedTime,
-          text: line.trim(),
-          id: Date.now() + index + Math.random(),
-          estimated: true,
-        });
-      }
-    });
+      });
+    } else {
+      // Existing LRC parsing logic
+      lines.forEach((line, index) => {
+        const timestampRegex = /\[(\d{1,2}):(\d{2})(?:\.(\d{2}))?\]/g;
+        const timestamps = [];
+        let match;
+
+        while ((match = timestampRegex.exec(line)) !== null) {
+          const minutes = parseInt(match[1]);
+          const seconds = parseInt(match[2]);
+          const centiseconds = parseInt(match[3] || 0);
+          const timeInSeconds = minutes * 60 + seconds + centiseconds / 100;
+          timestamps.push(timeInSeconds);
+        }
+
+        if (timestamps.length > 0) {
+          const textAfterTimestamps = line
+            .replace(/\[(\d{1,2}):(\d{2})(?:\.(\d{2}))?\]\s*/g, "")
+            .trim();
+
+          if (textAfterTimestamps) {
+            const mainTime = timestamps[0];
+            let finalText = textAfterTimestamps;
+
+            if (timestamps.length > 1) {
+              const additionalTimestamps = timestamps
+                .slice(1)
+                .map((time) => {
+                  const mins = Math.floor(time / 60);
+                  const secs = Math.floor(time % 60);
+                  const centisecs = Math.floor((time % 1) * 100);
+                  return `[${mins.toString().padStart(2, "0")}:${secs
+                    .toString()
+                    .padStart(2, "0")}.${centisecs
+                    .toString()
+                    .padStart(2, "0")}]`;
+                })
+                .join(" ");
+              finalText = additionalTimestamps + " " + textAfterTimestamps;
+            }
+
+            parsedLines.push({
+              time: mainTime,
+              text: finalText,
+              id: Date.now() + index + Math.random(),
+              hasMultipleTimestamps: timestamps.length > 1,
+              originalTimestamps: timestamps,
+            });
+          }
+        } else if (line.trim()) {
+          const estimatedTime = index * 4;
+          parsedLines.push({
+            time: estimatedTime,
+            text: line.trim(),
+            id: Date.now() + index + Math.random(),
+            estimated: true,
+          });
+        }
+      });
+    }
 
     return parsedLines.sort((a, b) => a.time - b.time);
   };
 
-  // Convert lyrics array về format LRC
-  const convertToLRCFormat = (lyricsArray) => {
+  // Convert lyrics array to LRC format or plain text
+  const convertToOutputFormat = (lyricsArray, outputPlain = false) => {
+    if (outputPlain) {
+      return lyricsArray.map((lyric) => lyric.text).join("\n");
+    }
     return lyricsArray
       .sort((a, b) => a.time - b.time)
       .map((lyric) => {
         const minutes = Math.floor(lyric.time / 60);
         const seconds = Math.floor(lyric.time % 60);
         const centiseconds = Math.floor((lyric.time % 1) * 100);
-
         const timeStr = `[${minutes.toString().padStart(2, "0")}:${seconds
           .toString()
           .padStart(2, "0")}.${centiseconds.toString().padStart(2, "0")}]`;
@@ -128,12 +142,14 @@ const LyricsEditor = ({ songData, onLyricsChange, audioUrl }) => {
       .join("\n");
   };
 
-  // Initialize lyrics khi component mount
+  // Initialize lyrics when component mounts
   useEffect(() => {
     if (songData?.lyrics) {
-      const parsed = parseLyricsFromText(songData.lyrics);
+      const isPlainText = !songData.lyrics.includes("[");
+      const parsed = parseLyricsFromText(songData.lyrics, isPlainText);
       setLyrics(parsed);
-      setRawLyrics(songData.lyrics);
+      setRawLyrics(isPlainText ? "" : songData.lyrics);
+      setPlainLyrics(isPlainText ? songData.lyrics : "");
     }
   }, [songData]);
 
@@ -181,13 +197,13 @@ const LyricsEditor = ({ songData, onLyricsChange, audioUrl }) => {
       id: Date.now(),
       time: currentTime,
       text: "",
-      estimated: false, // Đánh dấu không phải estimated
+      estimated: false,
+      isPlain: editorMode === "plain",
     };
 
     const newLyrics = [...lyrics, newLyric].sort((a, b) => a.time - b.time);
     setLyrics(newLyrics);
 
-    // Find index of new lyric and start editing
     const newIndex = newLyrics.findIndex((l) => l.id === newLyric.id);
     setEditingIndex(newIndex);
   };
@@ -197,7 +213,7 @@ const LyricsEditor = ({ songData, onLyricsChange, audioUrl }) => {
     newLyrics[index] = {
       ...newLyrics[index],
       [field]: value,
-      estimated: false, // Đánh dấu không phải estimated khi user edit
+      estimated: false,
     };
     setLyrics(newLyrics);
   };
@@ -205,37 +221,54 @@ const LyricsEditor = ({ songData, onLyricsChange, audioUrl }) => {
   const deleteLyric = (index) => {
     const newLyrics = lyrics.filter((_, i) => i !== index);
     setLyrics(newLyrics);
-    setEditingIndex(-1); // Reset editing state
+    setEditingIndex(-1);
   };
 
   const saveEditing = () => {
     setEditingIndex(-1);
-    // Cập nhật parent ngay lập tức để tránh mất data
     updateParentLyrics();
   };
 
-  // FIX: Cập nhật hàm này để không parse lại khi đang trong timeline mode
   const updateParentLyrics = () => {
-    const lrcFormat = convertToLRCFormat(lyrics);
-    setRawLyrics(lrcFormat); // Sync raw lyrics với current state
-    onLyricsChange(lrcFormat);
+    const outputFormat =
+      editorMode === "plain"
+        ? convertToOutputFormat(lyrics, true)
+        : convertToLRCFormat(lyrics);
+    setRawLyrics(editorMode === "plain" ? "" : outputFormat);
+    setPlainLyrics(editorMode === "plain" ? outputFormat : "");
+    onLyricsChange(outputFormat);
   };
 
-  // FIX: Cập nhật hàm xử lý raw lyrics
   const handleRawLyricsChange = (value) => {
     setRawLyrics(value);
-    // CHỈ parse lại khi đang ở raw mode và user thực sự thay đổi
     if (editorMode === "raw") {
       const parsed = parseLyricsFromText(value);
       setLyrics(parsed);
     }
   };
 
-  // FIX: Thêm hàm save cho raw editor
+  const handlePlainLyricsChange = (value) => {
+    setPlainLyrics(value);
+    if (editorMode === "plain") {
+      const parsed = parseLyricsFromText(value, true);
+      setLyrics(parsed);
+    }
+  };
+
   const saveRawLyrics = () => {
     const parsed = parseLyricsFromText(rawLyrics);
     setLyrics(parsed);
     onLyricsChange(rawLyrics);
+  };
+
+  const savePlainLyrics = () => {
+    const parsed = parseLyricsFromText(plainLyrics, true);
+    setLyrics(parsed);
+    onLyricsChange(plainLyrics);
+  };
+
+  const convertToLRCFormat = (lyricsArray) => {
+    return convertToOutputFormat(lyricsArray, false);
   };
 
   const formatTime = (seconds) => {
@@ -313,10 +346,19 @@ const LyricsEditor = ({ songData, onLyricsChange, audioUrl }) => {
                   label: (
                     <Group gap="xs">
                       <IconFileText size={16} />
-                      <span>Raw Text Editor</span>
+                      <span>Raw LRC Editor</span>
                     </Group>
                   ),
                   value: "raw",
+                },
+                {
+                  label: (
+                    <Group gap="xs">
+                      <IconTextCaption size={16} />
+                      <span>Plain Text Editor</span>
+                    </Group>
+                  ),
+                  value: "plain",
                 },
               ]}
             />
@@ -335,7 +377,7 @@ const LyricsEditor = ({ songData, onLyricsChange, audioUrl }) => {
       </Paper>
 
       {editorMode === "raw" ? (
-        /* Raw Text Editor */
+        /* Raw LRC Editor */
         <Paper p="md" withBorder>
           <Text size="sm" mb="xs" c="dimmed">
             Enter lyrics in LRC format: [mm:ss.xx] Lyric text
@@ -349,6 +391,25 @@ const LyricsEditor = ({ songData, onLyricsChange, audioUrl }) => {
           />
           <Group mt="md" justify="flex-end">
             <Button onClick={saveRawLyrics} color="green">
+              Save Changes
+            </Button>
+          </Group>
+        </Paper>
+      ) : editorMode === "plain" ? (
+        /* Plain Text Editor */
+        <Paper p="md" withBorder>
+          <Text size="sm" mb="xs" c="dimmed">
+            Enter lyrics as plain text, one line per lyric
+          </Text>
+          <Textarea
+            value={plainLyrics}
+            onChange={(e) => handlePlainLyricsChange(e.target.value)}
+            minRows={10}
+            maxRows={20}
+            placeholder="First lyric line&#10;Second lyric line&#10;..."
+          />
+          <Group mt="md" justify="flex-end">
+            <Button onClick={savePlainLyrics} color="green">
               Save Changes
             </Button>
           </Group>
@@ -449,6 +510,11 @@ const LyricsEditor = ({ songData, onLyricsChange, audioUrl }) => {
                             {lyric.hasMultipleTimestamps && (
                               <Badge color="purple" variant="light" size="xs">
                                 multi-time
+                              </Badge>
+                            )}
+                            {lyric.isPlain && (
+                              <Badge color="gray" variant="light" size="xs">
+                                plain
                               </Badge>
                             )}
                           </Group>
