@@ -523,8 +523,8 @@ const SongDescription = () => {
             }`}
           >
             <div
-              className="bg-black rounded-lg overflow-hidden"
-              style={{ height: "220px", width: "100%" }}
+              className="bg-transparent rounded-lg overflow-hidden"
+              style={{ height: "230px", width: "100%" }}
             >
               {hasTimestamps ? (
                 <SyncedLyricsDisplay
