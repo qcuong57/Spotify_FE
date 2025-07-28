@@ -14,12 +14,14 @@ import {
   IconDotsVertical,
   IconRepeat,
   IconRepeatOnce,
+  IconChevronDown,
+  IconChevronUp,
 } from "@tabler/icons-react";
 import { Menu, Button, Anchor } from "@mantine/core";
 import { useAudio } from "../../utils/audioContext";
 import { formatTime } from "../../utils/timeFormat";
 
-const PlayerControls = () => {
+const PlayerControls = ({ isVisible, onToggleVisibility }) => {
   const {
     currentSong,
     audio,
@@ -307,7 +309,37 @@ const PlayerControls = () => {
   if (!currentSong) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-black border-t border-gray-800 px-2 sm:px-4 py-2 sm:py-3 z-50 pb-safe">
+    <div
+      className={`fixed bottom-0 left-0 right-0 bg-black border-t border-gray-800 px-2 sm:px-4 py-2 sm:py-3 z-50 pb-safe transition-transform duration-300 ease-in-out ${
+        isVisible ? "translate-y-0" : "translate-y-full"
+      }`}
+    >
+      {/* Toggle Button - Always visible at top center */}
+      <button
+        onClick={onToggleVisibility}
+        className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-400 hover:to-green-500 text-white rounded-full w-12 h-6 shadow-xl transition-all duration-300 ease-out hover:scale-105 hover:shadow-green-500/30 border border-green-400/50 flex items-center justify-center group"
+        title={isVisible ? "Ẩn player" : "Hiện player"}
+      >
+        <div className="absolute inset-0 bg-white/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+        <div className="relative z-10 flex items-center justify-center">
+          {isVisible ? (
+            <IconChevronDown
+              stroke={2.5}
+              className="w-4 h-4 group-hover:animate-bounce"
+            />
+          ) : (
+            <IconChevronUp
+              stroke={2.5}
+              className="w-4 h-4 group-hover:animate-bounce"
+            />
+          )}
+        </div>
+
+        {/* Sparkle effects */}
+        <div className="absolute -top-1 -right-1 w-2 h-2 bg-green-300 rounded-full opacity-0 group-hover:opacity-100 animate-ping transition-opacity duration-300"></div>
+        <div className="absolute -bottom-1 -left-1 w-1.5 h-1.5 bg-green-200 rounded-full opacity-0 group-hover:opacity-100 animate-ping transition-opacity duration-300 delay-150"></div>
+      </button>
+
       <div className="flex items-center justify-between max-w-full mx-auto">
         {/* Mobile Layout - Stack vertically on very small screens */}
         <div className="flex flex-col w-full sm:hidden">

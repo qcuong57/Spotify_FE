@@ -9,7 +9,7 @@ import ChatManager from "./chat/ChatManager.jsx";
 import SongDescription from "./user/SongDescription.jsx";
 import { useAudio } from "../utils/audioContext.jsx";
 import ListSongs from "./user/ListSongs.jsx";
-import { IconMenu2 } from "@tabler/icons-react";
+import { IconMenu2, IconChevronUp, IconChevronDown } from "@tabler/icons-react";
 
 const Banner = ({ onClose }) => {
   const [isVisible, setIsVisible] = useState(false);
@@ -118,10 +118,15 @@ const HomePage = () => {
   const [listSongsDetail, setListSongsDetail] = useState([]);
   const [showLibraries, setShowLibraries] = useState(false); // Changed to false by default
   const [showBanner, setShowBanner] = useState(true);
+  const [showPlayerControls, setShowPlayerControls] = useState(true); // New state for PlayerControls visibility
   const { currentSong, songDescriptionAvailable } = useAudio();
 
   const handleCloseBanner = () => {
     setShowBanner(false);
+  };
+
+  const togglePlayerControls = () => {
+    setShowPlayerControls(!showPlayerControls);
   };
 
   return (
@@ -165,7 +170,15 @@ const HomePage = () => {
         )}
         {songDescriptionAvailable && <SongDescription />}
       </div>
-      {currentSong && <PlayerControls />}
+
+      {/* PlayerControls with integrated toggle button */}
+      {currentSong && (
+        <PlayerControls
+          isVisible={showPlayerControls}
+          onToggleVisibility={togglePlayerControls}
+        />
+      )}
+
       {/* <ChatManager className="fixed bottom-4 right-4 w-[320px] max-w-xs z-30" /> */}
     </div>
   );
