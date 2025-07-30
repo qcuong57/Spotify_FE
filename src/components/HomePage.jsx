@@ -10,7 +10,6 @@ import SongDescription from "./user/SongDescription.jsx";
 import { useAudio } from "../utils/audioContext.jsx";
 import ListSongs from "./user/ListSongs.jsx";
 import { IconMenu2, IconChevronUp, IconChevronDown } from "@tabler/icons-react";
-import Footer from "./Footer.jsx";
 
 const Banner = ({ onClose }) => {
   const [isVisible, setIsVisible] = useState(false);
