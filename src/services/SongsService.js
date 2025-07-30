@@ -113,3 +113,66 @@ export const getSongLyrics = async (id) => {
 export const updateSongLyrics = async (id, lyrics) => {
   return await axiosCustom.patch(`/api/songs/${id}/lyrics/`, { lyrics });
 };
+
+// ==================== RANKING & STATS APIs ====================
+
+// Tăng lượt nghe khi phát nhạc
+export const incrementPlayCount = async (songId) => {
+  return await axiosCustom.post(`/api/songs/${songId}/play/`);
+};
+
+// Lấy top bài hát theo lượt nghe
+export const getTopSongs = async (limit = 10, genreId = null) => {
+  let url = `/api/songs/top-songs/?limit=${limit}`;
+  if (genreId) {
+    url += `&genre=${genreId}`;
+  }
+  return await axiosCustom.get(url);
+};
+
+// Lấy bài hát trending (mới và có lượt nghe cao) - Updated
+export const getTrendingSongs = async (limit = 20) => {
+  try {
+    const response = await axiosCustom.get(
+      `/api/songs/trending/?limit=${limit}`
+    );
+
+    // Transform response to add rank if not present
+    if (response.data && response.data.results) {
+      const songsWithRank = response.data.results.map((song, index) => ({
+        ...song,
+        rank: song.rank || index + 1,
+      }));
+
+      return {
+        ...response,
+        data: {
+          ...response.data,
+          results: songsWithRank,
+        },
+      };
+    }
+
+    return response;
+  } catch (error) {
+    console.error("Error fetching trending songs:", error);
+    throw error;
+  }
+};
+
+// Lấy xếp hạng theo từng thể loại
+export const getGenreRanking = async (limitPerGenre = 5) => {
+  return await axiosCustom.get(
+    `/api/songs/genre-ranking/?limit=${limitPerGenre}`
+  );
+};
+
+// Lấy thống kê tổng quan
+export const getStats = async () => {
+  return await axiosCustom.get(`/api/songs/stats/`);
+};
+
+// Lấy bài hát mới nhất
+export const getLatestSongs = async (limit = 10) => {
+  return await axiosCustom.get(`/api/songs/latest/?limit=${limit}`);
+};

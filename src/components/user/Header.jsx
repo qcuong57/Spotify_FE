@@ -70,7 +70,7 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
           />
           <div className="flex items-center gap-2">
             <h4 className="text-2xl font-extrabold bg-gradient-to-r from-[#1DB954] via-[#1ed760] to-[#1DB954] text-transparent bg-clip-text drop-shadow-md">
-              Spoticuong
+              UIAMusic
             </h4>
 
             <IconHome
