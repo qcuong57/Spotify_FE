@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useCallback } from "react";
+import React, { useEffect, useState, useMemo, useCallback, memo } from "react";
 import {
   getAllSongs,
   getAllSongsWithPagination,
@@ -8,6 +8,117 @@ import {
 import { getAllGenres } from "../../services/genresService";
 import Song from "./_Song";
 import TrendingSong from "./TrendingSong ";
+
+// Memoized Section component để tránh re-render không cần thiết
+const Section = memo(
+  ({
+    title,
+    emoji,
+    children,
+    onViewAll,
+    buttonText = "Xem tất cả",
+    hoverColor = "green",
+    isTransitioning,
+  }) => (
+    <div className="mb-8">
+      <div className="flex flex-row justify-between items-center mb-6">
+        <h2
+          className={`text-2xl md:text-3xl font-bold cursor-pointer hover:underline transition-colors duration-200 hover:text-${hoverColor}-400 flex items-center gap-2`}
+        >
+          {emoji && <span className="text-2xl">{emoji}</span>}
+          {title}
+        </h2>
+        {onViewAll && (
+          <button
+            className={`
+            text-sm font-semibold px-6 py-3 rounded-full
+            transition-colors duration-200
+            ${
+              isTransitioning
+                ? `pointer-events-none opacity-50 bg-${hoverColor}-600 text-white`
+                : `text-gray-400 hover:text-white hover:bg-${hoverColor}-600`
+            }
+          `}
+            onClick={onViewAll}
+            disabled={isTransitioning}
+          >
+            <span className="flex items-center gap-2">
+              <span>{buttonText}</span>
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
+            </span>
+          </button>
+        )}
+      </div>
+      {children}
+    </div>
+  )
+);
+
+// Memoized SongGrid component
+const SongGrid = memo(
+  ({
+    songs,
+    showRank = false,
+    keyPrefix = "",
+    contextMenu,
+    setContextMenu,
+    handleCloseContextMenu,
+  }) => (
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 gap-y-6">
+      {songs.map((song, index) => (
+        <Song
+          key={`${keyPrefix}-${song.id}`}
+          song={song}
+          contextMenu={contextMenu}
+          setContextMenu={setContextMenu}
+          handleCloseContextMenu={handleCloseContextMenu}
+          list={songs}
+          showRank={showRank}
+          rank={showRank ? index + 1 : undefined}
+        />
+      ))}
+    </div>
+  )
+);
+
+// Memoized TrendingSection component
+const TrendingSection = memo(
+  ({ trendingSongs, contextMenu, setContextMenu, handleCloseContextMenu }) => (
+    <div className="mb-8">
+      <div className="flex flex-row justify-between items-center mb-6">
+        <h2 className="text-2xl md:text-3xl font-bold cursor-pointer hover:underline transition-colors duration-200 hover:text-green-400 flex items-center gap-2">
+          <span className="text-2xl">🔥</span>
+          Trending ngay bây giờ
+        </h2>
+      </div>
+      <div className="space-y-1">
+        {trendingSongs.slice(0, 10).map((song, index) => (
+          <TrendingSong
+            key={`trending-${song.id}`}
+            song={song}
+            contextMenu={contextMenu}
+            setContextMenu={setContextMenu}
+            handleCloseContextMenu={handleCloseContextMenu}
+            list={trendingSongs}
+            rank={index + 1}
+          />
+        ))}
+      </div>
+    </div>
+  )
+);
 
 const MainContent = ({ setCurrentView, setListSongsDetail }) => {
   const [allSongs, setAllSongs] = useState([]);
@@ -37,19 +148,25 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
     [contextMenu, handleCloseContextMenu]
   );
 
-  // Context menu event listeners
+  // Context menu event listeners - Tối ưu hóa
   useEffect(() => {
     if (contextMenu) {
-      document.addEventListener("click", handleClickOutside);
-      document.addEventListener("contextmenu", handleClickOutside);
+      const handleClick = (e) => handleClickOutside(e);
+      const handleContextMenuClick = (e) => handleClickOutside(e);
+
+      document.addEventListener("click", handleClick, { passive: true });
+      document.addEventListener("contextmenu", handleContextMenuClick, {
+        passive: true,
+      });
+
       return () => {
-        document.removeEventListener("click", handleClickOutside);
-        document.removeEventListener("contextmenu", handleClickOutside);
+        document.removeEventListener("click", handleClick);
+        document.removeEventListener("contextmenu", handleContextMenuClick);
       };
     }
   }, [contextMenu, handleClickOutside]);
 
-  // Data fetching
+  // Data fetching - Không thay đổi
   useEffect(() => {
     const fetchAllData = async () => {
       try {
@@ -68,7 +185,6 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
           getLatestSongs(12),
         ]);
 
-        // Set data with validation
         setAllSongs(songsResponse?.data?.results || []);
         setGenres(genresResponse?.data?.results || []);
         setTrendingSongs(trendingResponse?.data?.results || []);
@@ -84,53 +200,66 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
     fetchAllData();
   }, []);
 
-  // Optimized transition handler
+  // Tối ưu hóa transition handler
   const handleAllSongs = useCallback(
-    async (songs, title) => {
+    (songs, title) => {
       if (!Array.isArray(songs)) {
         console.warn("Invalid songs data:", songs);
         return;
       }
 
-      setIsTransitioning(true);
-
-      setTimeout(() => {
-        const data = { songs, title: title || "Songs" };
-        setListSongsDetail(data);
-        setCurrentView("listSongs");
-        setIsTransitioning(false);
-      }, 300);
+      // Loại bỏ animation phức tạp, chỉ đơn giản set state
+      const data = { songs, title: title || "Songs" };
+      setListSongsDetail(data);
+      setCurrentView("listSongs");
     },
     [setListSongsDetail, setCurrentView]
   );
 
-  // Load more handlers
+  // Load more handlers - Tối ưu hóa với timeout và chunk loading
   const handleLoadAllSongs = useCallback(async () => {
+    if (isLoadingAllSongs) return; // Prevent double clicks
+
     try {
       setIsLoadingAllSongs(true);
-      setIsTransitioning(true);
 
-      const allSongsResponse = await getAllSongsWithPagination();
+      // Thêm timeout để tránh blocking UI
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Request timeout")), 15000)
+      );
+
+      const fetchPromise = getAllSongsWithPagination();
+
+      const allSongsResponse = await Promise.race([
+        fetchPromise,
+        timeoutPromise,
+      ]);
 
       if (allSongsResponse?.data?.results) {
-        setTimeout(() => {
+        // Sử dụng requestAnimationFrame để không block UI thread
+        requestAnimationFrame(() => {
           const data = {
             songs: allSongsResponse.data.results,
             title: `Tất cả bài hát (${allSongsResponse.data.results.length} bài)`,
           };
           setListSongsDetail(data);
           setCurrentView("listSongs");
-          setIsTransitioning(false);
-          setIsLoadingAllSongs(false);
-        }, 300);
+        });
       }
     } catch (error) {
       console.error("Error loading all songs:", error);
-      setError("Failed to load all songs. Please try again.");
-      setIsTransitioning(false);
-      setIsLoadingAllSongs(false);
+      if (error.message === "Request timeout") {
+        setError("Tải dữ liệu quá lâu. Vui lòng thử lại.");
+      } else {
+        setError("Không thể tải tất cả bài hát. Vui lòng thử lại.");
+      }
+    } finally {
+      // Delay reset loading state một chút để UX tốt hơn
+      setTimeout(() => {
+        setIsLoadingAllSongs(false);
+      }, 300);
     }
-  }, [setListSongsDetail, setCurrentView]);
+  }, [setListSongsDetail, setCurrentView, isLoadingAllSongs]);
 
   const handleLoadMoreLatest = useCallback(async () => {
     try {
@@ -150,6 +279,13 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
         genre.songs && Array.isArray(genre.songs) && genre.songs.length > 0
     );
   }, [genres]);
+
+  // Memoized sliced data để tránh re-compute
+  const displayAllSongs = useMemo(() => allSongs.slice(0, 12), [allSongs]);
+  const displayTrendingSongs = useMemo(
+    () => trendingSongs.slice(0, 10),
+    [trendingSongs]
+  );
 
   // Loading state
   if (loading) {
@@ -184,144 +320,16 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
     );
   }
 
-  // Section component for reusability
-  const Section = ({
-    title,
-    emoji,
-    children,
-    onViewAll,
-    buttonText = "Xem tất cả",
-    hoverColor = "green",
-  }) => (
-    <div
-      className={`transition-all duration-700 ease-out ${
-        isTransitioning
-          ? "opacity-40 translate-y-4"
-          : "opacity-100 translate-y-0"
-      }`}
-    >
-      <div className="flex flex-row justify-between items-center mb-6">
-        <h2
-          className={`text-2xl md:text-3xl font-bold cursor-pointer hover:underline transition-all duration-300 hover:text-${hoverColor}-400 hover:scale-105 flex items-center gap-2`}
-        >
-          {emoji && <span className="text-2xl">{emoji}</span>}
-          {title}
-        </h2>
-        {onViewAll && (
-          <button
-            className={`
-              text-sm font-semibold px-6 py-3 rounded-full
-              transition-all duration-300 ease-out
-              ${
-                isTransitioning
-                  ? `pointer-events-none opacity-50 bg-${hoverColor}-600 text-white`
-                  : `text-gray-400 hover:text-white hover:bg-${hoverColor}-600`
-              }
-            `}
-            onClick={onViewAll}
-            disabled={isTransitioning}
-          >
-            <span className="flex items-center gap-2">
-              <span>{buttonText}</span>
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
-            </span>
-          </button>
-        )}
-      </div>
-      {children}
-    </div>
-  );
-
-  // Grid component for song layouts
-  const SongGrid = ({ songs, showRank = false, keyPrefix = "" }) => (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 gap-y-6">
-      {songs.map((song, index) => (
-        <div
-          key={`${keyPrefix}-${song.id}`}
-          className={`transition-all duration-500 ease-out ${
-            isTransitioning
-              ? "opacity-20 translate-y-8 scale-95"
-              : "opacity-100 translate-y-0 scale-100"
-          }`}
-          style={{ transitionDelay: `${index * 50}ms` }}
-        >
-          <Song
-            song={song}
-            contextMenu={contextMenu}
-            setContextMenu={setContextMenu}
-            handleCloseContextMenu={handleCloseContextMenu}
-            list={songs}
-            showRank={showRank}
-            rank={showRank ? index + 1 : undefined}
-          />
-        </div>
-      ))}
-    </div>
-  );
-
   return (
-    <div
-      className={`
-      bg-[#131313] text-white p-3 md:p-4 mr-0 md:mr-2 rounded-lg flex-1 overflow-y-auto 
-      space-y-8 scrollbar-hide pb-8
-      transition-all duration-500 ease-out transform
-      ${
-        isTransitioning
-          ? "opacity-60 scale-[0.98] blur-sm"
-          : "opacity-100 scale-100 blur-none"
-      }
-    `}
-    >
+    <div className="bg-[#131313] text-white p-3 md:p-4 mr-0 md:mr-2 rounded-lg flex-1 overflow-y-auto space-y-8 scrollbar-hide pb-8">
       {/* Trending Songs Section */}
       {trendingSongs.length > 0 && (
-        <div
-          className={`transition-all duration-700 ease-out ${
-            isTransitioning
-              ? "opacity-40 translate-y-4"
-              : "opacity-100 translate-y-0"
-          }`}
-        >
-          <div className="flex flex-row justify-between items-center mb-6">
-            <h2 className="text-2xl md:text-3xl font-bold cursor-pointer hover:underline transition-all duration-300 hover:text-green-400 hover:scale-105 flex items-center gap-2">
-              <span className="text-2xl">🔥</span>
-              Trending ngay bây giờ
-            </h2>
-          </div>
-          <div className="space-y-1">
-            {trendingSongs.slice(0, 10).map((song, index) => (
-              <div
-                key={`trending-${song.id}`}
-                className={`transition-all duration-500 ease-out ${
-                  isTransitioning
-                    ? "opacity-20 translate-x-8 scale-95"
-                    : "opacity-100 translate-x-0 scale-100"
-                }`}
-                style={{ transitionDelay: `${index * 100}ms` }}
-              >
-                <TrendingSong
-                  song={song}
-                  contextMenu={contextMenu}
-                  setContextMenu={setContextMenu}
-                  handleCloseContextMenu={handleCloseContextMenu}
-                  list={trendingSongs}
-                  rank={index + 1}
-                />
-              </div>
-            ))}
-          </div>
-        </div>
+        <TrendingSection
+          trendingSongs={displayTrendingSongs}
+          contextMenu={contextMenu}
+          setContextMenu={setContextMenu}
+          handleCloseContextMenu={handleCloseContextMenu}
+        />
       )}
 
       {/* Latest Songs Section */}
@@ -331,41 +339,42 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
           emoji="🆕"
           onViewAll={handleLoadMoreLatest}
           hoverColor="green"
+          isTransitioning={isTransitioning}
         >
-          <SongGrid songs={latestSongs} keyPrefix="latest" />
+          <SongGrid
+            songs={latestSongs}
+            keyPrefix="latest"
+            contextMenu={contextMenu}
+            setContextMenu={setContextMenu}
+            handleCloseContextMenu={handleCloseContextMenu}
+          />
         </Section>
       )}
 
       {/* All Songs Section */}
       {allSongs.length > 0 && (
-        <div
-          className={`transition-all duration-700 ease-out ${
-            isTransitioning
-              ? "opacity-40 translate-y-4"
-              : "opacity-100 translate-y-0"
-          }`}
-        >
+        <div className="mb-8">
           <div className="flex flex-row justify-between items-center mb-6">
-            <h2 className="text-2xl md:text-3xl font-bold cursor-pointer hover:underline transition-all duration-300 hover:text-green-400 hover:scale-105">
+            <h2 className="text-2xl md:text-3xl font-bold cursor-pointer hover:underline transition-colors duration-200 hover:text-green-400">
               Tất cả bài hát
             </h2>
             <button
               className={`
                 text-sm font-semibold px-6 py-3 rounded-full
-                transition-all duration-300 ease-out
+                transition-colors duration-200
                 ${
-                  isTransitioning || isLoadingAllSongs
+                  isLoadingAllSongs
                     ? "pointer-events-none opacity-50 bg-green-600 text-white"
                     : "text-gray-400 hover:text-white hover:bg-green-600"
                 }
               `}
               onClick={handleLoadAllSongs}
-              disabled={isTransitioning || isLoadingAllSongs}
+              disabled={isLoadingAllSongs}
             >
-              {isTransitioning || isLoadingAllSongs ? (
+              {isLoadingAllSongs ? (
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  <span>Đang tải tất cả...</span>
+                  <span>Đang tải... {/* Có thể mất vài giây */}</span>
                 </div>
               ) : (
                 <span className="flex items-center gap-2">
@@ -387,42 +396,42 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
               )}
             </button>
           </div>
-          <SongGrid songs={allSongs.slice(0, 12)} keyPrefix="all" />
+          <SongGrid
+            songs={displayAllSongs}
+            keyPrefix="all"
+            contextMenu={contextMenu}
+            setContextMenu={setContextMenu}
+            handleCloseContextMenu={handleCloseContextMenu}
+          />
         </div>
       )}
 
       {/* Genres Sections */}
-      {validGenres.map((genre, genreIndex) => (
-        <div
+      {validGenres.map((genre) => (
+        <Section
           key={genre.id}
-          className={`transition-all duration-700 ease-out ${
-            isTransitioning
-              ? "opacity-40 translate-y-4"
-              : "opacity-100 translate-y-0"
-          }`}
-          style={{ transitionDelay: `${genreIndex * 100}ms` }}
+          title={genre.name}
+          onViewAll={() => handleAllSongs(genre.songs, genre.name)}
+          hoverColor="green"
+          isTransitioning={isTransitioning}
         >
-          <Section
-            title={genre.name}
-            onViewAll={() => handleAllSongs(genre.songs, genre.name)}
-            hoverColor="green"
-          >
-            <SongGrid
-              songs={genre.songs.slice(0, 12)}
-              keyPrefix={`genre-${genre.id}`}
-            />
-          </Section>
-        </div>
+          <SongGrid
+            songs={genre.songs.slice(0, 12)}
+            keyPrefix={`genre-${genre.id}`}
+            contextMenu={contextMenu}
+            setContextMenu={setContextMenu}
+            handleCloseContextMenu={handleCloseContextMenu}
+          />
+        </Section>
       ))}
 
       {/* Empty State */}
       {allSongs.length === 0 &&
         trendingSongs.length === 0 &&
-        topSongs.length === 0 &&
         latestSongs.length === 0 &&
         validGenres.length === 0 &&
         !loading && (
-          <div className="flex flex-col items-center justify-center h-64 text-gray-400 transition-all duration-500 ease-out">
+          <div className="flex flex-col items-center justify-center h-64 text-gray-400">
             <div className="text-6xl mb-4 opacity-50">🎵</div>
             <p className="text-xl mb-2 font-medium">No songs available</p>
             <p className="text-sm opacity-75">

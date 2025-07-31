@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo, useRef } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef, memo } from "react";
 import { useAudio } from "../../utils/audioContext";
 import {
   IconPlayerPlayFilled,
@@ -7,6 +7,98 @@ import {
 } from "@tabler/icons-react";
 import ContextMenu from "./library/_ContextMenu";
 import { incrementPlayCount } from "../../services/SongsService";
+
+// Memoized PlayButton component để tránh re-render icon
+const PlayButton = memo(
+  ({ isCurrentSong, isPlaying, showPlayButton, onClick }) => {
+    const buttonContent = useMemo(() => {
+      if (isCurrentSong && isPlaying) {
+        return <IconPlayerPauseFilled className="w-6 h-6 text-black" />;
+      }
+      return <IconPlayerPlayFilled className="w-6 h-6 text-black ml-0.5" />;
+    }, [isCurrentSong, isPlaying]);
+
+    return (
+      <button
+        className={`
+        w-12 h-12 bg-green-500 rounded-full flex items-center justify-center
+        shadow-lg transition-all duration-200 transform
+        hover:scale-105 hover:bg-green-400 active:scale-95
+        ${
+          showPlayButton
+            ? "translate-y-0 opacity-100 pointer-events-auto"
+            : "translate-y-2 opacity-0 pointer-events-none"
+        }
+      `}
+        onClick={onClick}
+        tabIndex={showPlayButton ? 0 : -1}
+      >
+        {buttonContent}
+      </button>
+    );
+  }
+);
+
+// Memoized RankBadge component
+const RankBadge = memo(({ rank }) => {
+  const badgeClass = useMemo(() => {
+    if (rank === 1) return "bg-yellow-500 text-black";
+    if (rank === 2) return "bg-gray-300 text-black";
+    if (rank === 3) return "bg-amber-600 text-white";
+    return "bg-green-600 text-white";
+  }, [rank]);
+
+  return (
+    <div className="absolute top-2 left-2 z-10">
+      <div
+        className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${badgeClass} shadow-lg`}
+      >
+        {rank}
+      </div>
+    </div>
+  );
+});
+
+// Memoized NowPlayingIndicator component
+const NowPlayingIndicator = memo(() => (
+  <div className="absolute top-2 right-2">
+    <div className="flex space-x-1">
+      {[0, 1, 2].map((index) => (
+        <div
+          key={index}
+          className="w-1 h-4 bg-green-500 rounded-full animate-bounce"
+          style={{ animationDelay: `${index * 0.1}s` }}
+        />
+      ))}
+    </div>
+  </div>
+));
+
+// Memoized SongInfo component
+const SongInfo = memo(({ song, isCurrentSong, formattedPlayCount }) => (
+  <div className="space-y-2">
+    <h3
+      className={`
+        text-base font-semibold line-clamp-2 leading-tight transition-colors duration-200
+        ${isCurrentSong ? "text-green-500" : "text-white"}
+        group-hover:text-white
+      `}
+    >
+      {song.song_name || "Unknown Title"}
+    </h3>
+    <p className="text-sm text-gray-400 line-clamp-1 group-hover:text-gray-300 transition-colors duration-200">
+      {song.singer_name || "Unknown Artist"}
+    </p>
+
+    {/* Play Count */}
+    {song.play_count !== undefined && song.play_count > 0 && (
+      <div className="flex items-center space-x-1 text-xs text-gray-500">
+        <IconTrendingUp className="w-3 h-3" />
+        <span>{formattedPlayCount} lượt nghe</span>
+      </div>
+    )}
+  </div>
+));
 
 const Song = ({
   song,
@@ -32,7 +124,7 @@ const Song = ({
 
   // Sử dụng ref để tránh re-render khi loading
   const isLoadingRef = useRef(false);
-  const timeoutRef = useRef(null);
+  const hoverTimeoutRef = useRef(null);
 
   // Memoized check if this song is currently playing
   const isCurrentSong = useMemo(
@@ -45,46 +137,50 @@ const Song = ({
     return Array.isArray(list) ? list : list?.songs || [];
   }, [list]);
 
-  // Optimized play audio function without loading state re-render
+  // Memoized format play count function
+  const formattedPlayCount = useMemo(() => {
+    const count = song.play_count;
+    if (count >= 1000000) {
+      return (count / 1000000).toFixed(1) + "M";
+    } else if (count >= 1000) {
+      return (count / 1000).toFixed(1) + "K";
+    }
+    return count?.toString() || "0";
+  }, [song.play_count]);
+
+  // Optimized play audio function
   const playAudio = useCallback(async () => {
     if (songList.length === 0 || isLoadingRef.current) {
-      console.warn("No songs available or already loading");
       return;
     }
 
     const currentIndex = songList.findIndex((s) => s.id === song.id);
     if (currentIndex === -1) {
-      console.warn("Song not found in the list");
       return;
     }
 
-    // Set loading flag without triggering re-render
     isLoadingRef.current = true;
 
     try {
-      // Set new playlist immediately
       setNewPlaylist(songList, currentIndex);
 
-      // Increment play count when song starts playing (only once per play session)
+      // Increment play count asynchronously without blocking
       if (!playCountIncremented) {
-        try {
-          await incrementPlayCount(song.id);
-          setPlayCountIncremented(true);
-          console.log(`Play count incremented for song: ${song.song_name}`);
-        } catch (error) {
-          console.error("Error incrementing play count:", error);
-        }
+        incrementPlayCount(song.id)
+          .then(() => {
+            setPlayCountIncremented(true);
+          })
+          .catch((error) => {
+            console.error("Error incrementing play count:", error);
+          });
       }
     } finally {
-      // Clear loading flag after a short delay
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-      timeoutRef.current = setTimeout(() => {
+      // Clear loading flag immediately to prevent multiple clicks
+      setTimeout(() => {
         isLoadingRef.current = false;
-      }, 150);
+      }, 100);
     }
-  }, [songList, song.id, song.song_name, playCountIncremented, setNewPlaylist]);
+  }, [songList, song.id, playCountIncremented, setNewPlaylist]);
 
   // Optimized toggle play/pause
   const togglePlayPause = useCallback(
@@ -108,15 +204,6 @@ const Song = ({
     }
   }, [isCurrentSong]);
 
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, []);
-
   // Optimized context menu handler
   const handleContextMenu = useCallback(
     (e) => {
@@ -131,152 +218,82 @@ const Song = ({
     [song.id, setContextMenu]
   );
 
-  // Optimized hover handlers với debounce nhẹ
+  // Optimized hover handlers với debounce
   const handleMouseEnter = useCallback(() => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
     }
     setIsHovered(true);
   }, []);
 
   const handleMouseLeave = useCallback(() => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
     }
-    // Delay nhẹ để tránh flicker khi di chuyển chuột nhanh
-    timeoutRef.current = setTimeout(() => {
+    hoverTimeoutRef.current = setTimeout(() => {
       setIsHovered(false);
-    }, 50);
+    }, 100);
   }, []);
 
-  // Memoized format play count function
-  const formattedPlayCount = useMemo(() => {
-    const count = song.play_count;
-    if (count >= 1000000) {
-      return (count / 1000000).toFixed(1) + "M";
-    } else if (count >= 1000) {
-      return (count / 1000).toFixed(1) + "K";
-    }
-    return count?.toString() || "0";
-  }, [song.play_count]);
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+      }
+    };
+  }, []);
 
-  // Ổn định logic hiển thị nút play
+  // Stable logic for showing play button
   const showPlayButton = useMemo(() => {
     return isHovered || isCurrentSong;
   }, [isHovered, isCurrentSong]);
 
-  // Memoized button content để tránh re-render icon
-  const buttonContent = useMemo(() => {
-    if (isCurrentSong && isPlaying) {
-      return <IconPlayerPauseFilled className="w-6 h-6 text-black" />;
-    }
-    return <IconPlayerPlayFilled className="w-6 h-6 text-black ml-0.5" />;
-  }, [isCurrentSong, isPlaying]);
-
   return (
     <div
-      className="group relative bg-[#181818] hover:bg-[#282828] transition-all duration-300 p-4 rounded-lg cursor-pointer"
+      className="group relative bg-[#181818] hover:bg-[#282828] transition-colors duration-200 p-4 rounded-lg cursor-pointer"
       onClick={playAudio}
       onContextMenu={handleContextMenu}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
       {/* Rank Badge */}
-      {showRank && rank && (
-        <div className="absolute top-2 left-2 z-10">
-          <div
-            className={`
-              w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold
-              ${
-                rank === 1
-                  ? "bg-yellow-500 text-black"
-                  : rank === 2
-                  ? "bg-gray-300 text-black"
-                  : rank === 3
-                  ? "bg-amber-600 text-white"
-                  : "bg-green-600 text-white"
-              }
-              shadow-lg
-            `}
-          >
-            {rank}
-          </div>
-        </div>
-      )}
+      {showRank && rank && <RankBadge rank={rank} />}
 
       {/* Album Art Container */}
       <div className="relative mb-4">
         <div className="relative aspect-square overflow-hidden rounded-lg shadow-lg">
           <img
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
             src={song.image}
             alt={song.song_name}
             loading="lazy"
           />
 
-          {/* Overlay */}
-          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300" />
+          {/* Simplified Overlay */}
+          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-opacity duration-200" />
 
-          {/* Play Button - Ổn định hơn */}
+          {/* Play Button */}
           <div className="absolute bottom-2 right-2">
-            <button
-              className={`
-                w-12 h-12 bg-green-500 rounded-full flex items-center justify-center
-                shadow-lg transition-all duration-300 transform
-                hover:scale-110 hover:bg-green-400
-                ${
-                  showPlayButton
-                    ? "translate-y-0 opacity-100 pointer-events-auto"
-                    : "translate-y-2 opacity-0 pointer-events-none"
-                }
-              `}
+            <PlayButton
+              isCurrentSong={isCurrentSong}
+              isPlaying={isPlaying}
+              showPlayButton={showPlayButton}
               onClick={togglePlayPause}
-              tabIndex={showPlayButton ? 0 : -1}
-            >
-              {buttonContent}
-            </button>
+            />
           </div>
 
-          {/* Now Playing Indicator - Chỉ hiện khi đang play */}
-          {isCurrentSong && isPlaying && (
-            <div className="absolute top-2 right-2">
-              <div className="flex space-x-1">
-                {[0, 1, 2].map((index) => (
-                  <div
-                    key={index}
-                    className="w-1 h-4 bg-green-500 rounded-full animate-bounce"
-                    style={{ animationDelay: `${index * 0.1}s` }}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
+          {/* Now Playing Indicator */}
+          {isCurrentSong && isPlaying && <NowPlayingIndicator />}
         </div>
       </div>
 
       {/* Song Info */}
-      <div className="space-y-2">
-        <h3
-          className={`
-            text-base font-semibold line-clamp-2 leading-tight transition-colors duration-300
-            ${isCurrentSong ? "text-green-500" : "text-white"}
-            group-hover:text-white
-          `}
-        >
-          {song.song_name || "Unknown Title"}
-        </h3>
-        <p className="text-sm text-gray-400 line-clamp-1 group-hover:text-gray-300 transition-colors duration-300">
-          {song.singer_name || "Unknown Artist"}
-        </p>
-
-        {/* Play Count */}
-        {song.play_count !== undefined && song.play_count > 0 && (
-          <div className="flex items-center space-x-1 text-xs text-gray-500">
-            <IconTrendingUp className="w-3 h-3" />
-            <span>{formattedPlayCount} lượt nghe</span>
-          </div>
-        )}
-      </div>
+      <SongInfo
+        song={song}
+        isCurrentSong={isCurrentSong}
+        formattedPlayCount={formattedPlayCount}
+      />
 
       {/* Context Menu */}
       {contextMenu && contextMenu.songId === song.id && (
@@ -291,4 +308,4 @@ const Song = ({
   );
 };
 
-export default Song;
+export default memo(Song);

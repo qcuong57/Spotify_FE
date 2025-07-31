@@ -7,7 +7,6 @@ import {
   IconChevronDown,
   IconHeart,
   IconHeartFilled,
-  IconMusic,
   IconMicrophone,
   IconChevronUp,
 } from "@tabler/icons-react";
@@ -131,6 +130,7 @@ const SongDescription = () => {
           }
         }
       }
+      // For "all" mode, the video will sync with the new song via the audioContext's playNextSong
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
@@ -268,55 +268,6 @@ const SongDescription = () => {
     }
   }, [currentTime, videoError, isVideoFullscreen]);
 
-  // Handle audio events
-  useEffect(() => {
-    const videoElement = videoRef.current;
-    if (!videoElement || !audio) return;
-
-    const handleAudioEnded = () => {
-      if (repeatMode === "one") {
-        videoElement.currentTime = 0;
-      } else if (repeatMode === "off") {
-        videoElement.pause();
-        videoElement.currentTime = 0;
-        setIsVideoFullscreen(false);
-      }
-    };
-
-    const handleAudioPlay = () => {
-      if (videoElement && !isVideoFullscreen) {
-        videoElement.currentTime = audio.currentTime;
-      }
-    };
-
-    const handleAudioPause = () => {
-      if (videoElement && !isVideoFullscreen) {
-        videoElement.pause();
-      }
-    };
-
-    const handleAudioTimeUpdate = () => {
-      if (videoElement && !isVideoFullscreen && !videoError) {
-        const timeDiff = Math.abs(videoElement.currentTime - audio.currentTime);
-        if (timeDiff > 1) {
-          videoElement.currentTime = audio.currentTime;
-        }
-      }
-    };
-
-    audio.addEventListener("ended", handleAudioEnded);
-    audio.addEventListener("play", handleAudioPlay);
-    audio.addEventListener("pause", handleAudioPause);
-    audio.addEventListener("timeupdate", handleAudioTimeUpdate);
-
-    return () => {
-      audio.removeEventListener("ended", handleAudioEnded);
-      audio.removeEventListener("play", handleAudioPlay);
-      audio.removeEventListener("pause", handleAudioPause);
-      audio.removeEventListener("timeupdate", handleAudioTimeUpdate);
-    };
-  }, [audio, setIsPlaying, repeatMode, isVideoFullscreen, videoError]);
-
   const handleClose = () => {
     setIsClosing(true);
 
@@ -364,7 +315,6 @@ const SongDescription = () => {
           : "translate-y-full opacity-0 md:translate-y-0 md:translate-x-full"
       }`}
     >
-      {/* Mobile Header */}
       <div
         className={`flex items-center justify-between p-4 md:hidden transition-all duration-300 delay-100 ${
           isVisible && !isClosing
@@ -384,7 +334,6 @@ const SongDescription = () => {
         <div className="w-10" />
       </div>
 
-      {/* Desktop Header */}
       <div
         className={`hidden md:flex items-center justify-between p-3 border-b border-gray-700 transition-all duration-300 delay-100 ${
           isVisible && !isClosing
@@ -401,9 +350,7 @@ const SongDescription = () => {
         </button>
       </div>
 
-      {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Video Container - Fixed height to leave space for lyrics */}
         <div
           className={`flex-shrink-0 p-3 md:p-4 transition-all duration-500 delay-200 ${
             isVisible && !isClosing
@@ -455,7 +402,6 @@ const SongDescription = () => {
           </div>
         </div>
 
-        {/* Song Info - Compact version */}
         <div
           className={`flex-shrink-0 px-3 md:px-4 pb-2 transition-all duration-500 delay-300 ${
             isVisible && !isClosing
@@ -479,7 +425,6 @@ const SongDescription = () => {
               {currentSong.singer_name || "Unknown Artist"}
             </p>
 
-            {/* Action Buttons */}
             <div className="flex items-center justify-center md:justify-start space-x-3">
               <button
                 onClick={handleLike}
@@ -495,7 +440,6 @@ const SongDescription = () => {
                 )}
               </button>
 
-              {/* Lyrics Toggle */}
               {hasLyrics && (
                 <button
                   onClick={() => setShowLyrics(!showLyrics)}
@@ -513,7 +457,6 @@ const SongDescription = () => {
           </div>
         </div>
 
-        {/* Lyrics Display Area - Takes remaining space */}
         {showLyrics && hasLyrics && (
           <div
             className={`flex-1 mx-3 md:mx-4 mb-3 md:mb-4 transition-all duration-500 delay-400 ${
@@ -575,7 +518,6 @@ const SongDescription = () => {
           </div>
         )}
 
-        {/* Mobile Instructions - Only show when lyrics are not displayed */}
         {(!showLyrics || !hasLyrics) && (
           <div
             className={`text-center md:hidden mt-auto p-4 transition-all duration-500 delay-400 ${

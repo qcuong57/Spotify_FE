@@ -37,11 +37,12 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
     playNextSong,
     setSongDescriptionAvailable,
     playBackSong,
+    repeatMode,
+    setRepeatMode,
   } = useAudio();
   const progressRef = useRef(null);
   const [isLiked, setIsLiked] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  const [repeatMode, setRepeatMode] = useState("off"); // "off", "all", "one"
 
   const togglePlayPause = () => {
     setIsPlaying(!isPlaying);
@@ -62,7 +63,7 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
   };
 
   const toggleRepeat = () => {
-    const modes = ["off", "all", "one"];
+    const modes = ["all", "one"];
     const currentIndex = modes.indexOf(repeatMode);
     const nextIndex = (currentIndex + 1) % modes.length;
     setRepeatMode(modes[nextIndex]);
@@ -72,10 +73,8 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
     switch (repeatMode) {
       case "one":
         return <IconRepeatOnce size={18} className="text-green-500" />;
-      case "all":
-        return <IconRepeat size={18} className="text-green-500" />;
       default:
-        return <IconRepeat size={18} />;
+        return <IconRepeat size={18} className="text-green-500" />;
     }
   };
 
@@ -87,7 +86,6 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
     isValidDuration && isValidCurrentTime ? (currentTime / duration) * 100 : 0;
 
   const handleProgressClick = (e) => {
-    // Check if duration is valid before proceeding
     if (!progressRef.current || !isValidDuration) {
       console.log("Invalid duration or ref not available:", {
         duration,
@@ -108,7 +106,6 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
       const clickX = clientX - rect.left;
       const width = rect.width;
 
-      // Validate calculations
       if (width <= 0) {
         console.log("Invalid width:", width);
         return;
@@ -117,15 +114,12 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
       const percentage = clickX / width;
       const newTime = percentage * duration;
 
-      // Validate newTime before setting
       if (isNaN(newTime) || newTime < 0) {
         console.log("Invalid newTime calculated:", newTime);
         return;
       }
 
-      // Clamp newTime to valid range
       const clampedTime = Math.max(0, Math.min(newTime, duration));
-
       console.log("Setting playback time:", clampedTime);
       setPlaybackTime(Math.round(clampedTime));
     } catch (error) {
@@ -135,8 +129,6 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
 
   const handleProgressMouseDown = (e) => {
     e.preventDefault();
-
-    // Only allow dragging if duration is valid
     if (!isValidDuration) {
       console.log("Cannot drag: invalid duration");
       return;
@@ -144,15 +136,12 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
 
     setIsDragging(true);
     handleProgressClick(e);
-    // Disable body scroll on desktop
     document.body.style.overflow = "hidden";
   };
 
   const handleProgressTouchStart = (e) => {
     e.preventDefault();
     e.stopPropagation();
-
-    // Only allow dragging if duration is valid
     if (!isValidDuration) {
       console.log("Cannot drag: invalid duration");
       return;
@@ -160,7 +149,6 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
 
     setIsDragging(true);
     handleProgressClick(e);
-    // Disable body scroll on mobile
     document.body.style.overflow = "hidden";
     document.body.style.touchAction = "none";
   };
@@ -222,13 +210,11 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
 
   const handleProgressMouseUp = () => {
     setIsDragging(false);
-    // Re-enable body scroll
     document.body.style.overflow = "";
   };
 
   const handleProgressTouchEnd = () => {
     setIsDragging(false);
-    // Re-enable body scroll
     document.body.style.overflow = "";
     document.body.style.touchAction = "";
   };
@@ -252,56 +238,6 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
     };
   }, [isDragging, isValidDuration]);
 
-  // Handle audio ended event for repeat functionality
-  React.useEffect(() => {
-    if (audio) {
-      const handleEnded = () => {
-        console.log("Audio ended, repeat mode:", repeatMode);
-
-        if (repeatMode === "one") {
-          setTimeout(() => {
-            // Validate audio state before repeating
-            if (audio && !isNaN(audio.duration) && audio.duration > 0) {
-              audio.currentTime = 0;
-              setPlaybackTime(0);
-              audio.play().catch(console.error);
-              setIsPlaying(true);
-            }
-          }, 100);
-        } else if (repeatMode === "all") {
-          setTimeout(() => {
-            playNextSong();
-          }, 100);
-        } else {
-          setIsPlaying(false);
-        }
-      };
-
-      audio.addEventListener("ended", handleEnded);
-      return () => {
-        audio.removeEventListener("ended", handleEnded);
-      };
-    }
-  }, [audio, repeatMode, playNextSong, setIsPlaying, setPlaybackTime]);
-
-  // Alternative approach - check if song is about to end
-  React.useEffect(() => {
-    if (audio && isValidDuration && isValidCurrentTime) {
-      if (duration - currentTime <= 0.5 && duration - currentTime > 0) {
-        if (repeatMode === "one") {
-          console.log("Song about to end, preparing to repeat");
-        }
-      }
-    }
-  }, [
-    currentTime,
-    duration,
-    repeatMode,
-    audio,
-    isValidDuration,
-    isValidCurrentTime,
-  ]);
-
   const handleAvailable = () => {
     setSongDescriptionAvailable(true);
   };
@@ -314,7 +250,6 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
         isVisible ? "translate-y-0" : "translate-y-full"
       }`}
     >
-      {/* Toggle Button - Always visible at top center */}
       <button
         onClick={onToggleVisibility}
         className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-400 hover:to-green-500 text-white rounded-full w-12 h-6 shadow-xl transition-all duration-300 ease-out hover:scale-105 hover:shadow-green-500/30 border border-green-400/50 flex items-center justify-center group"
@@ -334,16 +269,12 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
             />
           )}
         </div>
-
-        {/* Sparkle effects */}
         <div className="absolute -top-1 -right-1 w-2 h-2 bg-green-300 rounded-full opacity-0 group-hover:opacity-100 animate-ping transition-opacity duration-300"></div>
         <div className="absolute -bottom-1 -left-1 w-1.5 h-1.5 bg-green-200 rounded-full opacity-0 group-hover:opacity-100 animate-ping transition-opacity duration-300 delay-150"></div>
       </button>
 
       <div className="flex items-center justify-between max-w-full mx-auto">
-        {/* Mobile Layout - Stack vertically on very small screens */}
         <div className="flex flex-col w-full sm:hidden">
-          {/* Progress Bar - Mobile Top */}
           <div className="w-full flex items-center gap-2 mb-3 px-2">
             <span className="text-xs text-gray-400 font-medium min-w-[32px] text-right">
               {formatTime(currentTime)}
@@ -361,7 +292,7 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
                 display: "flex",
                 alignItems: "center",
                 WebkitTapHighlightColor: "transparent",
-                opacity: isValidDuration ? 1 : 0.5, // Visual feedback for invalid state
+                opacity: isValidDuration ? 1 : 0.5,
               }}
             >
               <div
@@ -382,9 +313,7 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
             </span>
           </div>
 
-          {/* Main Controls - Mobile Bottom */}
           <div className="flex items-center justify-between pb-2">
-            {/* Song Info - Mobile */}
             <div className="flex items-center gap-2 flex-1 min-w-0">
               <img
                 src={currentSong.image}
@@ -401,7 +330,6 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
               </div>
             </div>
 
-            {/* Playback Controls - Mobile */}
             <div className="flex items-center gap-2 mx-4">
               <button
                 className="text-gray-400 hover:text-white transition-colors p-1 touch-manipulation"
@@ -429,7 +357,6 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
               </button>
             </div>
 
-            {/* Mobile Menu */}
             <Menu shadow="md" position="top">
               <Menu.Target>
                 <button className="text-gray-400 hover:text-white transition-colors p-2 touch-manipulation">
@@ -443,14 +370,7 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
                 >
                   <div className="flex items-center gap-2">
                     {getRepeatIcon()}
-                    <span>
-                      Repeat:{" "}
-                      {repeatMode === "off"
-                        ? "Off"
-                        : repeatMode === "all"
-                        ? "All"
-                        : "One"}
-                    </span>
+                    <span>Repeat: {repeatMode === "all" ? "All" : "One"}</span>
                   </div>
                 </Menu.Item>
                 <Menu.Item
@@ -502,9 +422,7 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
           </div>
         </div>
 
-        {/* Desktop Layout - Hidden on mobile */}
         <div className="hidden sm:flex items-center justify-between w-full">
-          {/* Currently Playing - Left Section */}
           <div className="flex items-center w-1/4 min-w-0">
             <div className="flex items-center gap-3 md:gap-4 min-w-0">
               <img
@@ -533,7 +451,6 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
             </div>
           </div>
 
-          {/* Playback Controls - Center Section */}
           <div className="flex flex-col items-center w-1/2 max-w-2xl">
             <div className="flex items-center gap-4 mb-2">
               <button
@@ -562,19 +479,9 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
               </button>
 
               <button
-                className={`transition-colors ${
-                  repeatMode !== "off"
-                    ? "text-green-500"
-                    : "text-gray-400 hover:text-white"
-                }`}
+                className="text-green-500 transition-colors"
                 onClick={toggleRepeat}
-                title={`Repeat: ${
-                  repeatMode === "off"
-                    ? "Off"
-                    : repeatMode === "all"
-                    ? "All"
-                    : "One"
-                }`}
+                title={`Repeat: ${repeatMode === "all" ? "All" : "One"}`}
               >
                 {getRepeatIcon()}
               </button>
@@ -591,7 +498,7 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
                 onMouseDown={handleProgressMouseDown}
                 onTouchStart={handleProgressTouchStart}
                 style={{
-                  opacity: isValidDuration ? 1 : 0.5, // Visual feedback for invalid state
+                  opacity: isValidDuration ? 1 : 0.5,
                 }}
               >
                 <div
@@ -607,7 +514,6 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
             </div>
           </div>
 
-          {/* Volume Control - Right Section */}
           <div className="flex items-center gap-2 md:gap-3 w-1/4 justify-end">
             <button
               className="text-gray-400 hover:text-white transition-colors"
@@ -672,12 +578,10 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
       </div>
 
       <style jsx>{`
-        /* Safe area support for iPhone */
         .pb-safe {
           padding-bottom: env(safe-area-inset-bottom);
         }
 
-        /* Improve touch interaction */
         .touch-manipulation {
           touch-action: manipulation;
         }
@@ -712,7 +616,6 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
           opacity: 1;
         }
 
-        /* Prevent scrolling when dragging progress bar */
         body.dragging {
           overflow: hidden;
           touch-action: none;

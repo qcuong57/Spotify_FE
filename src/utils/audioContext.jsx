@@ -12,10 +12,11 @@ export const AudioProvider = ({ children }) => {
   const [volume, setVolume] = useState(50);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  // Thêm state cho playlist và chỉ số bài hát hiện tại
   const [playlist, setPlaylist] = useState([]);
   const [currentSongIndex, setCurrentSongIndex] = useState(-1);
-  const [songDescriptionAvailable, setSongDescriptionAvailable] = useState(false);
+  const [songDescriptionAvailable, setSongDescriptionAvailable] =
+    useState(false);
+  const [repeatMode, setRepeatMode] = useState("all"); // "all", "one"
 
   // Hàm để phát/tạm dừng bài hát
   const togglePlay = () => {
@@ -54,9 +55,9 @@ export const AudioProvider = ({ children }) => {
   const playBackSong = () => {
     if (playlist.length === 0) return;
 
-    let nextIndex = currentSongIndex -1;
+    let nextIndex = currentSongIndex - 1;
     if (nextIndex < 0) {
-      nextIndex = playlist.length - 1; // Quay lại bài đầu tiên nếu hết danh sách
+      nextIndex = playlist.length - 1; // Quay lại bài cuối cùng nếu ở bài đầu
     }
 
     setCurrentSongIndex(nextIndex);
@@ -65,10 +66,10 @@ export const AudioProvider = ({ children }) => {
 
   // Hàm để thêm danh sách bài hát
   const setNewPlaylist = (newPlaylist, startIndex = 0) => {
-    setSongDescriptionAvailable(true)
+    setSongDescriptionAvailable(true);
     if (audio) {
-      audio.pause(); // Dừng bài hát hiện tại
-      setIsPlaying(false); // Cập nhật trạng thái phát
+      audio.pause();
+      setIsPlaying(false);
     }
     setPlaylist(newPlaylist);
     if (newPlaylist.length > 0) {
@@ -87,8 +88,10 @@ export const AudioProvider = ({ children }) => {
         audio.pause();
       }
       const newAudio = new Audio(currentSong.url_audio);
-      newAudio.volume = 0.5;
-      newAudio.play();
+      newAudio.volume = isMute ? 0 : volume / 100;
+      newAudio
+        .play()
+        .catch((error) => console.error("Playback failed:", error));
       setAudio(newAudio);
       setIsPlaying(true);
     }
@@ -115,18 +118,41 @@ export const AudioProvider = ({ children }) => {
     }
   }, [audio]);
 
+  // Xử lý khi bài hát kết thúc
+  useEffect(() => {
+    if (audio) {
+      const handleEnded = () => {
+        console.log("Audio ended, repeat mode:", repeatMode);
+        if (repeatMode === "one") {
+          setTimeout(() => {
+            if (audio && !isNaN(audio.duration) && audio.duration > 0) {
+              audio.currentTime = 0;
+              setPlaybackTime(0);
+              audio
+                .play()
+                .catch((error) => console.error("Repeat failed:", error));
+              setIsPlaying(true);
+            }
+          }, 100);
+        } else {
+          // repeatMode === "all"
+          setTimeout(() => {
+            playNextSong();
+          }, 100);
+        }
+      };
+
+      audio.addEventListener("ended", handleEnded);
+      return () => audio.removeEventListener("ended", handleEnded);
+    }
+  }, [audio, repeatMode, playNextSong, setPlaybackTime, setIsPlaying]);
+
   // Cập nhật volume và mute
   useEffect(() => {
     if (audio) {
       audio.volume = isMute ? 0 : volume / 100;
     }
   }, [volume, isMute, audio]);
-
-  useEffect(() => {
-    if (currentTime === duration) {
-      playNextSong(); // Tự động phát bài tiếp theo khi bài hiện tại kết thúc
-    }
-  }, [currentTime]);
 
   return (
     <AudioContext.Provider
@@ -150,9 +176,11 @@ export const AudioProvider = ({ children }) => {
         setNewPlaylist,
         currentSongIndex,
         playNextSong,
+        playBackSong,
         songDescriptionAvailable,
         setSongDescriptionAvailable,
-        playBackSong
+        repeatMode,
+        setRepeatMode,
       }}
     >
       {children}
