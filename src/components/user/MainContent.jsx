@@ -76,6 +76,71 @@ const Section = memo(
   )
 );
 
+// Genre Filter Component
+const GenreFilter = memo(
+  ({ genres, selectedGenre, onGenreSelect, isLoading }) => {
+    return (
+      <div className="mb-8">
+        <div className="flex flex-row justify-between items-center mb-4">
+          <h2 className="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
+            <span className="text-xl">🎭</span>
+            Thể loại
+          </h2>
+        </div>
+
+        <div className="flex flex-wrap gap-2 md:gap-3">
+          {/* All Genres Button */}
+          <button
+            onClick={() => onGenreSelect(null)}
+            className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ease-out
+              ${
+                selectedGenre === null
+                  ? "bg-green-700 text-white shadow-md scale-105"
+                  : "bg-[#1a1a1a] text-gray-300 hover:bg-[#262626] hover:text-white hover:shadow-lg hover:scale-105"
+              }`}
+          >
+            Tất cả
+          </button>
+
+          {/* Genre Buttons */}
+          {genres.map((genre) => (
+            <button
+              key={genre.id}
+              onClick={() => onGenreSelect(genre)}
+              disabled={isLoading}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ease-out
+                ${
+                  selectedGenre?.id === genre.id
+                    ? "bg-green-700 text-white shadow-md scale-105"
+                    : "bg-[#1a1a1a] text-gray-300 hover:bg-[#262626] hover:text-white hover:shadow-lg hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                }`}
+            >
+              {genre.name}
+              {genre.songs && (
+                <span className="ml-1 text-xs opacity-75">
+                  ({genre.songs.length})
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* Loading indicator for genre filter */}
+        {isLoading && (
+          <div className="flex items-center justify-center mt-4">
+            <div className="flex items-center gap-2 text-green-400">
+              <div className="w-4 h-4 relative">
+                <div className="absolute inset-0 rounded-full border-2 border-green-400 border-t-transparent animate-spin"></div>
+              </div>
+              <span className="text-sm">Đang tải bài hát...</span>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+);
+
 const SongCardSkeleton = () => (
   <div className="bg-[#181818] p-4 rounded-lg overflow-hidden">
     {/* Image skeleton with shimmer effect */}
@@ -133,6 +198,16 @@ const SongGrid = memo(
           {Array.from({ length: 12 }).map((_, index) => (
             <SongCardSkeleton key={`skeleton-${index}`} />
           ))}
+        </div>
+      );
+    }
+
+    if (songs.length === 0) {
+      return (
+        <div className="flex flex-col items-center justify-center py-12 text-gray-400">
+          <div className="text-4xl mb-4 opacity-50">🎵</div>
+          <p className="text-lg mb-2">Không có bài hát nào</p>
+          <p className="text-sm opacity-75">Thể loại này chưa có bài hát</p>
         </div>
       );
     }
@@ -205,6 +280,9 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
   const [genres, setGenres] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedGenre, setSelectedGenre] = useState(null);
+  const [filteredSongs, setFilteredSongs] = useState([]);
+  const [genreFilterLoading, setGenreFilterLoading] = useState(false);
   const [loadingStates, setLoadingStates] = useState({
     allSongs: false,
     latest: false,
@@ -269,6 +347,9 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
         setGenres(genresResponse?.data?.results || []);
         setTrendingSongs(trendingResponse?.data?.results || []);
         setLatestSongs(latestResponse?.data?.results || []);
+
+        // Set initial filtered songs to all songs
+        setFilteredSongs(songsResponse?.data?.results || []);
       } catch (error) {
         console.error("Error fetching data:", error);
         setError("Failed to load songs. Please try again.");
@@ -279,6 +360,30 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
 
     fetchAllData();
   }, []);
+
+  // Handle genre filter selection
+  const handleGenreSelect = useCallback(
+    async (genre) => {
+      setGenreFilterLoading(true);
+      setSelectedGenre(genre);
+
+      try {
+        if (genre === null) {
+          // Show all songs
+          setFilteredSongs(allSongs);
+        } else {
+          // Filter songs by selected genre
+          const genreSongs = genre.songs || [];
+          setFilteredSongs(genreSongs);
+        }
+      } catch (error) {
+        console.error("Error filtering by genre:", error);
+      } finally {
+        setGenreFilterLoading(false);
+      }
+    },
+    [allSongs]
+  );
 
   // Quick navigation function
   const handleAllSongs = useCallback(
@@ -534,74 +639,115 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
 
   return (
     <div className="bg-[#131313] text-white p-3 md:p-4 mr-0 md:mr-2 rounded-lg flex-1 overflow-y-auto space-y-8 spotify-scrollbar pb-8">
-      {/* Trending Songs Section */}
-      {trendingSongs.length > 0 && (
-        <TrendingSection
-          trendingSongs={displayTrendingSongs}
-          contextMenu={contextMenu}
-          setContextMenu={setContextMenu}
-          handleCloseContextMenu={handleCloseContextMenu}
+      {/* Genre Filter Section */}
+      {validGenres.length > 0 && (
+        <GenreFilter
+          genres={validGenres}
+          selectedGenre={selectedGenre}
+          onGenreSelect={handleGenreSelect}
+          isLoading={genreFilterLoading}
         />
       )}
 
-      {/* Latest Songs Section */}
-      {latestSongs.length > 0 && (
+      {/* Filtered Songs Section (when genre is selected) */}
+      {selectedGenre && (
         <Section
-          title="Mới phát hành"
-          emoji="🆕"
-          onViewAll={handleLoadMoreLatest}
-          hoverColor="green"
-          isLoading={loadingStates.latest}
-        >
-          <SongGrid
-            songs={latestSongs}
-            keyPrefix="latest"
-            contextMenu={contextMenu}
-            setContextMenu={setContextMenu}
-            handleCloseContextMenu={handleCloseContextMenu}
-          />
-        </Section>
-      )}
-
-      {/* All Songs Section */}
-      {allSongs.length > 0 && (
-        <Section
-          title="Tất cả bài hát"
-          onViewAll={handleLoadAllSongs}
-          buttonText="Hiện tất cả"
-          hoverColor="green"
-          isLoading={loadingStates.allSongs}
-        >
-          <SongGrid
-            songs={displayAllSongs}
-            keyPrefix="all"
-            contextMenu={contextMenu}
-            setContextMenu={setContextMenu}
-            handleCloseContextMenu={handleCloseContextMenu}
-          />
-        </Section>
-      )}
-
-      {/* Genres Sections */}
-      {validGenres.map((genre) => (
-        <Section
-          key={genre.id}
-          title={genre.name}
+          title={`${selectedGenre.name}`}
+          emoji="🎵"
           onViewAll={() =>
-            handleGenreViewAll(genre.songs, genre.name, genre.id)
+            handleGenreViewAll(
+              filteredSongs,
+              selectedGenre.name,
+              selectedGenre.id
+            )
           }
           hoverColor="green"
-          isLoading={loadingStates.genres[genre.id]}
+          isLoading={genreFilterLoading}
         >
           <SongGrid
-            songs={genre.songs.slice(0, 12)}
-            keyPrefix={`genre-${genre.id}`}
+            songs={filteredSongs.slice(0, 12)}
+            keyPrefix={`filtered-${selectedGenre.id}`}
             contextMenu={contextMenu}
             setContextMenu={setContextMenu}
             handleCloseContextMenu={handleCloseContextMenu}
+            isLoading={genreFilterLoading}
           />
         </Section>
-      ))}
+      )}
+
+      {/* Show other sections only when no genre is selected */}
+      {!selectedGenre && (
+        <>
+          {/* Trending Songs Section */}
+          {trendingSongs.length > 0 && (
+            <TrendingSection
+              trendingSongs={displayTrendingSongs}
+              contextMenu={contextMenu}
+              setContextMenu={setContextMenu}
+              handleCloseContextMenu={handleCloseContextMenu}
+            />
+          )}
+
+          {/* Latest Songs Section */}
+          {latestSongs.length > 0 && (
+            <Section
+              title="Mới phát hành"
+              emoji="🆕"
+              onViewAll={handleLoadMoreLatest}
+              hoverColor="green"
+              isLoading={loadingStates.latest}
+            >
+              <SongGrid
+                songs={latestSongs}
+                keyPrefix="latest"
+                contextMenu={contextMenu}
+                setContextMenu={setContextMenu}
+                handleCloseContextMenu={handleCloseContextMenu}
+              />
+            </Section>
+          )}
+
+          {/* All Songs Section */}
+          {allSongs.length > 0 && (
+            <Section
+              title="Tất cả bài hát"
+              onViewAll={handleLoadAllSongs}
+              buttonText="Hiện tất cả"
+              hoverColor="green"
+              isLoading={loadingStates.allSongs}
+            >
+              <SongGrid
+                songs={displayAllSongs}
+                keyPrefix="all"
+                contextMenu={contextMenu}
+                setContextMenu={setContextMenu}
+                handleCloseContextMenu={handleCloseContextMenu}
+              />
+            </Section>
+          )}
+
+          {/* Genres Sections */}
+          {validGenres.map((genre) => (
+            <Section
+              key={genre.id}
+              title={genre.name}
+              onViewAll={() =>
+                handleGenreViewAll(genre.songs, genre.name, genre.id)
+              }
+              hoverColor="green"
+              isLoading={loadingStates.genres[genre.id]}
+            >
+              <SongGrid
+                songs={genre.songs.slice(0, 12)}
+                keyPrefix={`genre-${genre.id}`}
+                contextMenu={contextMenu}
+                setContextMenu={setContextMenu}
+                handleCloseContextMenu={handleCloseContextMenu}
+              />
+            </Section>
+          ))}
+        </>
+      )}
 
       {/* Empty State */}
       {allSongs.length === 0 &&
