@@ -67,7 +67,7 @@ const Banner = ({ onClose }) => {
           <button
             onClick={handleClose}
             className="absolute top-4 right-4 z-10 p-2 rounded-full bg-green-600 bg-opacity-20 hover:bg-opacity-30 transition-all duration-200 group"
-            title="Close banner"
+            title="Đóng banner"
           >
             <IconX
               className="w-5 h-5 text-white group-hover:scale-110 transition-transform duration-200"
@@ -87,16 +87,16 @@ const Banner = ({ onClose }) => {
 
               {/* Title */}
               <h3 className="text-white font-bold text-2xl sm:text-3xl leading-tight">
-                Announcement
+                Thông báo
               </h3>
 
               {/* Description */}
               <p className="text-white text-sm sm:text-base opacity-90 leading-relaxed max-w-xs mx-auto">
-                If the website is loading music, please wait and refresh the
-                page after 1-2 minutes.
+                Nếu website trong trạng thái loading nhạc. Vui lòng đợi tải lại
+                trang sau 1-2 phút.
               </p>
               <p className="text-white text-sm sm:text-base opacity-90 leading-relaxed max-w-xs mx-auto">
-                Discover your next favorite song with us. Thank you! — UIA Team
+                UIA Cường. Xin cám ơn!
               </p>
             </div>
           </div>
@@ -144,7 +144,7 @@ const HomePage = () => {
           <button
             onClick={() => setShowLibraries(true)}
             className="fixed top-1/2 left-4 -translate-y-1/2 z-20 bg-[#1f1f1f] hover:bg-[#2a2a2a] text-white rounded-full p-2 sm:p-3 shadow-lg transition-colors"
-            title="Open library"
+            title="Mở thư viện"
           >
             <IconMenu2 stroke={2} className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
