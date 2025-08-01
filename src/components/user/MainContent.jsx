@@ -282,7 +282,7 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
 
   // Quick navigation function
   const handleAllSongs = useCallback(
-    (songs, title, genreId = null) => {
+    async (songs, title, genreId = null) => {
       if (!Array.isArray(songs)) {
         console.warn("Invalid songs data:", songs);
         return;
@@ -296,19 +296,32 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
         }));
       }
 
-      // Immediate navigation without delay
-      const data = { songs, title: title || "Songs" };
-      setListSongsDetail(data);
+      // Show loading state on destination page first
+      const loadingData = {
+        songs: [],
+        title: "Đang tải...",
+        isLoading: true,
+      };
+      setListSongsDetail(loadingData);
       setCurrentView("listSongs");
 
-      // Clear loading state after navigation
+      // Simulate loading time for better UX
+      await new Promise((resolve) => setTimeout(resolve, 300));
+
+      // Then show actual data
+      const data = {
+        songs,
+        title: title || "Songs",
+        isLoading: false,
+      };
+      setListSongsDetail(data);
+
+      // Clear loading state for genre button
       if (genreId) {
-        setTimeout(() => {
-          setLoadingStates((prev) => ({
-            ...prev,
-            genres: { ...prev.genres, [genreId]: false },
-          }));
-        }, 500);
+        setLoadingStates((prev) => ({
+          ...prev,
+          genres: { ...prev.genres, [genreId]: false },
+        }));
       }
     },
     [setListSongsDetail, setCurrentView]
@@ -381,17 +394,38 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
 
     try {
       setLoadingStates((prev) => ({ ...prev, latest: true }));
+
+      // Show loading on destination page first
+      const loadingData = {
+        songs: [],
+        title: "Đang tải bài hát mới nhất...",
+        isLoading: true,
+      };
+      setListSongsDetail(loadingData);
+      setCurrentView("listSongs");
+
       const response = await getLatestSongs(50);
       if (response?.data?.results) {
-        handleAllSongs(response.data.results, "🆕 Bài hát mới nhất");
+        const data = {
+          songs: response.data.results,
+          title: "🆕 Bài hát mới nhất",
+          isLoading: false,
+        };
+        setListSongsDetail(data);
       }
     } catch (error) {
       console.error("Error loading more latest songs:", error);
-      setError("Không thể tải bài hát mới. Vui lòng thử lại.");
+      const errorData = {
+        songs: [],
+        title: "Lỗi tải dữ liệu",
+        error: "Không thể tải bài hát mới. Vui lòng thử lại.",
+        isLoading: false,
+      };
+      setListSongsDetail(errorData);
     } finally {
       setLoadingStates((prev) => ({ ...prev, latest: false }));
     }
-  }, [handleAllSongs, loadingStates.latest]);
+  }, [setListSongsDetail, setCurrentView, loadingStates.latest]);
 
   // Handle genre view all with loading state
   const handleGenreViewAll = useCallback(
@@ -499,7 +533,7 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
   }
 
   return (
-    <div className="bg-[#131313] text-white p-3 md:p-4 mr-0 md:mr-2 rounded-lg flex-1 overflow-y-auto space-y-8 scrollbar-hide pb-8">
+    <div className="bg-[#131313] text-white p-3 md:p-4 mr-0 md:mr-2 rounded-lg flex-1 overflow-y-auto space-y-8 spotify-scrollbar pb-8">
       {/* Trending Songs Section */}
       {trendingSongs.length > 0 && (
         <TrendingSection

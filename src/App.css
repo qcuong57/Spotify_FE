@@ -40,3 +40,150 @@
 .read-the-docs {
   color: #888;
 }
+
+/* Spotify-inspired Dark Scrollbar Styles */
+
+/* Webkit browsers (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: #121212; /* Spotify's main background color */
+  border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #282828; /* Dark gray similar to Spotify's sidebar */
+  border-radius: 6px;
+  border: 2px solid #121212; /* Creates a subtle border effect */
+  transition: background-color 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #404040; /* Lighter on hover */
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: #1db954; /* Spotify green when active */
+}
+
+::-webkit-scrollbar-corner {
+  background: #121212;
+}
+
+/* Firefox */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: #282828 #121212;
+}
+
+/* Thinner scrollbar for mobile/compact view */
+@media (max-width: 768px) {
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    border: 1px solid #121212;
+  }
+}
+
+/* Custom scrollbar for specific containers */
+.spotify-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #282828 #121212;
+}
+
+.spotify-scrollbar::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.spotify-scrollbar::-webkit-scrollbar-track {
+  background: #131313; /* Slightly different for nested containers */
+  border-radius: 5px;
+}
+
+.spotify-scrollbar::-webkit-scrollbar-thumb {
+  background: #2a2a2a;
+  border-radius: 5px;
+  border: 1px solid #131313;
+}
+
+.spotify-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #3e3e3e;
+}
+
+/* Ultra-thin scrollbar for overlay content */
+.thin-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.thin-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.thin-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(40, 40, 40, 0.7);
+  border-radius: 3px;
+  border: none;
+}
+
+.thin-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(64, 64, 64, 0.9);
+}
+
+/* Hide scrollbar but keep functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+/* Animated scrollbar for smooth interactions */
+.animated-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(45deg, #282828, #404040);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.animated-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(45deg, #404040, #1db954);
+  transform: scale(1.1);
+}
+
+/* Dark green accent scrollbar for special sections */
+.accent-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #1db954, #1ed760);
+}
+
+.accent-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #1ed760, #21e065);
+}
+
+/* Code/text area specific scrollbar */
+.code-scrollbar::-webkit-scrollbar {
+  width: 14px;
+  height: 14px;
+}
+
+.code-scrollbar::-webkit-scrollbar-track {
+  background: #0d1117; /* GitHub dark theme inspired */
+  border-radius: 7px;
+}
+
+.code-scrollbar::-webkit-scrollbar-thumb {
+  background: #21262d;
+  border-radius: 7px;
+  border: 2px solid #0d1117;
+}
+
+.code-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #30363d;
+}
