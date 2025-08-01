@@ -31,14 +31,14 @@ const ListSongs = ({ listSongs }) => {
   // Ensure we have valid data
   if (!listSongs || !listSongs.songs || !Array.isArray(listSongs.songs)) {
     return (
-      <div className="bg-[#131313] text-white flex-1 mr-2 sm:mr-0 rounded-lg p-4">
+      <div className="bg-[#131313] text-white flex-1 mr-2 sm:mr-0 rounded-lg p-4 scrollbar-spotify">
         <p className="text-gray-400">No songs available</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-[#131313] text-white flex-1 mr-2 sm:mr-0 rounded-lg overflow-y-auto">
+    <div className="bg-[#131313] text-white flex-1 mr-2 sm:mr-0 rounded-lg overflow-y-auto scrollbar-spotify">
       {/* Header */}
       <div className="sticky top-0 bg-[#131313] z-10 border-b border-gray-800">
         <h3 className="p-4 font-bold text-xl sm:text-2xl">
@@ -50,9 +50,10 @@ const ListSongs = ({ listSongs }) => {
       <div
         className={`
           grid gap-4 p-4
-          ${songDescriptionAvailable 
-            ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4" 
-            : "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6"
+          ${
+            songDescriptionAvailable
+              ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+              : "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6"
           }
         `}
       >
