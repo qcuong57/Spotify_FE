@@ -81,13 +81,6 @@ const GenreFilter = memo(
   ({ genres, selectedGenre, onGenreSelect, isLoading }) => {
     return (
       <div className="mb-8">
-        {/* <div className="flex flex-row justify-between items-center mb-4">
-          <h2 className="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
-            <span className="text-xl">🎭</span>
-            Thể loại
-          </h2>
-        </div> */}
-
         <div className="flex flex-wrap gap-2 md:gap-3">
           {/* All Genres Button */}
           <button
@@ -558,7 +551,7 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
   // Loading state
   if (loading) {
     return (
-      <div className="bg-[#131313] text-white p-4 mr-0 md:mr-2 rounded-lg flex-1 overflow-y-auto">
+      <div className="bg-[#131313] text-white p-4 mr-0 md:mr-2 rounded-lg flex-1 overflow-y-auto scrollbar-spotify">
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center space-y-6">
             {/* Main Loading Animation */}
@@ -621,7 +614,7 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
   // Error state
   if (error) {
     return (
-      <div className="bg-[#131313] text-white p-4 mr-0 md:mr-2 rounded-lg flex-1 overflow-y-auto">
+      <div className="bg-[#131313] text-white p-4 mr-0 md:mr-2 rounded-lg flex-1 overflow-y-auto scrollbar-spotify">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <p className="text-red-400 mb-2">{error}</p>
@@ -638,7 +631,7 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
   }
 
   return (
-    <div className="bg-[#131313] text-white p-3 md:p-4 mr-0 md:mr-2 rounded-lg flex-1 overflow-y-auto space-y-8 spotify-scrollbar pb-8">
+    <div className="bg-[#131313] text-white p-3 md:p-4 mr-0 md:mr-2 rounded-lg flex-1 overflow-y-auto space-y-8 scrollbar-spotify pb-8">
       {/* Genre Filter Section */}
       {validGenres.length > 0 && (
         <GenreFilter
