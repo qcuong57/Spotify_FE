@@ -98,6 +98,10 @@ const Banner = ({ onClose }) => {
               <p className="text-white text-sm sm:text-base opacity-90 leading-relaxed max-w-xs mx-auto">
                 UIA Cường. Xin cám ơn!
               </p>
+              <p className="text-white text-xs italic sm:text-sm opacity-90 leading-relaxed max-w-xs mx-auto">
+                “Inspired by Spotify. Not affiliated with or endorsed by Spotify
+                AB.”
+              </p>
             </div>
           </div>
 
