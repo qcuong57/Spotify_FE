@@ -81,12 +81,12 @@ const GenreFilter = memo(
   ({ genres, selectedGenre, onGenreSelect, isLoading }) => {
     return (
       <div className="mb-8">
-        <div className="flex flex-row justify-between items-center mb-4">
+        {/* <div className="flex flex-row justify-between items-center mb-4">
           <h2 className="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
             <span className="text-xl">🎭</span>
             Thể loại
           </h2>
-        </div>
+        </div> */}
 
         <div className="flex flex-wrap gap-2 md:gap-3">
           {/* All Genres Button */}
