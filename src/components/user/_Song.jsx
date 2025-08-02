@@ -74,119 +74,105 @@ const NowPlayingIndicator = memo(() => (
   </div>
 ));
 
-// Optimized Floating Bubble Effect - generates fewer, more efficient bubbles
+// Heavily optimized Floating Bubble Effect
 const FloatingBubbleEffect = memo(({ isHovered }) => {
-  const [bubbles, setBubbles] = useState([]);
-  const animationFrameRef = useRef();
+  const [isActive, setIsActive] = useState(false);
+  const containerRef = useRef(null);
+  const timeoutRef = useRef(null);
 
-  // Pre-generated bubble configurations for better performance
+  // Reduced bubble configurations for better performance
   const bubbleConfigs = useMemo(() => {
     const configs = [];
     
-    // Small floating bubbles (8 total)
-    for (let i = 0; i < 8; i++) {
+    // Only 4 small bubbles (reduced from 8)
+    for (let i = 0; i < 4; i++) {
       configs.push({
         id: `float-${i}`,
-        size: 3 + Math.random() * 4,
-        x: 15 + Math.random() * 70, // Keep away from edges
-        y: 20 + Math.random() * 60, // Distributed throughout
-        duration: 4 + Math.random() * 2,
-        delay: Math.random() * 1.5,
-        type: 'small',
-        animationType: ['gentle', 'sway', 'drift'][Math.floor(Math.random() * 3)]
-      });
-    }
-
-    // Medium floating bubbles (5 total)
-    for (let i = 0; i < 5; i++) {
-      configs.push({
-        id: `medium-${i}`,
-        size: 5 + Math.random() * 3,
+        size: 3 + Math.random() * 3, // Smaller range
         x: 20 + Math.random() * 60,
         y: 25 + Math.random() * 50,
-        duration: 5 + Math.random() * 2,
-        delay: Math.random() * 2,
-        type: 'medium',
-        animationType: ['sway', 'drift', 'pulse'][Math.floor(Math.random() * 3)]
+        duration: 4 + Math.random() * 1.5, // Shorter duration
+        delay: Math.random() * 1,
+        type: 'small',
+        animationType: 'gentle' // Fixed animation type for consistency
       });
     }
 
-    // Large floating bubbles (3 total)
-    for (let i = 0; i < 3; i++) {
+    // Only 2 medium bubbles (reduced from 5)
+    for (let i = 0; i < 2; i++) {
       configs.push({
-        id: `large-${i}`,
-        size: 6 + Math.random() * 4,
+        id: `medium-${i}`,
+        size: 4 + Math.random() * 2,
         x: 25 + Math.random() * 50,
         y: 30 + Math.random() * 40,
-        duration: 6 + Math.random() * 2,
-        delay: Math.random() * 2.5,
-        type: 'large',
-        animationType: ['drift', 'pulse'][Math.floor(Math.random() * 2)]
+        duration: 5 + Math.random() * 1,
+        delay: Math.random() * 1.5,
+        type: 'medium',
+        animationType: 'sway'
       });
     }
+
+    // Only 1 large bubble (reduced from 3)
+    configs.push({
+      id: 'large-0',
+      size: 5 + Math.random() * 2,
+      x: 35 + Math.random() * 30,
+      y: 35 + Math.random() * 30,
+      duration: 6,
+      delay: Math.random() * 2,
+      type: 'large',
+      animationType: 'drift'
+    });
 
     return configs;
   }, []); // Only generate once
 
+  // Debounced activation to prevent flickering
   useEffect(() => {
-    if (!isHovered) {
-      setBubbles([]);
-      return;
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
     }
 
-    // Use pre-generated configs for better performance
-    setBubbles(bubbleConfigs);
-  }, [isHovered, bubbleConfigs]);
+    if (isHovered) {
+      timeoutRef.current = setTimeout(() => {
+        setIsActive(true);
+      }, 150); // Delay activation to reduce flicker
+    } else {
+      setIsActive(false);
+    }
 
-  if (!isHovered || bubbles.length === 0) return null;
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, [isHovered]);
+
+  if (!isActive) return null;
 
   return (
-    <div className="absolute inset-0 pointer-events-none overflow-hidden z-0 rounded-lg bubble-container">
-      {bubbles.map((bubble) => {
-        const getAnimationClass = () => {
-          switch (bubble.animationType) {
-            case 'gentle':
-              return 'animate-floating-gentle';
-            case 'sway':
-              return 'animate-floating-sway';
-            case 'drift':
-              return 'animate-floating-drift';
-            case 'pulse':
-              return 'animate-floating-pulse';
-            default:
-              return 'animate-floating-gentle';
-          }
-        };
-
-        const getBubbleClass = () => {
-          const baseClass = 'absolute rounded-full';
-          const gradientClass = bubble.type === 'large' 
-            ? 'bubble-gradient-large-optimized' 
-            : 'bubble-gradient-optimized';
-          return `${baseClass} ${gradientClass} ${getAnimationClass()}`;
-        };
-
-        const getBubbleStyle = () => ({
-          width: `${bubble.size}px`,
-          height: `${bubble.size}px`,
-          left: `${bubble.x}%`,
-          top: `${bubble.y}%`,
-          animationDuration: `${bubble.duration}s`,
-          animationDelay: `${bubble.delay}s`,
-          zIndex: bubble.type === 'large' ? 3 : bubble.type === 'medium' ? 2 : 1,
-        });
-
-        return (
-          <div
-            key={bubble.id}
-            className={getBubbleClass()}
-            style={getBubbleStyle()}
-          />
-        );
-      })}
+    <div 
+      ref={containerRef}
+      className="absolute inset-0 pointer-events-none overflow-hidden z-0 rounded-lg bubble-container-optimized"
+    >
+      {bubbleConfigs.map((bubble) => (
+        <div
+          key={bubble.id}
+          className={`absolute rounded-full bubble-optimized bubble-${bubble.animationType}-optimized`}
+          style={{
+            width: `${bubble.size}px`,
+            height: `${bubble.size}px`,
+            left: `${bubble.x}%`,
+            top: `${bubble.y}%`,
+            animationDuration: `${bubble.duration}s`,
+            animationDelay: `${bubble.delay}s`,
+            zIndex: bubble.type === 'large' ? 3 : bubble.type === 'medium' ? 2 : 1,
+          }}
+        />
+      ))}
       
-      {/* Subtle ambient light effect */}
-      <div className="absolute inset-0 bg-gradient-to-br from-teal-400/2 via-transparent to-emerald-400/2 opacity-40" />
+      {/* Simplified ambient light effect */}
+      <div className="absolute inset-0 bg-gradient-to-br from-teal-400/1 via-transparent to-emerald-400/1 opacity-30" />
     </div>
   );
 });
@@ -336,7 +322,7 @@ const Song = ({
     [song.id, setContextMenu]
   );
 
-  // Optimized hover handlers with debouncing
+  // Optimized hover handlers with longer debouncing
   const handleMouseEnter = useCallback(() => {
     if (hoverTimeoutRef.current) {
       clearTimeout(hoverTimeoutRef.current);
@@ -350,7 +336,7 @@ const Song = ({
     }
     hoverTimeoutRef.current = setTimeout(() => {
       setIsHovered(false);
-    }, 200); // Slightly longer delay to prevent flickering
+    }, 300); // Longer delay to prevent rapid state changes
   }, []);
 
   useEffect(() => {
@@ -368,7 +354,7 @@ const Song = ({
   return (
     <div
       className={`
-        group relative transition-all duration-300 p-4 rounded-lg cursor-pointer backdrop-blur-sm overflow-hidden
+        group relative transition-all duration-300 p-4 rounded-lg cursor-pointer backdrop-blur-sm overflow-hidden song-card-optimized
         ${isHovered 
           ? 'bg-teal-800/50 shadow-xl shadow-teal-500/25 transform scale-[1.03] border border-teal-400/20' 
           : 'bg-teal-900/30 hover:bg-teal-800/30 border border-transparent'

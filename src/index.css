@@ -62,147 +62,117 @@
   scrollbar-color: #333333 #1a1a1a;
 }
 
-/* Optimized Floating Bubble Animations */
-@keyframes floating-gentle {
-  0%, 100% {
-    transform: translateY(0) translateX(0) scale(1);
-    opacity: 0.6;
-  }
-  25% {
-    transform: translateY(-8px) translateX(4px) scale(1.1);
-    opacity: 0.8;
-  }
-  50% {
-    transform: translateY(-5px) translateX(-3px) scale(0.95);
-    opacity: 0.9;
-  }
-  75% {
-    transform: translateY(-12px) translateX(6px) scale(1.05);
-    opacity: 0.7;
-  }
-}
-
-@keyframes floating-sway {
-  0%, 100% {
-    transform: translateY(0) translateX(0) rotate(0deg) scale(1);
-    opacity: 0.7;
-  }
-  33% {
-    transform: translateY(-6px) translateX(8px) rotate(5deg) scale(1.08);
-    opacity: 0.85;
-  }
-  66% {
-    transform: translateY(-10px) translateX(-5px) rotate(-3deg) scale(0.98);
-    opacity: 0.9;
-  }
-}
-
-@keyframes floating-drift {
-  0%, 100% {
+/* OPTIMIZED Floating Bubble Animations - Reduced complexity */
+@keyframes floating-gentle-optimized {
+  0%,
+  100% {
     transform: translateY(0) translateX(0) scale(1);
     opacity: 0.5;
   }
-  20% {
-    transform: translateY(-4px) translateX(3px) scale(1.05);
+  50% {
+    transform: translateY(-8px) translateX(3px) scale(1.05);
     opacity: 0.7;
   }
-  40% {
-    transform: translateY(-8px) translateX(-2px) scale(0.95);
+}
+
+@keyframes floating-sway-optimized {
+  0%,
+  100% {
+    transform: translateY(0) translateX(0) scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translateY(-6px) translateX(5px) scale(1.03);
     opacity: 0.8;
   }
-  60% {
-    transform: translateY(-6px) translateX(5px) scale(1.02);
-    opacity: 0.75;
-  }
-  80% {
-    transform: translateY(-10px) translateX(-4px) scale(0.98);
-    opacity: 0.6;
-  }
 }
 
-@keyframes floating-pulse {
-  0%, 100% {
-    transform: scale(1);
-    opacity: 0.6;
+@keyframes floating-drift-optimized {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 0.4;
   }
   50% {
-    transform: scale(1.15);
-    opacity: 0.9;
+    transform: translateY(-10px) scale(1.08);
+    opacity: 0.7;
   }
 }
 
-/* Optimized shimmer effect */
-@keyframes bubble-shimmer-light {
-  0%, 100% {
-    box-shadow: 
-      0 0 6px rgba(20, 184, 166, 0.3),
-      inset 0 1px 2px rgba(255, 255, 255, 0.6);
+/* Simplified shimmer effect */
+@keyframes bubble-shimmer-optimized {
+  0%,
+  100% {
+    box-shadow: 0 0 4px rgba(20, 184, 166, 0.2);
   }
   50% {
-    box-shadow: 
-      0 0 12px rgba(20, 184, 166, 0.5),
-      inset 0 2px 3px rgba(255, 255, 255, 0.8);
+    box-shadow: 0 0 8px rgba(20, 184, 166, 0.4);
   }
 }
 
-/* Performance optimized animation classes */
-.animate-floating-gentle {
-  animation: floating-gentle 4s ease-in-out infinite, bubble-shimmer-light 3s ease-in-out infinite;
-  will-change: transform, opacity;
+/* PERFORMANCE OPTIMIZED animation classes */
+.bubble-gentle-optimized {
+  animation: floating-gentle-optimized 4s ease-in-out infinite;
+  will-change: transform;
+  transform: translateZ(0); /* Force hardware acceleration */
 }
 
-.animate-floating-sway {
-  animation: floating-sway 5s ease-in-out infinite, bubble-shimmer-light 4s ease-in-out infinite;
-  will-change: transform, opacity;
+.bubble-sway-optimized {
+  animation: floating-sway-optimized 5s ease-in-out infinite;
+  will-change: transform;
+  transform: translateZ(0);
 }
 
-.animate-floating-drift {
-  animation: floating-drift 6s ease-in-out infinite, bubble-shimmer-light 3.5s ease-in-out infinite;
-  will-change: transform, opacity;
+.bubble-drift-optimized {
+  animation: floating-drift-optimized 6s ease-in-out infinite;
+  will-change: transform;
+  transform: translateZ(0);
 }
 
-.animate-floating-pulse {
-  animation: floating-pulse 3s ease-in-out infinite, bubble-shimmer-light 2.5s ease-in-out infinite;
-  will-change: transform, opacity;
+/* SIMPLIFIED gradient bubble effects - Much lighter */
+.bubble-optimized {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.6) 0%,
+    rgba(20, 184, 166, 0.3) 50%,
+    rgba(255, 255, 255, 0.2) 100%
+  );
+  box-shadow: 0 1px 3px rgba(20, 184, 166, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  animation: bubble-shimmer-optimized 3s ease-in-out infinite;
 }
 
-/* Optimized gradient bubble effects */
-.bubble-gradient-optimized {
-  background: linear-gradient(135deg, 
-    rgba(255, 255, 255, 0.8) 0%, 
-    rgba(20, 184, 166, 0.6) 30%,
-    rgba(16, 185, 129, 0.4) 70%,
-    rgba(255, 255, 255, 0.3) 100%);
-  box-shadow: 
-    0 2px 8px rgba(20, 184, 166, 0.3),
-    inset 0 1px 2px rgba(255, 255, 255, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(1px);
+/* OPTIMIZED container with better performance */
+.bubble-container-optimized {
+  contain: layout style paint; /* Better containment */
+  will-change: contents;
+  pointer-events: none;
+  /* Use transform instead of changing layout properties */
+  transform: translateZ(0);
 }
 
-.bubble-gradient-large-optimized {
-  background: linear-gradient(135deg, 
-    rgba(255, 255, 255, 0.9) 0%, 
-    rgba(20, 184, 166, 0.7) 25%,
-    rgba(16, 185, 129, 0.5) 50%,
-    rgba(45, 212, 191, 0.4) 75%,
-    rgba(255, 255, 255, 0.3) 100%);
-  box-shadow: 
-    0 3px 10px rgba(20, 184, 166, 0.4),
-    inset 0 2px 3px rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  backdrop-filter: blur(1px);
+/* OPTIMIZED song card container */
+.song-card-optimized {
+  contain: layout style;
+  will-change: transform;
+  transform: translateZ(0);
 }
 
-/* Header Bubbles - Enhanced but optimized */
+/* Header Bubbles - Kept original but optimized */
 .bubble {
   position: absolute;
   border-radius: 50%;
-  background: radial-gradient(circle at 30% 30%, rgba(45, 212, 191, 0.4), rgba(45, 212, 191, 0.1));
-  box-shadow: inset 0 0 8px rgba(45, 212, 191, 0.3), 0 0 15px rgba(45, 212, 191, 0.15);
+  background: radial-gradient(
+    circle at 30% 30%,
+    rgba(45, 212, 191, 0.3),
+    rgba(45, 212, 191, 0.08)
+  );
+  box-shadow: inset 0 0 6px rgba(45, 212, 191, 0.2),
+    0 0 10px rgba(45, 212, 191, 0.1);
   animation: float 6s ease-in-out infinite;
-  opacity: 0.8;
-  will-change: transform, opacity;
+  opacity: 0.7;
+  will-change: transform;
+  transform: translateZ(0); /* Hardware acceleration */
 }
 
 /* Optimized bubble positions */
@@ -304,37 +274,38 @@
 
 /* Optimized float animation for header bubbles */
 @keyframes float {
-  0%, 100% {
-    transform: translateY(100%) scale(0) rotate(0deg);
+  0%,
+  100% {
+    transform: translateY(100%) scale(0) translateZ(0);
     opacity: 0;
   }
   10% {
-    opacity: 0.8;
-    transform: translateY(80%) scale(1) rotate(45deg);
+    opacity: 0.7;
+    transform: translateY(80%) scale(1) translateZ(0);
   }
   25% {
-    transform: translateY(60%) scale(1.1) rotate(90deg);
+    transform: translateY(60%) scale(1.05) translateZ(0);
   }
   50% {
-    transform: translateY(40%) scale(1) rotate(180deg);
+    transform: translateY(40%) scale(1) translateZ(0);
   }
   75% {
-    transform: translateY(20%) scale(0.9) rotate(270deg);
+    transform: translateY(20%) scale(0.95) translateZ(0);
   }
   90% {
-    opacity: 0.6;
-    transform: translateY(-10%) scale(0.8) rotate(315deg);
+    opacity: 0.5;
+    transform: translateY(-10%) scale(0.8) translateZ(0);
   }
   100% {
-    transform: translateY(-100%) scale(0) rotate(360deg);
+    transform: translateY(-100%) scale(0) translateZ(0);
     opacity: 0;
   }
 }
 
 .bubble:hover {
   animation-play-state: paused;
-  transform: scale(1.2) !important;
-  opacity: 1 !important;
+  transform: scale(1.15) translateZ(0) !important;
+  opacity: 0.9 !important;
   z-index: 20;
 }
 
@@ -357,20 +328,44 @@
   background: rgba(20, 184, 166, 0.8);
 }
 
-/* Performance optimization */
-.bubble-container {
-  contain: layout;
-  will-change: contents;
+/* CRITICAL Performance optimizations */
+* {
+  /* Improve scrolling performance */
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Optimize transforms and animations */
+@media (min-width: 768px) {
+  .bubble-container-optimized,
+  .song-card-optimized,
+  .bubble {
+    /* Enable hardware acceleration on desktop only */
+    backface-visibility: hidden;
+    perspective: 1000px;
+  }
 }
 
 /* Reduce motion for users who prefer it */
 @media (prefers-reduced-motion: reduce) {
-  .animate-floating-gentle,
-  .animate-floating-sway,
-  .animate-floating-drift,
-  .animate-floating-pulse,
+  .bubble-gentle-optimized,
+  .bubble-sway-optimized,
+  .bubble-drift-optimized,
   .bubble {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
+    animation: none !important;
+  }
+
+  .song-card-optimized {
+    transition: none !important;
+  }
+}
+
+/* Optimize for lower-end devices */
+@media (max-width: 768px) {
+  .bubble-container-optimized {
+    display: none; /* Hide bubbles on mobile for better performance */
+  }
+
+  .song-card-optimized {
+    will-change: auto; /* Reduce will-change on mobile */
   }
 }
