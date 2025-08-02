@@ -130,7 +130,6 @@ const SongDescription = () => {
           }
         }
       }
-      // For "all" mode, the video will sync with the new song via the audioContext's playNextSong
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
@@ -309,14 +308,14 @@ const SongDescription = () => {
 
   return (
     <div
-      className={`fixed inset-0 z-50 bg-black flex flex-col md:relative md:inset-auto md:bg-transparent md:max-w-[400px] md:bg-[#131313] md:shadow-lg md:rounded-lg transition-all duration-300 ease-out ${
+      className={`fixed inset-0 z-50 bg-gradient-to-t from-teal-900/50 via-teal-800/50 to-teal-700/50 flex flex-col md:relative md:inset-auto md:max-w-[400px] md:shadow-lg md:rounded-lg transition-all duration-300 ease-out backdrop-blur-md ${
         isVisible && !isClosing
           ? "translate-y-0 opacity-100 md:translate-x-0"
           : "translate-y-full opacity-0 md:translate-y-0 md:translate-x-full"
       }`}
     >
       <div
-        className={`flex items-center justify-between p-4 md:hidden transition-all duration-300 delay-100 ${
+        className={`flex items-center justify-between p-4 md:hidden transition-all duration-300 delay-100 bg-gradient-to-r from-teal-900/50 to-teal-800/50 backdrop-blur-md ${
           isVisible && !isClosing
             ? "translate-y-0 opacity-100"
             : "translate-y-4 opacity-0"
@@ -324,29 +323,29 @@ const SongDescription = () => {
       >
         <button
           onClick={handleClose}
-          className="p-2 rounded-full hover:bg-gray-800 transition-colors"
+          className="p-2 rounded-full hover:bg-teal-600/50 transition-colors"
         >
-          <IconChevronDown size={24} className="text-white" />
+          <IconChevronDown size={24} className="text-teal-300" />
         </button>
-        <span className="text-sm text-gray-400 font-medium">
+        <span className="text-sm text-teal-300 font-medium">
           {isVideoFullscreen ? "Video Playing" : "Now Playing"}
         </span>
         <div className="w-10" />
       </div>
 
       <div
-        className={`hidden md:flex items-center justify-between p-3 border-b border-gray-700 transition-all duration-300 delay-100 ${
+        className={`hidden md:flex items-center justify-between p-3 border-b border-teal-700/50 transition-all duration-300 delay-100 bg-gradient-to-r from-teal-900/50 to-teal-800/50 backdrop-blur-md ${
           isVisible && !isClosing
             ? "translate-y-0 opacity-100"
             : "translate-y-4 opacity-0"
         }`}
       >
-        <h2 className="text-lg font-semibold text-white">Now Playing</h2>
+        <h2 className="text-lg font-semibold text-teal-300">Now Playing</h2>
         <button
           onClick={handleClose}
-          className="p-2 rounded-full hover:bg-gray-800 transition-colors"
+          className="p-2 rounded-full hover:bg-teal-600/50 transition-colors"
         >
-          <IconX size={20} className="text-white" />
+          <IconX size={20} className="text-teal-300" />
         </button>
       </div>
 
@@ -359,7 +358,7 @@ const SongDescription = () => {
           }`}
         >
           <div
-            className={`relative bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg overflow-hidden shadow-xl ${
+            className={`relative bg-gradient-to-br from-teal-900/50 to-teal-800/50 rounded-lg overflow-hidden shadow-xl ${
               showLyrics && hasLyrics ? "aspect-[16/9]" : "aspect-video"
             }`}
           >
@@ -388,7 +387,7 @@ const SongDescription = () => {
                 )}
               </>
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-600 to-blue-600">
+              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-teal-600 to-emerald-500">
                 <img
                   src={currentSong.image}
                   alt={currentSong.song_name}
@@ -418,7 +417,7 @@ const SongDescription = () => {
               {currentSong.song_name || "Unknown Title"}
             </h3>
             <p
-              className={`text-gray-400 mb-2 line-clamp-1 ${
+              className={`text-teal-300 mb-2 line-clamp-1 ${
                 showLyrics && hasLyrics ? "text-xs" : "text-base md:text-sm"
               }`}
             >
@@ -428,14 +427,14 @@ const SongDescription = () => {
             <div className="flex items-center justify-center md:justify-start space-x-3">
               <button
                 onClick={handleLike}
-                className="p-2 rounded-full hover:bg-gray-800 transition-colors"
+                className="p-2 rounded-full hover:bg-teal-600/50 transition-colors"
               >
                 {isLiked ? (
-                  <IconHeartFilled size={18} className="text-green-500" />
+                  <IconHeartFilled size={18} className="text-emerald-400" />
                 ) : (
                   <IconHeart
                     size={18}
-                    className="text-gray-400 hover:text-white"
+                    className="text-teal-300 hover:text-emerald-400"
                   />
                 )}
               </button>
@@ -445,8 +444,8 @@ const SongDescription = () => {
                   onClick={() => setShowLyrics(!showLyrics)}
                   className={`p-2 rounded-full transition-colors ${
                     showLyrics
-                      ? "bg-green-600 text-white"
-                      : "hover:bg-gray-800 text-gray-400 hover:text-white"
+                      ? "bg-teal-300/70 text-teal-900"
+                      : "hover:bg-teal-600/50 text-teal-300 hover:text-emerald-400"
                   }`}
                   title={showLyrics ? "Hide Lyrics" : "Show Lyrics"}
                 >
@@ -483,19 +482,12 @@ const SongDescription = () => {
                     width: "100%",
                     overflowY: "auto",
                     padding: "16px",
-                    scrollbarWidth: "none",
-                    msOverflowStyle: "none",
                   }}
-                  className="no-scrollbar"
+                  className="no-scrollbar scrollbar-spotify"
                 >
-                  <style jsx>{`
-                    .no-scrollbar::-webkit-scrollbar {
-                      display: none;
-                    }
-                  `}</style>
                   <Text
                     style={{
-                      color: "rgba(229, 231, 235, 0.8)",
+                      color: "rgba(209, 250, 229, 0.8)", // teal-300/80
                       fontSize: "14px",
                       fontWeight: 400,
                       lineHeight: 1.5,
@@ -526,7 +518,7 @@ const SongDescription = () => {
                 : "translate-y-4 opacity-0"
             }`}
           >
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-teal-300/80">
               {isVideoFullscreen
                 ? "Exit fullscreen to control playback"
                 : "Swipe down to close"}

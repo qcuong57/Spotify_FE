@@ -29,7 +29,6 @@ const SyncedLyricsDisplay = ({
         const minutes = parseInt(match[1]);
         const seconds = parseInt(match[2]);
         const centiseconds = parseInt(match[3] || 0);
-        // Handle both 2-digit and 3-digit centiseconds
         const timeInSeconds =
           minutes * 60 +
           seconds +
@@ -88,7 +87,6 @@ const SyncedLyricsDisplay = ({
       const syncedLyrics = lyrics.filter((l) => l.time !== null);
       let activeIndex = -1;
 
-      // Tìm lyric hiện tại
       for (let i = 0; i < syncedLyrics.length; i++) {
         const currentLyric = syncedLyrics[i];
         const nextLyric = syncedLyrics[i + 1];
@@ -156,7 +154,7 @@ const SyncedLyricsDisplay = ({
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          background: "#000000",
+          background: "transparent", // Đã loại bỏ background
           position: "relative",
           overflow: "hidden",
         }}
@@ -164,14 +162,14 @@ const SyncedLyricsDisplay = ({
         <IconMusic
           size={32}
           style={{
-            color: "rgba(156, 163, 175, 0.6)",
+            color: "rgba(209, 250, 229, 0.6)", // teal-300/60
             marginBottom: "8px",
           }}
         />
         <Text
           size="sm"
           style={{
-            color: "rgba(156, 163, 175, 0.8)",
+            color: "rgba(209, 250, 229, 0.8)", // teal-300/80
             textAlign: "center",
             fontWeight: 500,
           }}
@@ -196,7 +194,7 @@ const SyncedLyricsDisplay = ({
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#000000",
+          background: "transparent", // Đã loại bỏ background
           position: "relative",
           overflow: "hidden",
           cursor: currentLyric ? "pointer" : "default",
@@ -216,14 +214,14 @@ const SyncedLyricsDisplay = ({
             <IconMicrophone
               size={28}
               style={{
-                color: "rgba(156, 163, 175, 0.7)",
+                color: "rgba(209, 250, 229, 0.6)", // teal-300/60
                 marginBottom: "8px",
               }}
             />
             <Text
               size="md"
               style={{
-                color: "rgba(229, 231, 235, 0.8)",
+                color: "rgba(209, 250, 229, 0.8)", // teal-300/80
                 textAlign: "center",
                 fontWeight: 500,
               }}
@@ -247,7 +245,7 @@ const SyncedLyricsDisplay = ({
           >
             <Text
               style={{
-                color: "rgba(255, 255, 255, 0.95)",
+                color: "rgba(209, 250, 229, 1)", // teal-300
                 fontSize: "16px",
                 fontWeight: 600,
                 letterSpacing: "0.3px",
@@ -290,49 +288,22 @@ const SyncedLyricsDisplay = ({
       style={{
         width: "100%",
         height: "100%",
-        background: "#000000",
+        background: "transparent", // Đã loại bỏ background
         position: "relative",
         overflow: "auto",
         padding: "12px 8px",
         scrollBehavior: "smooth",
-        scrollbarWidth: "none" /* Firefox */,
-        msOverflowStyle: "none" /* Internet Explorer 10+ */,
+        scrollbarWidth: "none",
+        msOverflowStyle: "none",
       }}
     >
-      {/* Hide scrollbar for webkit browsers */}
       <style jsx>{`
         .${className}::-webkit-scrollbar {
           display: none;
         }
       `}</style>
 
-      {/* Top/Bottom gradients for fade effect */}
-      <div
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          height: "20px",
-          background: "linear-gradient(to bottom, #000000, transparent)",
-          zIndex: 1,
-          pointerEvents: "none",
-        }}
-      />
-      <div
-        style={{
-          position: "absolute",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: "20px",
-          background: "linear-gradient(to top, #000000, transparent)",
-          zIndex: 1,
-          pointerEvents: "none",
-        }}
-      />
-
-      {/* Lyrics list */}
+      {/* Lyrics list - đã loại bỏ Top/Bottom gradients */}
       <div style={{ padding: "20px 0" }}>
         {lyrics.map((lyric, index) => {
           const isActive = index === currentLyricIndex;
@@ -355,30 +326,30 @@ const SyncedLyricsDisplay = ({
               onClick={() => lyric.time !== null && seekToLyric(lyric.time)}
               onMouseEnter={(e) => {
                 if (lyric.time !== null && !isActive) {
-                  e.target.style.color = "rgba(255, 255, 255, 0.9)";
+                  e.target.style.color = "rgba(209, 250, 229, 0.9)"; // teal-300/90
                 }
               }}
               onMouseLeave={(e) => {
                 if (lyric.time !== null && !isActive) {
                   e.target.style.color = isActive
-                    ? "rgba(255, 255, 255, 0.95)"
+                    ? "rgba(209, 250, 229, 1)" // teal-300
                     : isPassed
-                    ? "rgba(156, 163, 175, 0.7)"
+                    ? "rgba(209, 250, 229, 0.7)" // teal-300/70
                     : isUpcoming
-                    ? "rgba(229, 231, 235, 0.6)"
-                    : "rgba(229, 231, 235, 0.8)";
+                    ? "rgba(209, 250, 229, 0.6)" // teal-300/60
+                    : "rgba(209, 250, 229, 0.8)"; // teal-300/80
                 }
               }}
             >
               <Text
                 style={{
                   color: isActive
-                    ? "rgba(255, 255, 255, 0.95)"
+                    ? "rgba(209, 250, 229, 1)" // teal-300
                     : isPassed
-                    ? "rgba(156, 163, 175, 0.7)"
+                    ? "rgba(209, 250, 229, 0.7)" // teal-300/70
                     : isUpcoming
-                    ? "rgba(229, 231, 235, 0.6)"
-                    : "rgba(229, 231, 235, 0.8)",
+                    ? "rgba(209, 250, 229, 0.6)" // teal-300/60
+                    : "rgba(209, 250, 229, 0.8)", // teal-300/80
                   fontSize: isActive ? "15px" : "14px",
                   fontWeight: isActive ? 600 : 400,
                   lineHeight: 1.5,

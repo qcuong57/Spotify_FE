@@ -81,7 +81,7 @@ const Banner = ({ onClose }) => {
               {/* Icon */}
               <div className="flex justify-center">
                 <div className="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center text-3xl animate-pulse">
-                  <img src="https://i.pinimg.com/736x/48/eb/2a/48eb2a522aba3081d8258babe67a3473.jpg" />
+                  <img src="https://yzfbdwvbybecxhbitkmc.supabase.co/storage/v1/object/sign/image/78ed005b-b0aa-427b-bc0d-6f1efb29e653.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV82OTc4ZGU2My0wOWQzLTRhYmYtOWRjZC0wZjY0NTBlN2VlYmIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJpbWFnZS83OGVkMDA1Yi1iMGFhLTQyN2ItYmMwZC02ZjFlZmIyOWU2NTMucG5nIiwiaWF0IjoxNzU0MTM1Mzk4LCJleHAiOjIwNjk0OTUzOTh9.MxsdoFIdkMKWNqhTMN5PTDT2k_K-ELn-q7OzxBEF9PM" />
                 </div>
               </div>
 
@@ -99,8 +99,8 @@ const Banner = ({ onClose }) => {
                 UIA Cường. Xin cám ơn!
               </p>
               <p className="text-white text-xs italic sm:text-sm opacity-90 leading-relaxed max-w-xs mx-auto">
-                “Inspired by Spotify. Not affiliated with or endorsed by Spotify
-                AB.”
+                "Inspired by Spotify. Not affiliated with or endorsed by Spotify
+                AB."
               </p>
             </div>
           </div>
@@ -134,7 +134,16 @@ const HomePage = () => {
   };
 
   return (
-    <div className="flex flex-1 flex-col h-screen bg-black">
+    <div 
+      className="flex flex-1 flex-col h-screen"
+      style={{
+        backgroundImage: `linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url(https://yzfbdwvbybecxhbitkmc.supabase.co/storage/v1/object/sign/image/background.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV82OTc4ZGU2My0wOWQzLTRhYmYtOWRjZC0wZjY0NTBlN2VlYmIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJpbWFnZS9iYWNrZ3JvdW5kLnBuZyIsImlhdCI6MTc1NDA2NzQwNSwiZXhwIjoxODgwMjExNDA1fQ.YIFsdi94V2V5m4kV3f1F_N31ZTiEf5PkgK8xPlogylU)`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+        backgroundAttachment: "fixed",
+      }}
+    >
       {/* Banner */}
       {showBanner && <Banner onClose={handleCloseBanner} />}
 
@@ -143,24 +152,23 @@ const HomePage = () => {
         setListSongsDetail={setListSongsDetail}
       />
       <div className="flex flex-row flex-1 overflow-hidden">
-        {/* Show Libraries button when hidden */}
-        {!showLibraries && (
-          <button
-            onClick={() => setShowLibraries(true)}
-            className="fixed top-1/2 left-4 -translate-y-1/2 z-20 bg-[#1f1f1f] hover:bg-[#2a2a2a] text-white rounded-full p-2 sm:p-3 shadow-lg transition-colors"
-            title="Mở thư viện"
-          >
-            <IconMenu2 stroke={2} className="w-5 h-5 sm:w-6 sm:h-6" />
-          </button>
-        )}
+        {/* {!showLibraries && (
+          // <button
+          //   onClick={() => setShowLibraries(true)}
+          //   className="fixed top-1/2 left-4 -translate-y-1/2 z-20 bg-[#1f1f1f]/80 hover:bg-[#2a2a2a]/80 text-white rounded-full p-2 sm:p-3 shadow-lg transition-colors backdrop-blur-sm"
+          //   title="Mở thư viện"
+          // >
+          //   <IconMenu2 stroke={2} className="w-5 h-5 sm:w-6 sm:h-6" />
+          // </button>
+        )} */}
 
-        {showLibraries && (
-          <Libraries
-            setCurrentView={setCurrentView}
-            currentView={currentView}
-            onClose={() => setShowLibraries(false)}
-          />
-        )}
+        {/* {showLibraries && (
+          // <Libraries
+          //   setCurrentView={setCurrentView}
+          //   currentView={currentView}
+          //   onClose={() => setShowLibraries(false)}
+          // />
+        )} */}
 
         {currentView === "main" ? (
           <MainContent

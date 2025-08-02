@@ -17,7 +17,7 @@ const Section = memo(
     children,
     onViewAll,
     buttonText = "Xem tất cả",
-    hoverColor = "green",
+    hoverColor = "emerald",
     isLoading = false,
   }) => (
     <div className="mb-8">
@@ -36,7 +36,7 @@ const Section = memo(
             ${
               isLoading
                 ? `pointer-events-none opacity-50 bg-${hoverColor}-600 text-white`
-                : `text-gray-400 hover:text-white hover:bg-${hoverColor}-600`
+                : `text-gray-400 hover:text-white hover:bg-${hoverColor}-500`
             }
           `}
             onClick={onViewAll}
@@ -88,8 +88,8 @@ const GenreFilter = memo(
             className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ease-out
               ${
                 selectedGenre === null
-                  ? "bg-green-700 text-white shadow-md scale-105"
-                  : "bg-[#1a1a1a] text-gray-300 hover:bg-[#262626] hover:text-white hover:shadow-lg hover:scale-105"
+                  ? "bg-gradient-to-r from-teal-600 to-emerald-500 text-white shadow-md scale-105"
+                  : "bg-teal-800/50 text-teal-300 hover:bg-teal-700/70 hover:text-emerald-300 hover:shadow-lg hover:scale-105"
               }`}
           >
             Tất cả
@@ -104,8 +104,8 @@ const GenreFilter = memo(
               className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ease-out
                 ${
                   selectedGenre?.id === genre.id
-                    ? "bg-green-700 text-white shadow-md scale-105"
-                    : "bg-[#1a1a1a] text-gray-300 hover:bg-[#262626] hover:text-white hover:shadow-lg hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                    ? "bg-gradient-to-r from-teal-600 to-emerald-500 text-white shadow-md scale-105"
+                    : "bg-teal-800/50 text-teal-300 hover:bg-teal-700/70 hover:text-emerald-300 hover:shadow-lg hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
                 }`}
             >
               {genre.name}
@@ -121,9 +121,9 @@ const GenreFilter = memo(
         {/* Loading indicator for genre filter */}
         {isLoading && (
           <div className="flex items-center justify-center mt-4">
-            <div className="flex items-center gap-2 text-green-400">
+            <div className="flex items-center gap-2 text-emerald-300">
               <div className="w-4 h-4 relative">
-                <div className="absolute inset-0 rounded-full border-2 border-green-400 border-t-transparent animate-spin"></div>
+                <div className="absolute inset-0 rounded-full border-2 border-emerald-300 border-t-transparent animate-spin"></div>
               </div>
               <span className="text-sm">Đang tải bài hát...</span>
             </div>
@@ -137,9 +137,9 @@ const GenreFilter = memo(
 const SongCardSkeleton = () => (
   <div className="bg-[#181818] p-4 rounded-lg overflow-hidden">
     {/* Image skeleton with shimmer effect */}
-    <div className="aspect-square bg-gradient-to-br from-gray-700 to-gray-800 rounded-lg mb-4 relative overflow-hidden">
+    <div className="aspect-square bg-gradient-to-br from-gray-600 to-gray-500 rounded-lg mb-4 relative overflow-hidden">
       <div
-        className="absolute inset-0 bg-gradient-to-r from-transparent via-gray-600/50 to-transparent animate-pulse"
+        className="absolute inset-0 bg-gradient-to-r from-transparent via-gray-500/50 to-transparent animate-pulse"
         style={{
           animation: "shimmer 2s infinite",
           background:
@@ -150,8 +150,8 @@ const SongCardSkeleton = () => (
 
     {/* Text skeleton */}
     <div className="space-y-2">
-      <div className="h-4 bg-gradient-to-r from-gray-700 to-gray-600 rounded animate-pulse"></div>
-      <div className="h-3 bg-gradient-to-r from-gray-700 to-gray-600 rounded w-3/4 animate-pulse"></div>
+      <div className="h-4 bg-gradient-to-r from-gray-600 to-gray-500 rounded animate-pulse"></div>
+      <div className="h-3 bg-gradient-to-r from-gray-600 to-gray-500 rounded w-3/4 animate-pulse"></div>
     </div>
   </div>
 );
@@ -227,7 +227,7 @@ const SongGrid = memo(
           <div className="text-center mt-6">
             <button
               onClick={loadMoreSongs}
-              className="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-full transition-colors duration-200"
+              className="px-6 py-3 bg-gray-600 hover:bg-gray-500 text-white rounded-full transition-colors duration-200"
             >
               Xem thêm ({songs.length - currentIndex} bài)
             </button>
@@ -243,7 +243,7 @@ const TrendingSection = memo(
   ({ trendingSongs, contextMenu, setContextMenu, handleCloseContextMenu }) => (
     <div className="mb-8">
       <div className="flex flex-row justify-between items-center mb-6">
-        <h2 className="text-2xl md:text-3xl font-bold cursor-pointer hover:underline transition-colors duration-200 hover:text-green-400 flex items-center gap-2">
+        <h2 className="text-2xl md:text-3xl font-bold cursor-pointer hover:underline transition-colors duration-200 hover:text-emerald-400 flex items-center gap-2">
           <span className="text-2xl">🔥</span>
           Trending ngay bây giờ
         </h2>
@@ -551,25 +551,25 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
   // Loading state
   if (loading) {
     return (
-      <div className="bg-[#131313] text-white p-4 mr-0 md:mr-2 rounded-lg flex-1 overflow-y-auto scrollbar-spotify">
+      <div className="text-white p-4 mr-0 md:mr-2 rounded-lg flex-1 overflow-y-auto scrollbar-spotify">
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center space-y-6">
             {/* Main Loading Animation */}
             <div className="relative">
               {/* Pulsing Circle Background */}
               <div className="absolute inset-0 w-32 h-32 mx-auto">
-                <div className="w-full h-full rounded-full bg-green-500 opacity-20 animate-ping"></div>
+                <div className="w-full h-full rounded-full bg-emerald-500 opacity-20 animate-ping"></div>
               </div>
               <div className="absolute inset-2 w-28 h-28 mx-auto">
                 <div
-                  className="w-full h-full rounded-full bg-green-500 opacity-30 animate-ping"
+                  className="w-full h-full rounded-full bg-emerald-500 opacity-30 animate-ping"
                   style={{ animationDelay: "0.5s" }}
                 ></div>
               </div>
 
               {/* Central Music Icon */}
               <div className="relative w-32 h-32 mx-auto flex items-center justify-center">
-                <div className="w-20 h-20 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center animate-bounce">
+                <div className="w-20 h-20 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full flex items-center justify-center animate-bounce">
                   <svg
                     className="w-10 h-10 text-white"
                     fill="currentColor"
@@ -583,7 +583,7 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
 
             {/* Loading Text with Animation */}
             <div className="space-y-2">
-              <h2 className="text-2xl font-bold text-green-400 animate-pulse">
+              <h2 className="text-2xl font-bold text-emerald-400 animate-pulse">
                 Đang tải nhạc...
               </h2>
               <div className="flex justify-center space-x-1">
@@ -602,7 +602,7 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
             {/* Progress Bar */}
             <div className="w-64 mx-auto">
               <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-green-500 to-green-400 rounded-full animate-pulse"></div>
+                <div className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full animate-pulse"></div>
               </div>
             </div>
           </div>
@@ -614,13 +614,13 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
   // Error state
   if (error) {
     return (
-      <div className="bg-[#131313] text-white p-4 mr-0 md:mr-2 rounded-lg flex-1 overflow-y-auto scrollbar-spotify">
+      <div className="text-white p-4 mr-0 md:mr-2 rounded-lg flex-1 overflow-y-auto scrollbar-spotify">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <p className="text-red-400 mb-2">{error}</p>
             <button
               onClick={() => window.location.reload()}
-              className="text-green-500 hover:text-green-400 underline transition-colors"
+              className="text-emerald-500 hover:text-emerald-400 underline transition-colors"
             >
               Retry
             </button>
@@ -631,7 +631,7 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
   }
 
   return (
-    <div className="bg-[#131313] text-white p-3 md:p-4 mr-0 md:mr-2 rounded-lg flex-1 overflow-y-auto space-y-8 scrollbar-spotify pb-8">
+    <div className="text-white p-3 md:p-4 mr-0 md:mr-2 rounded-lg flex-1 overflow-y-auto space-y-8 scrollbar-spotify pb-8">
       {/* Genre Filter Section */}
       {validGenres.length > 0 && (
         <GenreFilter
@@ -654,7 +654,7 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
               selectedGenre.id
             )
           }
-          hoverColor="green"
+          hoverColor="emerald"
           isLoading={genreFilterLoading}
         >
           <SongGrid
@@ -687,7 +687,7 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
               title="Mới phát hành"
               emoji="🆕"
               onViewAll={handleLoadMoreLatest}
-              hoverColor="green"
+              hoverColor="emerald"
               isLoading={loadingStates.latest}
             >
               <SongGrid
@@ -706,7 +706,7 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
               title="Tất cả bài hát"
               onViewAll={handleLoadAllSongs}
               buttonText="Hiện tất cả"
-              hoverColor="green"
+              hoverColor="emerald"
               isLoading={loadingStates.allSongs}
             >
               <SongGrid
@@ -727,7 +727,7 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
               onViewAll={() =>
                 handleGenreViewAll(genre.songs, genre.name, genre.id)
               }
-              hoverColor="green"
+              hoverColor="emerald"
               isLoading={loadingStates.genres[genre.id]}
             >
               <SongGrid

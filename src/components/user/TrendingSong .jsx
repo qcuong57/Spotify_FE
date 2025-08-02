@@ -284,7 +284,7 @@ const TrendingSong = ({ song, list, rank }) => {
         className={`
         hidden md:flex flex-shrink-0 items-center gap-1 text-xs min-w-0
         transition-all duration-300 ease-out
-        ${isHovered ? "text-gray-300 scale-105" : "text-gray-500"}
+        ${isHovered ? "text-emerald-300 scale-105" : "text-teal-400"}
       `}
       >
         <IconTrendingUp className="w-3 h-3 flex-shrink-0" />
