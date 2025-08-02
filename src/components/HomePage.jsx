@@ -137,7 +137,7 @@ const HomePage = () => {
     <div 
       className="flex flex-1 flex-col h-screen"
       style={{
-        backgroundImage: `linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url(https://yzfbdwvbybecxhbitkmc.supabase.co/storage/v1/object/sign/image/background.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV82OTc4ZGU2My0wOWQzLTRhYmYtOWRjZC0wZjY0NTBlN2VlYmIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJpbWFnZS9iYWNrZ3JvdW5kLnBuZyIsImlhdCI6MTc1NDA2NzQwNSwiZXhwIjoxODgwMjExNDA1fQ.YIFsdi94V2V5m4kV3f1F_N31ZTiEf5PkgK8xPlogylU)`,
+        backgroundImage: `linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url(https://yzfbdwvbybecxhbitkmc.supabase.co/storage/v1/object/sign/image/abcccccc.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV82OTc4ZGU2My0wOWQzLTRhYmYtOWRjZC0wZjY0NTBlN2VlYmIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJpbWFnZS9hYmNjY2NjYy5wbmciLCJpYXQiOjE3NTQxNDcxMjIsImV4cCI6MjA2OTUwNzEyMn0.pYqd1AjFr3DqSxnf0CiQoq1eKpFiIPSPH_ooRlSpIyI)`,
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
