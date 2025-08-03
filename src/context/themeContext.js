@@ -15,7 +15,7 @@ export const useTheme = () => {
 export const themes = {
   ocean: {
     id: "ocean",
-    name: "Ocean Fish",
+    name: "Đại dương ngáo ngơ",
     emoji: "🐠",
     description: "Chủ đề biển cả với cá và san hô",
     colors: {
@@ -59,7 +59,7 @@ export const themes = {
   },
   forest: {
     id: "forest",
-    name: "Mystic Forest",
+    name: "Rừng bí ẩn mà hổng bí",
     emoji: "🌲",
     description: "Chủ đề rừng xanh với thiên nhiên",
     colors: {
@@ -104,7 +104,7 @@ export const themes = {
   },
   space: {
     id: "space",
-    name: "Cosmic Galaxy",
+    name: "Vũ trụ bao laaaaaa",
     emoji: "🌌",
     description: "Chủ đề vũ trụ với sao và hành tinh",
     colors: {
@@ -150,7 +150,7 @@ export const themes = {
   },
   sunset: {
     id: "sunset",
-    name: "Golden Sunset",
+    name: "Hoàng hôn siêu chillll =))",
     emoji: "🌅",
     description: "Chủ đề hoàng hôn ấm áp",
     colors: {
