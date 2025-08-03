@@ -10,8 +10,11 @@ import SongDescription from "./user/SongDescription.jsx";
 import { useAudio } from "../utils/audioContext.jsx";
 import ListSongs from "./user/ListSongs.jsx";
 import { IconMenu2, IconChevronUp, IconChevronDown } from "@tabler/icons-react";
+import { useTheme } from "../context/themeContext.js"; // Import useTheme
+import ThemeSelector from "../components/user/ThemeSelector.jsx";
+import { ThemeParticles } from "../components/user/ThemeParticles.jsx";
 
-const Banner = ({ onClose }) => {
+const Banner = ({ onClose, theme }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
 
@@ -52,7 +55,7 @@ const Banner = ({ onClose }) => {
 
       {/* Banner content - Square aspect ratio */}
       <div
-        className={`relative bg-gradient-to-br from-black via-gray-900 to-green-600 shadow-2xl rounded-2xl transform transition-all duration-300 ease-out ${
+        className={`relative bg-gradient-to-br ${theme.colors.background} shadow-2xl rounded-2xl transform transition-all duration-300 ease-out ${
           isVisible && !isClosing
             ? "scale-100 opacity-100"
             : "scale-95 opacity-0"
@@ -66,7 +69,7 @@ const Banner = ({ onClose }) => {
           {/* Close button */}
           <button
             onClick={handleClose}
-            className="absolute top-4 right-4 z-10 p-2 rounded-full bg-green-600 bg-opacity-20 hover:bg-opacity-30 transition-all duration-200 group"
+            className={`absolute top-4 right-4 z-10 p-2 rounded-full bg-${theme.colors.primary}-600 bg-opacity-20 hover:bg-opacity-30 transition-all duration-200 group`}
             title="Đóng banner"
           >
             <IconX
@@ -80,7 +83,7 @@ const Banner = ({ onClose }) => {
             <div className="text-center space-y-6">
               {/* Icon */}
               <div className="flex justify-center">
-                <div className="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center text-3xl animate-pulse">
+                <div className={`w-16 h-16 bg-${theme.colors.primary}-600 rounded-full flex items-center justify-center text-3xl animate-pulse`}>
                   <img src="https://yzfbdwvbybecxhbitkmc.supabase.co/storage/v1/object/sign/image/78ed005b-b0aa-427b-bc0d-6f1efb29e653.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV82OTc4ZGU2My0wOWQzLTRhYmYtOWRjZC0wZjY0NTBlN2VlYmIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJpbWFnZS83OGVkMDA1Yi1iMGFhLTQyN2ItYmMwZC02ZjFlZmIyOWU2NTMucG5nIiwiaWF0IjoxNzU0MTM1Mzk4LCJleHAiOjIwNjk0OTUzOTh9.MxsdoFIdkMKWNqhTMN5PTDT2k_K-ELn-q7OzxBEF9PM" />
                 </div>
               </div>
@@ -106,11 +109,11 @@ const Banner = ({ onClose }) => {
           </div>
 
           {/* Animated border */}
-          <div className="absolute inset-0 rounded-2xl border-2 border-green-400 opacity-50 animate-pulse"></div>
+          <div className={`absolute inset-0 rounded-2xl border-2 border-${theme.colors.secondary}-400 opacity-50 animate-pulse`}></div>
 
           {/* Animated corner accents */}
-          <div className="absolute top-0 left-0 w-20 h-20 bg-gradient-to-br from-green-400 to-transparent opacity-30 rounded-tl-2xl"></div>
-          <div className="absolute bottom-0 right-0 w-20 h-20 bg-gradient-to-tl from-green-400 to-transparent opacity-30 rounded-br-2xl"></div>
+          <div className={`absolute top-0 left-0 w-20 h-20 bg-gradient-to-br from-${theme.colors.secondary}-400 to-transparent opacity-30 rounded-tl-2xl`}></div>
+          <div className={`absolute bottom-0 right-0 w-20 h-20 bg-gradient-to-tl from-${theme.colors.secondary}-400 to-transparent opacity-30 rounded-br-2xl`}></div>
         </div>
       </div>
     </div>
@@ -120,10 +123,11 @@ const Banner = ({ onClose }) => {
 const HomePage = () => {
   const [currentView, setCurrentView] = useState("main");
   const [listSongsDetail, setListSongsDetail] = useState([]);
-  const [showLibraries, setShowLibraries] = useState(false); // Changed to false by default
+  const [showLibraries, setShowLibraries] = useState(false);
   const [showBanner, setShowBanner] = useState(true);
-  const [showPlayerControls, setShowPlayerControls] = useState(true); // New state for PlayerControls visibility
+  const [showPlayerControls, setShowPlayerControls] = useState(true);
   const { currentSong, songDescriptionAvailable } = useAudio();
+  const { theme } = useTheme(); // Use theme context
 
   const handleCloseBanner = () => {
     setShowBanner(false);
@@ -135,41 +139,26 @@ const HomePage = () => {
 
   return (
     <div 
-      className="flex flex-1 flex-col h-screen"
+      className="flex flex-1 flex-col h-screen relative"
       style={{
-        backgroundImage: `linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url(https://yzfbdwvbybecxhbitkmc.supabase.co/storage/v1/object/sign/image/abcccccc.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV82OTc4ZGU2My0wOWQzLTRhYmYtOWRjZC0wZjY0NTBlN2VlYmIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJpbWFnZS9hYmNjY2NjYy5wbmciLCJpYXQiOjE3NTQxNDcxMjIsImV4cCI6MjA2OTUwNzEyMn0.pYqd1AjFr3DqSxnf0CiQoq1eKpFiIPSPH_ooRlSpIyI)`,
+        backgroundImage: `linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url(${theme.backgroundImage})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
         backgroundAttachment: "fixed",
       }}
     >
+      {/* Theme Particles Effect */}
+      <ThemeParticles />
+
       {/* Banner */}
-      {showBanner && <Banner onClose={handleCloseBanner} />}
+      {showBanner && <Banner onClose={handleCloseBanner} theme={theme} />}
 
       <Header
         setCurrentView={setCurrentView}
         setListSongsDetail={setListSongsDetail}
       />
       <div className="flex flex-row flex-1 overflow-hidden">
-        {/* {!showLibraries && (
-          // <button
-          //   onClick={() => setShowLibraries(true)}
-          //   className="fixed top-1/2 left-4 -translate-y-1/2 z-20 bg-[#1f1f1f]/80 hover:bg-[#2a2a2a]/80 text-white rounded-full p-2 sm:p-3 shadow-lg transition-colors backdrop-blur-sm"
-          //   title="Mở thư viện"
-          // >
-          //   <IconMenu2 stroke={2} className="w-5 h-5 sm:w-6 sm:h-6" />
-          // </button>
-        )} */}
-
-        {/* {showLibraries && (
-          // <Libraries
-          //   setCurrentView={setCurrentView}
-          //   currentView={currentView}
-          //   onClose={() => setShowLibraries(false)}
-          // />
-        )} */}
-
         {currentView === "main" ? (
           <MainContent
             setCurrentView={setCurrentView}
@@ -190,7 +179,9 @@ const HomePage = () => {
           onToggleVisibility={togglePlayerControls}
         />
       )}
-      {/* <ChatManager className="fixed bottom-4 right-4 w-[320px] max-w-xs z-30" /> */}
+
+      {/* Theme Selector Modal */}
+      <ThemeSelector />
     </div>
   );
 };

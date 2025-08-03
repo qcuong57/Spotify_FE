@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
 import Song from "./_Song";
 import { useAudio } from "../../utils/audioContext.jsx";
+import { useTheme } from "../../context/themeContext.js";
 
 const ListSongs = ({ listSongs }) => {
   const [contextMenu, setContextMenu] = useState(null);
   const { currentSong, songDescriptionAvailable } = useAudio();
+  const { theme } = useTheme();
 
   const handleCloseContextMenu = () => {
     setContextMenu(null);
@@ -32,7 +34,7 @@ const ListSongs = ({ listSongs }) => {
   if (!listSongs || !listSongs.songs || !Array.isArray(listSongs.songs)) {
     return (
       <div className="text-white flex-1 mr-2 sm:mr-0 rounded-lg p-4">
-        <p className="text-teal-300/80">No songs available</p>
+        <p className={`text-${theme.colors.text}`}>No songs available</p>
       </div>
     );
   }
@@ -40,8 +42,8 @@ const ListSongs = ({ listSongs }) => {
   return (
     <div className="text-white flex-1 mr-2 sm:mr-0 rounded-lg overflow-y-auto scrollbar-teal">
       {/* Header */}
-      <div className="sticky top-0 z-10 border-b border-teal-700/50 bg-gradient-to-t from-teal-900/30 via-teal-800/30 to-teal-700/30 backdrop-blur-md">
-        <h3 className="p-4 font-bold text-xl sm:text-2xl text-teal-300">
+      <div className={`sticky top-0 z-10 bg-gradient-to-t ${theme.colors.backgroundOverlay} backdrop-blur-md`}>
+        <h3 className={`p-4 font-bold text-xl sm:text-2xl text-${theme.colors.text}`}>
           {listSongs.title || "Songs"}
         </h3>
       </div>
@@ -71,7 +73,7 @@ const ListSongs = ({ listSongs }) => {
 
       {/* Empty State */}
       {listSongs.songs.length === 0 && (
-        <div className="flex flex-col items-center justify-center h-64 text-teal-300/80">
+        <div className={`flex flex-col items-center justify-center h-64 text-${theme.colors.text}`}>
           <p className="text-lg mb-2">No songs found</p>
           <p className="text-sm">Try browsing other categories</p>
         </div>

@@ -6,10 +6,11 @@ import {
   getLatestSongs,
 } from "../../services/SongsService";
 import { getAllGenres } from "../../services/genresService";
+import { useTheme } from "../../context/themeContext";
 import Song from "./_Song";
 import TrendingSong from "./TrendingSong ";
 
-// Memoized Section component
+// Memoized Section component with theme support
 const Section = memo(
   ({
     title,
@@ -17,68 +18,73 @@ const Section = memo(
     children,
     onViewAll,
     buttonText = "Xem tất cả",
-    hoverColor = "emerald",
     isLoading = false,
-  }) => (
-    <div className="mb-8">
-      <div className="flex flex-row justify-between items-center mb-6">
-        <h2
-          className={`text-2xl md:text-3xl font-bold cursor-pointer hover:underline transition-colors duration-200 hover:text-${hoverColor}-400 flex items-center gap-2`}
-        >
-          {emoji && <span className="text-2xl">{emoji}</span>}
-          {title}
-        </h2>
-        {onViewAll && (
-          <button
-            className={`
-            text-sm font-semibold px-6 py-3 rounded-full
-            transition-colors duration-200
-            ${
-              isLoading
-                ? `pointer-events-none opacity-50 bg-${hoverColor}-600 text-white`
-                : `text-gray-400 hover:text-white hover:bg-${hoverColor}-500`
-            }
-          `}
-            onClick={onViewAll}
-            disabled={isLoading}
+  }) => {
+    const { theme } = useTheme();
+    
+    return (
+      <div className="mb-8">
+        <div className="flex flex-row justify-between items-center mb-6">
+          <h2
+            className={`text-2xl md:text-3xl font-bold cursor-pointer hover:underline transition-colors duration-200 hover:text-${theme.colors.secondary}-400 flex items-center gap-2`}
           >
-            {isLoading ? (
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 relative">
-                  <div className="absolute inset-0 rounded-full border-2 border-white border-t-transparent animate-spin"></div>
-                  <div className="absolute inset-1 rounded-full bg-white opacity-20"></div>
+            {emoji && <span className="text-2xl">{emoji}</span>}
+            {title}
+          </h2>
+          {onViewAll && (
+            <button
+              className={`
+              text-sm font-semibold px-6 py-3 rounded-full
+              transition-colors duration-200
+              ${
+                isLoading
+                  ? `pointer-events-none opacity-50 bg-${theme.colors.secondary}-600 text-white`
+                  : `text-${theme.colors.text} hover:text-white hover:bg-${theme.colors.secondary}-500`
+              }
+            `}
+              onClick={onViewAll}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 relative">
+                    <div className="absolute inset-0 rounded-full border-2 border-white border-t-transparent animate-spin"></div>
+                    <div className="absolute inset-1 rounded-full bg-white opacity-20"></div>
+                  </div>
+                  <span>Đang tải...</span>
                 </div>
-                <span>Đang tải...</span>
-              </div>
-            ) : (
-              <span className="flex items-center gap-2">
-                <span>{buttonText}</span>
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 5l7 7-7 7"
-                  />
-                </svg>
-              </span>
-            )}
-          </button>
-        )}
+              ) : (
+                <span className="flex items-center gap-2">
+                  <span>{buttonText}</span>
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </span>
+              )}
+            </button>
+          )}
+        </div>
+        {children}
       </div>
-      {children}
-    </div>
-  )
+    );
+  }
 );
 
-// Genre Filter Component
+// Genre Filter Component with theme support
 const GenreFilter = memo(
   ({ genres, selectedGenre, onGenreSelect, isLoading }) => {
+    const { theme } = useTheme();
+
     return (
       <div className="mb-8">
         <div className="flex flex-wrap gap-2 md:gap-3">
@@ -88,8 +94,8 @@ const GenreFilter = memo(
             className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ease-out
               ${
                 selectedGenre === null
-                  ? "bg-gradient-to-r from-teal-600 to-emerald-500 text-white shadow-md scale-105"
-                  : "bg-teal-800/50 text-teal-300 hover:bg-teal-700/70 hover:text-emerald-300 hover:shadow-lg hover:scale-105"
+                  ? `bg-gradient-to-r from-${theme.colors.primary}-600 to-${theme.colors.secondary}-500 text-white shadow-md scale-105`
+                  : `bg-${theme.colors.card} text-${theme.colors.text} hover:bg-${theme.colors.cardHover} hover:text-${theme.colors.textHover} hover:shadow-lg hover:scale-105`
               }`}
           >
             Tất cả
@@ -104,8 +110,8 @@ const GenreFilter = memo(
               className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ease-out
                 ${
                   selectedGenre?.id === genre.id
-                    ? "bg-gradient-to-r from-teal-600 to-emerald-500 text-white shadow-md scale-105"
-                    : "bg-teal-800/50 text-teal-300 hover:bg-teal-700/70 hover:text-emerald-300 hover:shadow-lg hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                    ? `bg-gradient-to-r from-${theme.colors.primary}-600 to-${theme.colors.secondary}-500 text-white shadow-md scale-105`
+                    : `bg-${theme.colors.card} text-${theme.colors.text} hover:bg-${theme.colors.cardHover} hover:text-${theme.colors.textHover} hover:shadow-lg hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed`
                 }`}
             >
               {genre.name}
@@ -121,9 +127,9 @@ const GenreFilter = memo(
         {/* Loading indicator for genre filter */}
         {isLoading && (
           <div className="flex items-center justify-center mt-4">
-            <div className="flex items-center gap-2 text-emerald-300">
+            <div className={`flex items-center gap-2 text-${theme.colors.secondary}-300`}>
               <div className="w-4 h-4 relative">
-                <div className="absolute inset-0 rounded-full border-2 border-emerald-300 border-t-transparent animate-spin"></div>
+                <div className={`absolute inset-0 rounded-full border-2 border-${theme.colors.secondary}-300 border-t-transparent animate-spin`}></div>
               </div>
               <span className="text-sm">Đang tải bài hát...</span>
             </div>
@@ -134,29 +140,93 @@ const GenreFilter = memo(
   }
 );
 
-const SongCardSkeleton = () => (
-  <div className="bg-[#181818] p-4 rounded-lg overflow-hidden">
-    {/* Image skeleton with shimmer effect */}
-    <div className="aspect-square bg-gradient-to-br from-gray-600 to-gray-500 rounded-lg mb-4 relative overflow-hidden">
-      <div
-        className="absolute inset-0 bg-gradient-to-r from-transparent via-gray-500/50 to-transparent animate-pulse"
-        style={{
-          animation: "shimmer 2s infinite",
-          background:
-            "linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)",
-        }}
-      ></div>
-    </div>
+// Enhanced SongCardSkeleton with theme support
+const SongCardSkeleton = memo(() => {
+  const { theme } = useTheme();
 
-    {/* Text skeleton */}
-    <div className="space-y-2">
-      <div className="h-4 bg-gradient-to-r from-gray-600 to-gray-500 rounded animate-pulse"></div>
-      <div className="h-3 bg-gradient-to-r from-gray-600 to-gray-500 rounded w-3/4 animate-pulse"></div>
-    </div>
-  </div>
-);
+  // Get theme-specific skeleton colors
+  const getSkeletonColors = () => {
+    switch (theme.id) {
+      case "ocean":
+        return {
+          card: "from-teal-800/60 via-teal-700/60 to-emerald-600/60",
+          image: "from-teal-600 to-teal-500",
+          shimmer: "from-transparent via-teal-400/30 to-transparent",
+          text: "from-teal-600 to-teal-500",
+        };
+      case "forest":
+        return {
+          card: "from-green-800/60 via-green-700/60 to-emerald-600/60",
+          image: "from-green-600 to-green-500",
+          shimmer: "from-transparent via-amber-400/30 to-transparent",
+          text: "from-green-600 to-green-500",
+        };
+      case "space":
+        return {
+          card: "from-purple-800/60 via-purple-700/60 to-indigo-600/60",
+          image: "from-purple-600 to-purple-500",
+          shimmer: "from-transparent via-purple-400/30 to-transparent",
+          text: "from-purple-600 to-purple-500",
+        };
+      case "sunset":
+        return {
+          card: "from-orange-800/60 via-red-700/60 to-yellow-600/60",
+          image: "from-orange-600 to-orange-500",
+          shimmer: "from-transparent via-orange-400/30 to-transparent",
+          text: "from-orange-600 to-orange-500",
+        };
+      case "neon":
+        return {
+          card: "from-gray-800/60 via-blue-800/60 to-purple-700/60",
+          image: "from-cyan-600 to-cyan-500",
+          shimmer: "from-transparent via-cyan-400/30 to-transparent",
+          text: "from-cyan-600 to-cyan-500",
+        };
+      default:
+        return {
+          card: "from-teal-800/60 via-teal-700/60 to-emerald-600/60",
+          image: "from-teal-600 to-teal-500",
+          shimmer: "from-transparent via-teal-400/30 to-transparent",
+          text: "from-teal-600 to-teal-500",
+        };
+    }
+  };
 
-// Memoized SongGrid với lazy loading
+  const colors = getSkeletonColors();
+
+  return (
+    <div className={`bg-gradient-to-br ${colors.card} p-4 rounded-2xl overflow-hidden backdrop-blur-md border border-${theme.colors.songBorder}`}>
+      {/* Image skeleton with shimmer effect */}
+      <div className={`aspect-square bg-gradient-to-br ${colors.image} rounded-xl mb-4 relative overflow-hidden`}>
+        <div
+          className={`absolute inset-0 bg-gradient-to-r ${colors.shimmer} animate-pulse`}
+          style={{
+            animation: "shimmer 2s infinite",
+          }}
+        />
+      </div>
+
+      {/* Text skeleton */}
+      <div className="space-y-2">
+        <div className={`h-4 bg-gradient-to-r ${colors.text} rounded animate-pulse`} />
+        <div className={`h-3 bg-gradient-to-r ${colors.text} rounded w-3/4 animate-pulse`} />
+      </div>
+
+      <style jsx>{`
+        @keyframes shimmer {
+          0% {
+            transform: translateX(-100%);
+          }
+          100% {
+            transform: translateX(100%);
+          }
+        }
+      `}</style>
+    </div>
+  );
+});
+
+// Memoized SongGrid với lazy loading and theme support
 const SongGrid = memo(
   ({
     songs,
@@ -167,6 +237,7 @@ const SongGrid = memo(
     handleCloseContextMenu,
     isLoading = false,
   }) => {
+    const { theme } = useTheme();
     const [visibleSongs, setVisibleSongs] = useState(songs.slice(0, 12));
     const [currentIndex, setCurrentIndex] = useState(12);
 
@@ -197,10 +268,10 @@ const SongGrid = memo(
 
     if (songs.length === 0) {
       return (
-        <div className="flex flex-col items-center justify-center py-12 text-gray-400">
+        <div className={`flex flex-col items-center justify-center py-12 text-${theme.colors.text}`}>
           <div className="text-4xl mb-4 opacity-50">🎵</div>
           <p className="text-lg mb-2">Không có bài hát nào</p>
-          <p className="text-sm opacity-75">Thể loại này chưa có bài hát</p>
+          <p className={`text-sm opacity-75 text-${theme.colors.text}/60`}>Thể loại này chưa có bài hát</p>
         </div>
       );
     }
@@ -227,7 +298,7 @@ const SongGrid = memo(
           <div className="text-center mt-6">
             <button
               onClick={loadMoreSongs}
-              className="px-6 py-3 bg-gray-600 hover:bg-gray-500 text-white rounded-full transition-colors duration-200"
+              className={`px-6 py-3 bg-${theme.colors.card} hover:bg-${theme.colors.cardHover} text-${theme.colors.text} hover:text-white rounded-full transition-colors duration-200 border border-${theme.colors.border}`}
             >
               Xem thêm ({songs.length - currentIndex} bài)
             </button>
@@ -238,34 +309,39 @@ const SongGrid = memo(
   }
 );
 
-// Memoized TrendingSection
+// Memoized TrendingSection with theme support
 const TrendingSection = memo(
-  ({ trendingSongs, contextMenu, setContextMenu, handleCloseContextMenu }) => (
-    <div className="mb-8">
-      <div className="flex flex-row justify-between items-center mb-6">
-        <h2 className="text-2xl md:text-3xl font-bold cursor-pointer hover:underline transition-colors duration-200 hover:text-emerald-400 flex items-center gap-2">
-          <span className="text-2xl">🔥</span>
-          Trending ngay bây giờ
-        </h2>
+  ({ trendingSongs, contextMenu, setContextMenu, handleCloseContextMenu }) => {
+    const { theme } = useTheme();
+    
+    return (
+      <div className="mb-8">
+        <div className="flex flex-row justify-between items-center mb-6">
+          <h2 className={`text-2xl md:text-3xl font-bold cursor-pointer hover:underline transition-colors duration-200 hover:text-${theme.colors.secondary}-400 flex items-center gap-2`}>
+            <span className="text-2xl">🔥</span>
+            Trending ngay bây giờ
+          </h2>
+        </div>
+        <div className="space-y-1">
+          {trendingSongs.slice(0, 10).map((song, index) => (
+            <TrendingSong
+              key={`trending-${song.id}`}
+              song={song}
+              contextMenu={contextMenu}
+              setContextMenu={setContextMenu}
+              handleCloseContextMenu={handleCloseContextMenu}
+              list={trendingSongs}
+              rank={index + 1}
+            />
+          ))}
+        </div>
       </div>
-      <div className="space-y-1">
-        {trendingSongs.slice(0, 10).map((song, index) => (
-          <TrendingSong
-            key={`trending-${song.id}`}
-            song={song}
-            contextMenu={contextMenu}
-            setContextMenu={setContextMenu}
-            handleCloseContextMenu={handleCloseContextMenu}
-            list={trendingSongs}
-            rank={index + 1}
-          />
-        ))}
-      </div>
-    </div>
-  )
+    );
+  }
 );
 
 const MainContent = ({ setCurrentView, setListSongsDetail }) => {
+  const { theme } = useTheme();
   const [allSongs, setAllSongs] = useState([]);
   const [trendingSongs, setTrendingSongs] = useState([]);
   const [latestSongs, setLatestSongs] = useState([]);
@@ -548,7 +624,7 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
     [trendingSongs]
   );
 
-  // Loading state
+  // Enhanced loading state with theme colors
   if (loading) {
     return (
       <div className="text-white p-4 mr-0 md:mr-2 rounded-lg flex-1 overflow-y-auto scrollbar-spotify">
@@ -558,18 +634,18 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
             <div className="relative">
               {/* Pulsing Circle Background */}
               <div className="absolute inset-0 w-32 h-32 mx-auto">
-                <div className="w-full h-full rounded-full bg-emerald-500 opacity-20 animate-ping"></div>
+                <div className={`w-full h-full rounded-full bg-${theme.colors.secondary}-500 opacity-20 animate-ping`}></div>
               </div>
               <div className="absolute inset-2 w-28 h-28 mx-auto">
                 <div
-                  className="w-full h-full rounded-full bg-emerald-500 opacity-30 animate-ping"
+                  className={`w-full h-full rounded-full bg-${theme.colors.secondary}-500 opacity-30 animate-ping`}
                   style={{ animationDelay: "0.5s" }}
                 ></div>
               </div>
 
               {/* Central Music Icon */}
               <div className="relative w-32 h-32 mx-auto flex items-center justify-center">
-                <div className="w-20 h-20 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full flex items-center justify-center animate-bounce">
+                <div className={`w-20 h-20 bg-gradient-to-br from-${theme.colors.primary}-400 to-${theme.colors.secondary}-600 rounded-full flex items-center justify-center animate-bounce`}>
                   <svg
                     className="w-10 h-10 text-white"
                     fill="currentColor"
@@ -583,7 +659,7 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
 
             {/* Loading Text with Animation */}
             <div className="space-y-2">
-              <h2 className="text-2xl font-bold text-emerald-400 animate-pulse">
+              <h2 className={`text-2xl font-bold text-${theme.colors.secondary}-400 animate-pulse`}>
                 Đang tải nhạc...
               </h2>
               <div className="flex justify-center space-x-1">
@@ -601,8 +677,8 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
 
             {/* Progress Bar */}
             <div className="w-64 mx-auto">
-              <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full animate-pulse"></div>
+              <div className={`h-2 bg-${theme.colors.card} rounded-full overflow-hidden`}>
+                <div className={`h-full bg-gradient-to-r from-${theme.colors.primary}-500 to-${theme.colors.secondary}-400 rounded-full animate-pulse`}></div>
               </div>
             </div>
           </div>
@@ -611,16 +687,16 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
     );
   }
 
-  // Error state
+  // Error state with theme colors
   if (error) {
     return (
       <div className="text-white p-4 mr-0 md:mr-2 rounded-lg flex-1 overflow-y-auto scrollbar-spotify">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
-            <p className="text-red-400 mb-2">{error}</p>
+            <p className={`text-red-400 mb-2`}>{error}</p>
             <button
               onClick={() => window.location.reload()}
-              className="text-emerald-500 hover:text-emerald-400 underline transition-colors"
+              className={`text-${theme.colors.secondary}-500 hover:text-${theme.colors.secondary}-400 underline transition-colors`}
             >
               Retry
             </button>
@@ -654,7 +730,6 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
               selectedGenre.id
             )
           }
-          hoverColor="emerald"
           isLoading={genreFilterLoading}
         >
           <SongGrid
@@ -687,7 +762,6 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
               title="Mới phát hành"
               emoji="🆕"
               onViewAll={handleLoadMoreLatest}
-              hoverColor="emerald"
               isLoading={loadingStates.latest}
             >
               <SongGrid
@@ -706,7 +780,6 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
               title="Tất cả bài hát"
               onViewAll={handleLoadAllSongs}
               buttonText="Hiện tất cả"
-              hoverColor="emerald"
               isLoading={loadingStates.allSongs}
             >
               <SongGrid
@@ -727,7 +800,6 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
               onViewAll={() =>
                 handleGenreViewAll(genre.songs, genre.name, genre.id)
               }
-              hoverColor="emerald"
               isLoading={loadingStates.genres[genre.id]}
             >
               <SongGrid
@@ -748,10 +820,10 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
         latestSongs.length === 0 &&
         validGenres.length === 0 &&
         !loading && (
-          <div className="flex flex-col items-center justify-center h-64 text-gray-400">
+          <div className={`flex flex-col items-center justify-center h-64 text-${theme.colors.text}`}>
             <div className="text-6xl mb-4 opacity-50">🎵</div>
             <p className="text-xl mb-2 font-medium">No songs available</p>
-            <p className="text-sm opacity-75">
+            <p className={`text-sm opacity-75 text-${theme.colors.text}/60`}>
               Check back later for new content
             </p>
           </div>

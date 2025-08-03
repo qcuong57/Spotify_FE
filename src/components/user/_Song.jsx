@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useMemo, useRef, memo } from "react";
 import { useAudio } from "../../utils/audioContext";
+import { useTheme } from "../../context/themeContext";
 import {
   IconPlayerPlayFilled,
   IconPlayerPauseFilled,
@@ -8,28 +9,48 @@ import {
 import ContextMenu from "./library/_ContextMenu";
 import { incrementPlayCount } from "../../services/SongsService";
 
-// Memoized PlayButton component
+// Memoized PlayButton component with dynamic theme support
 const PlayButton = memo(
-  ({ isCurrentSong, isPlaying, showPlayButton, onClick }) => {
+  ({ isCurrentSong, isPlaying, showPlayButton, onClick, theme }) => {
     const buttonContent = useMemo(() => {
       if (isCurrentSong && isPlaying) {
-        return <IconPlayerPauseFilled className="w-6 h-6 text-teal-900" />;
+        return (
+          <IconPlayerPauseFilled
+            className={`w-5 h-5 text-${theme.colors.songButtonText} drop-shadow-lg`}
+          />
+        );
       }
-      return <IconPlayerPlayFilled className="w-6 h-6 text-teal-900 ml-0.5" />;
-    }, [isCurrentSong, isPlaying]);
+      return (
+        <IconPlayerPlayFilled
+          className={`w-5 h-5 text-${theme.colors.songButtonText} ml-0.5 drop-shadow-lg`}
+        />
+      );
+    }, [isCurrentSong, isPlaying, theme.colors.songButtonText]);
 
-    return (
-      <button
-        className={`
-        w-12 h-12 bg-teal-300/70 rounded-full flex items-center justify-center
-        shadow-lg transition-all duration-200 transform
-        hover:scale-105 hover:bg-emerald-400/70 active:scale-95
+    const isGradient = theme.colors.songButton.includes("gradient-to-r");
+
+    const buttonClass = useMemo(() => {
+      const baseClass = `
+        w-11 h-11 rounded-full flex items-center justify-center
+        shadow-2xl transition-all duration-300 transform backdrop-blur-sm
+        hover:scale-110 active:scale-95
         ${
           showPlayButton
             ? "translate-y-0 opacity-100 pointer-events-auto"
-            : "translate-y-2 opacity-0 pointer-events-none"
+            : "translate-y-3 opacity-0 pointer-events-none"
         }
-      `}
+      `;
+
+      if (isGradient) {
+        return `${baseClass} bg-${theme.colors.songButton} hover:bg-${theme.colors.songButtonHover} shadow-${theme.colors.primary}-500/50`;
+      } else {
+        return `${baseClass} bg-${theme.colors.songButton} hover:bg-${theme.colors.songButtonHover} shadow-${theme.colors.primary}-500/50`;
+      }
+    }, [showPlayButton, isGradient, theme.colors]);
+
+    return (
+      <button
+        className={buttonClass}
         onClick={onClick}
         tabIndex={showPlayButton ? 0 : -1}
       >
@@ -39,19 +60,22 @@ const PlayButton = memo(
   }
 );
 
-// Memoized RankBadge component
-const RankBadge = memo(({ rank }) => {
+// Enhanced RankBadge component with dynamic theme
+const RankBadge = memo(({ rank, theme }) => {
   const badgeClass = useMemo(() => {
-    if (rank === 1) return "bg-amber-400 text-black";
-    if (rank === 2) return "bg-gray-200 text-black";
-    if (rank === 3) return "bg-amber-500 text-white";
-    return "bg-emerald-400 text-white";
-  }, [rank]);
+    if (rank === 1)
+      return "bg-gradient-to-br from-amber-400 to-yellow-500 text-black shadow-amber-500/50";
+    if (rank === 2)
+      return "bg-gradient-to-br from-gray-300 to-gray-400 text-black shadow-gray-400/50";
+    if (rank === 3)
+      return "bg-gradient-to-br from-amber-600 to-orange-500 text-white shadow-amber-600/50";
+    return `bg-gradient-to-br from-${theme.colors.primary}-400 to-${theme.colors.secondary}-500 text-white shadow-${theme.colors.primary}-500/50`;
+  }, [rank, theme.colors]);
 
   return (
-    <div className="absolute top-2 left-2 z-10">
+    <div className="absolute top-3 left-3 z-20">
       <div
-        className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${badgeClass} shadow-lg`}
+        className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${badgeClass} shadow-xl border border-white/30 backdrop-blur-sm`}
       >
         {rank}
       </div>
@@ -59,160 +83,89 @@ const RankBadge = memo(({ rank }) => {
   );
 });
 
-// Memoized NowPlayingIndicator component
-const NowPlayingIndicator = memo(() => (
-  <div className="absolute top-2 right-2">
+// Enhanced NowPlayingIndicator with dynamic theme
+const NowPlayingIndicator = memo(({ theme }) => (
+  <div className="absolute top-3 right-3 z-20">
     <div className="flex space-x-1">
       {[0, 1, 2].map((index) => (
         <div
           key={index}
-          className="w-1 h-4 bg-teal-300 rounded-full animate-bounce"
-          style={{ animationDelay: `${index * 0.1}s` }}
-        />
-      ))}
-    </div>
-  </div>
-));
-
-// Heavily optimized Floating Bubble Effect
-const FloatingBubbleEffect = memo(({ isHovered }) => {
-  const [isActive, setIsActive] = useState(false);
-  const containerRef = useRef(null);
-  const timeoutRef = useRef(null);
-
-  // Reduced bubble configurations for better performance
-  const bubbleConfigs = useMemo(() => {
-    const configs = [];
-    
-    // Only 4 small bubbles (reduced from 8)
-    for (let i = 0; i < 4; i++) {
-      configs.push({
-        id: `float-${i}`,
-        size: 3 + Math.random() * 3, // Smaller range
-        x: 20 + Math.random() * 60,
-        y: 25 + Math.random() * 50,
-        duration: 4 + Math.random() * 1.5, // Shorter duration
-        delay: Math.random() * 1,
-        type: 'small',
-        animationType: 'gentle' // Fixed animation type for consistency
-      });
-    }
-
-    // Only 2 medium bubbles (reduced from 5)
-    for (let i = 0; i < 2; i++) {
-      configs.push({
-        id: `medium-${i}`,
-        size: 4 + Math.random() * 2,
-        x: 25 + Math.random() * 50,
-        y: 30 + Math.random() * 40,
-        duration: 5 + Math.random() * 1,
-        delay: Math.random() * 1.5,
-        type: 'medium',
-        animationType: 'sway'
-      });
-    }
-
-    // Only 1 large bubble (reduced from 3)
-    configs.push({
-      id: 'large-0',
-      size: 5 + Math.random() * 2,
-      x: 35 + Math.random() * 30,
-      y: 35 + Math.random() * 30,
-      duration: 6,
-      delay: Math.random() * 2,
-      type: 'large',
-      animationType: 'drift'
-    });
-
-    return configs;
-  }, []); // Only generate once
-
-  // Debounced activation to prevent flickering
-  useEffect(() => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-
-    if (isHovered) {
-      timeoutRef.current = setTimeout(() => {
-        setIsActive(true);
-      }, 150); // Delay activation to reduce flicker
-    } else {
-      setIsActive(false);
-    }
-
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, [isHovered]);
-
-  if (!isActive) return null;
-
-  return (
-    <div 
-      ref={containerRef}
-      className="absolute inset-0 pointer-events-none overflow-hidden z-0 rounded-lg bubble-container-optimized"
-    >
-      {bubbleConfigs.map((bubble) => (
-        <div
-          key={bubble.id}
-          className={`absolute rounded-full bubble-optimized bubble-${bubble.animationType}-optimized`}
+          className={`w-1 h-4 bg-gradient-to-t from-${theme.colors.primary}-400 to-${theme.colors.secondary}-300 rounded-full animate-bounce shadow-lg`}
           style={{
-            width: `${bubble.size}px`,
-            height: `${bubble.size}px`,
-            left: `${bubble.x}%`,
-            top: `${bubble.y}%`,
-            animationDuration: `${bubble.duration}s`,
-            animationDelay: `${bubble.delay}s`,
-            zIndex: bubble.type === 'large' ? 3 : bubble.type === 'medium' ? 2 : 1,
+            animationDelay: `${index * 0.15}s`,
+            animationDuration: "1s",
           }}
         />
       ))}
-      
-      {/* Simplified ambient light effect */}
-      <div className="absolute inset-0 bg-gradient-to-br from-teal-400/1 via-transparent to-emerald-400/1 opacity-30" />
     </div>
-  );
-});
-
-// Optimized SongInfo component
-const SongInfo = memo(({ song, isCurrentSong, formattedPlayCount, isHovered }) => (
-  <div className="space-y-2 relative z-10">
-    {/* Floating Bubble Effect */}
-    <FloatingBubbleEffect isHovered={isHovered} />
-
-    <h3
-      className={`
-        text-base font-semibold line-clamp-2 leading-tight transition-all duration-300
-        ${isCurrentSong ? "text-emerald-400" : "text-white"}
-        ${isHovered ? "text-teal-200 transform translate-y-[-1px] drop-shadow-lg" : ""}
-        group-hover:text-teal-300
-      `}
-    >
-      {song.song_name || "Unknown Title"}
-    </h3>
-    <p className={`
-      text-sm text-teal-300 line-clamp-1 transition-all duration-300
-      ${isHovered ? "text-emerald-300 transform translate-y-[-1px] drop-shadow-md" : ""}
-      group-hover:text-emerald-400
-    `}>
-      {song.singer_name || "Unknown Artist"}
-    </p>
-
-    {/* Play Count với hiệu ứng */}
-    {song.play_count !== undefined && song.play_count > 0 && (
-      <div className={`
-        flex items-center space-x-1 text-xs text-teal-300 transition-all duration-300
-        ${isHovered ? "text-emerald-300 transform translate-y-[-1px] drop-shadow-sm" : ""}
-      `}>
-        <IconTrendingUp className="w-3 h-3" />
-        <span>{formattedPlayCount} lượt nghe</span>
-      </div>
-    )}
   </div>
 ));
+
+// Enhanced SongInfo component with dynamic theme
+const SongInfo = memo(
+  ({ song, isCurrentSong, formattedPlayCount, isHovered, theme }) => (
+    <div className="space-y-2 relative z-10">
+      <h3
+        className={`
+        text-base font-bold line-clamp-2 leading-tight transition-all duration-300
+        ${
+          isCurrentSong
+            ? `text-${theme.colors.songTextCurrent} drop-shadow-lg`
+            : `text-${theme.colors.songText}`
+        }
+        ${
+          isHovered
+            ? `text-${theme.colors.songTextHover} transform translate-y-[-2px] drop-shadow-xl`
+            : ""
+        }
+        group-hover:text-${theme.colors.songTextHover}
+      `}
+      >
+        {song.song_name || "Unknown Title"}
+      </h3>
+      <p
+        className={`
+      text-sm line-clamp-1 transition-all duration-300 font-medium
+      ${
+        isCurrentSong
+          ? `text-${theme.colors.songArtist}`
+          : `text-${theme.colors.songArtist}/90`
+      }
+      ${
+        isHovered
+          ? `text-${theme.colors.songArtistHover} transform translate-y-[-1px] drop-shadow-lg`
+          : ""
+      }
+      group-hover:text-${theme.colors.songArtistHover}
+    `}
+      >
+        {song.singer_name || "Unknown Artist"}
+      </p>
+
+      {/* Enhanced Play Count with dynamic theme styling */}
+      {song.play_count !== undefined && song.play_count > 0 && (
+        <div
+          className={`
+        flex items-center space-x-1 text-xs transition-all duration-300 font-medium
+        ${
+          isCurrentSong
+            ? `text-${theme.colors.songPlayCount}`
+            : `text-${theme.colors.songPlayCount}/80`
+        }
+        ${
+          isHovered
+            ? `text-${theme.colors.songPlayCountHover} transform translate-y-[-1px] drop-shadow-md`
+            : ""
+        }
+      `}
+        >
+          <IconTrendingUp className="w-3 h-3" />
+          <span>{formattedPlayCount} lượt nghe</span>
+        </div>
+      )}
+    </div>
+  )
+);
 
 const Song = ({
   song,
@@ -223,6 +176,7 @@ const Song = ({
   showRank = false,
   rank,
 }) => {
+  const { theme } = useTheme();
   const {
     setCurrentSong,
     currentSong,
@@ -237,7 +191,6 @@ const Song = ({
   const [playCountIncremented, setPlayCountIncremented] = useState(false);
 
   const isLoadingRef = useRef(false);
-  const hoverTimeoutRef = useRef(null);
 
   const isCurrentSong = useMemo(
     () => currentSong?.id === song.id,
@@ -322,64 +275,139 @@ const Song = ({
     [song.id, setContextMenu]
   );
 
-  // Optimized hover handlers with longer debouncing
-  const handleMouseEnter = useCallback(() => {
-    if (hoverTimeoutRef.current) {
-      clearTimeout(hoverTimeoutRef.current);
-    }
-    setIsHovered(true);
-  }, []);
-
-  const handleMouseLeave = useCallback(() => {
-    if (hoverTimeoutRef.current) {
-      clearTimeout(hoverTimeoutRef.current);
-    }
-    hoverTimeoutRef.current = setTimeout(() => {
-      setIsHovered(false);
-    }, 300); // Longer delay to prevent rapid state changes
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (hoverTimeoutRef.current) {
-        clearTimeout(hoverTimeoutRef.current);
-      }
-    };
-  }, []);
-
   const showPlayButton = useMemo(() => {
     return isHovered || isCurrentSong;
   }, [isHovered, isCurrentSong]);
 
+  // Dynamic card styling based on theme with gradient background
+  const cardClass = useMemo(() => {
+    const baseClass =
+      "group relative transition-all duration-500 p-4 rounded-2xl cursor-pointer backdrop-blur-md overflow-hidden";
+
+    // Get theme-specific gradient background
+    const getThemeBackground = (isActive = false) => {
+      const opacity = isActive ? "/80" : "/60";
+      switch (theme.id) {
+        case "ocean":
+          return `bg-gradient-to-br from-teal-800${opacity} via-teal-600${opacity} to-emerald-800${opacity}`;
+        case "forest":
+          return `bg-gradient-to-br from-green-800${opacity} via-green-600${opacity} to-emerald-800${opacity}`;
+        case "space":
+          return `bg-gradient-to-br from-purple-800${opacity} via-purple-400${opacity} to-indigo-800${opacity}`;
+        case "sunset":
+          return `bg-gradient-to-br from-orange-800${opacity} via-red-600${opacity} to-yellow-800${opacity}`;
+        case "neon":
+          return `bg-gradient-to-br from-gray-800${opacity} via-blue-300${opacity} to-purple-800${opacity}`;
+        default:
+          return `bg-gradient-to-br from-teal-800${opacity} via-teal-700${opacity} to-emerald-600${opacity}`;
+      }
+    };
+
+    if (isHovered) {
+      return `${baseClass} ${getThemeBackground(true)} shadow-2xl shadow-${theme.colors.songShadowHover} transform scale-[1.03]`;
+    } else if (isCurrentSong) {
+      return `${baseClass} ${getThemeBackground(true)} shadow-xl shadow-${theme.colors.songShadow}`;
+    } else {
+      return `${baseClass} ${getThemeBackground()} hover:shadow-2xl hover:shadow-${theme.colors.songShadowHover}`;
+    }
+  }, [isHovered, isCurrentSong, theme.colors, theme.id]);
+
+  // Enhanced animated background effect with theme-specific overlay
+  const animatedBgClass = useMemo(() => {
+    const getOverlayGradient = () => {
+      switch (theme.id) {
+        case "ocean":
+          return "from-teal-400/10 via-emerald-300/5 to-teal-600/10";
+        case "forest":
+          return "from-green-400/10 via-amber-300/5 to-green-600/10";
+        case "space":
+          return "from-purple-400/10 via-pink-300/5 to-purple-600/10";
+        case "sunset":
+          return "from-orange-400/10 via-amber-300/5 to-orange-600/10";
+        case "neon":
+          return "from-cyan-400/10 via-fuchsia-300/5 to-cyan-600/10";
+        default:
+          return "from-teal-400/10 via-emerald-300/5 to-teal-600/10";
+      }
+    };
+
+    return `
+      absolute inset-0 opacity-0 transition-opacity duration-500 rounded-2xl
+      ${isHovered ? "opacity-100" : ""}
+      bg-gradient-to-br ${getOverlayGradient()}
+    `;
+  }, [isHovered, theme.id]);
+
+  // Dynamic album art shadow - removed white border and blur effects
+  const albumArtClass = useMemo(() => {
+    const baseClass =
+      "relative aspect-square overflow-hidden rounded-xl shadow-xl transition-all duration-500";
+
+    if (isHovered) {
+      return `${baseClass} shadow-2xl shadow-${theme.colors.songShadowHover} transform rotate-1`;
+    } else if (isCurrentSong) {
+      return `${baseClass} shadow-xl shadow-${theme.colors.songShadow}`;
+    } else {
+      return `${baseClass} shadow-lg shadow-slate-900/50`;
+    }
+  }, [isHovered, isCurrentSong, theme.colors]);
+
+  // Enhanced gradient overlay with theme-specific styling - removed blur
+  const overlayClass = useMemo(() => {
+    const baseClass = "absolute inset-0 transition-all duration-500 rounded-xl";
+
+    const getThemeOverlay = () => {
+      switch (theme.id) {
+        case "ocean":
+          return "from-teal-500/15 via-transparent to-teal-900/15";
+        case "forest":
+          return "from-amber-500/15 via-transparent to-green-900/15";
+        case "space":
+          return "from-purple-500/15 via-transparent to-purple-900/15";
+        case "sunset":
+          return "from-orange-500/15 via-transparent to-orange-900/15";
+        case "neon":
+          return "from-cyan-500/15 via-transparent to-blue-900/15";
+        default:
+          return "from-teal-500/15 via-transparent to-teal-900/15";
+      }
+    };
+
+    if (isHovered) {
+      return `${baseClass} bg-gradient-to-br ${getThemeOverlay()}`;
+    } else if (isCurrentSong) {
+      return `${baseClass} bg-gradient-to-br from-${theme.colors.primary}-600/10 via-transparent to-${theme.colors.secondary}-900/20`;
+    } else {
+      return `${baseClass} bg-transparent`;
+    }
+  }, [isHovered, isCurrentSong, theme.colors, theme.id]);
+
   return (
     <div
-      className={`
-        group relative transition-all duration-300 p-4 rounded-lg cursor-pointer backdrop-blur-sm overflow-hidden song-card-optimized
-        ${isHovered 
-          ? 'bg-teal-800/50 shadow-xl shadow-teal-500/25 transform scale-[1.03] border border-teal-400/20' 
-          : 'bg-teal-900/30 hover:bg-teal-800/30 border border-transparent'
-        }
-      `}
+      className={cardClass}
       onClick={playAudio}
       onContextMenu={handleContextMenu}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Rank Badge */}
-      {showRank && rank && <RankBadge rank={rank} />}
+      {/* Animated background effect */}
+      <div className={animatedBgClass} />
 
-      {/* Album Art Container với hiệu ứng nâng cao */}
+      {/* Rank Badge */}
+      {showRank && rank && <RankBadge rank={rank} theme={theme} />}
+
+      {/* Enhanced Album Art Container */}
       <div className="relative mb-4">
-        <div className={`
-          relative aspect-square overflow-hidden rounded-lg shadow-lg transition-all duration-300
-          ${isHovered ? 'shadow-2xl shadow-teal-500/40 ring-2 ring-teal-400/30' : ''}
-        `}>
+        <div className={albumArtClass}>
           <img
             className={`
               w-full h-full object-cover transition-all duration-500
-              ${isHovered 
-                ? 'scale-110 brightness-110 contrast-110' 
-                : 'group-hover:scale-105'
+              ${
+                isHovered
+                  ? "scale-110"
+                  : isCurrentSong
+                  ? "scale-105"
+                  : ""
               }
             `}
             src={song.image}
@@ -387,36 +415,44 @@ const Song = ({
             loading="lazy"
           />
 
-          {/* Enhanced Overlay với gradient động */}
-          <div className={`
-            absolute inset-0 transition-all duration-500
-            ${isHovered 
-              ? 'bg-gradient-to-br from-teal-500/15 via-emerald-500/10 to-teal-900/20' 
-              : 'bg-gray-900 bg-opacity-0 group-hover:bg-opacity-10'
-            }
-          `} />
+          {/* Enhanced Gradient Overlay */}
+          <div className={overlayClass} />
 
-          {/* Play Button */}
-          <div className="absolute bottom-2 right-2 z-20">
+          {/* Shimmer effect on hover */}
+          <div
+            className={`
+            absolute inset-0 transition-all duration-700 rounded-xl
+            ${
+              isHovered
+                ? "bg-gradient-to-r from-transparent via-white/10 to-transparent animate-pulse"
+                : ""
+            }
+          `}
+          />
+
+          {/* Enhanced Play Button */}
+          <div className="absolute bottom-3 right-3 z-20">
             <PlayButton
               isCurrentSong={isCurrentSong}
               isPlaying={isPlaying}
               showPlayButton={showPlayButton}
               onClick={togglePlayPause}
+              theme={theme}
             />
           </div>
 
           {/* Now Playing Indicator */}
-          {isCurrentSong && isPlaying && <NowPlayingIndicator />}
+          {isCurrentSong && isPlaying && <NowPlayingIndicator theme={theme} />}
         </div>
       </div>
 
-      {/* Song Info */}
+      {/* Enhanced Song Info */}
       <SongInfo
         song={song}
         isCurrentSong={isCurrentSong}
         formattedPlayCount={formattedPlayCount}
         isHovered={isHovered}
+        theme={theme}
       />
 
       {/* Context Menu */}

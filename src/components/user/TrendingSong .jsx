@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useAudio } from "../../utils/audioContext";
+import { useTheme } from "../../context/themeContext";
 import {
   IconPlayerPlayFilled,
   IconPlayerPauseFilled,
@@ -15,6 +16,8 @@ const TrendingSong = ({ song, list, rank }) => {
     isPlaying,
     setNewPlaylist,
   } = useAudio();
+  
+  const { theme } = useTheme();
 
   const [isHovered, setIsHovered] = useState(false);
   const [playCountIncremented, setPlayCountIncremented] = useState(false);
@@ -128,7 +131,7 @@ const TrendingSong = ({ song, list, rank }) => {
     return count?.toString() || "0";
   }, [song.play_count]);
 
-  // Memoized rank styling
+  // Memoized rank styling với theme support
   const rankStyle = useMemo(() => {
     if (rank <= 3) {
       return rank === 1
@@ -137,8 +140,63 @@ const TrendingSong = ({ song, list, rank }) => {
         ? "text-gray-300 drop-shadow-sm"
         : "text-amber-600 drop-shadow-sm";
     }
-    return isCurrentSong ? "text-green-500" : "text-gray-400";
-  }, [rank, isCurrentSong]);
+    return isCurrentSong ? `text-${theme.colors.songTextCurrent}` : "text-gray-400";
+  }, [rank, isCurrentSong, theme.colors.songTextCurrent]);
+
+  // Memoized play count styling với theme support - UPDATED
+  const playCountStyle = useMemo(() => {
+    if (isCurrentSong) {
+      return `text-${theme.colors.songTextCurrent}`;
+    }
+    if (isHovered) {
+      return `text-${theme.colors.songPlayCountHover}`;
+    }
+    return `text-${theme.colors.songPlayCount}`;
+  }, [isHovered, isCurrentSong, theme.colors.songPlayCount, theme.colors.songPlayCountHover, theme.colors.songTextCurrent]);
+
+  // Memoized song info styling với theme support - UPDATED
+  const songInfoStyle = useMemo(() => {
+    const titleClass = isCurrentSong
+      ? `text-${theme.colors.songTextCurrent} drop-shadow-sm`
+      : isHovered
+      ? `text-${theme.colors.songTextHover} transform translate-x-1`
+      : `text-${theme.colors.songText} group-hover:text-${theme.colors.songTextHover}`;
+
+    // UPDATED: Singer name giờ sẽ cùng màu với theme khi hover và current
+    const artistClass = isCurrentSong
+      ? `text-${theme.colors.songTextCurrent}/80`
+      : isHovered
+      ? `text-${theme.colors.songArtistHover} transform translate-x-1`
+      : `text-${theme.colors.songArtist} group-hover:text-${theme.colors.songArtistHover}`;
+
+    return { titleClass, artistClass };
+  }, [
+    isCurrentSong,
+    isHovered,
+    theme.colors.songTextCurrent,
+    theme.colors.songText,
+    theme.colors.songTextHover,
+    theme.colors.songArtist,
+    theme.colors.songArtistHover,
+  ]);
+
+  // Memoized card styling với theme support
+  const cardStyle = useMemo(() => {
+    if (isCurrentSong) {
+      return `bg-${theme.colors.songCardHover} border border-${theme.colors.songBorderHover} shadow-lg shadow-${theme.colors.songShadowHover}`;
+    }
+    if (isHovered) {
+      return `bg-${theme.colors.songCardHover} shadow-xl shadow-${theme.colors.songShadowHover} scale-[1.02]`;
+    }
+    return `hover:bg-${theme.colors.songCard}`;
+  }, [
+    isCurrentSong,
+    isHovered,
+    theme.colors.songCard,
+    theme.colors.songCardHover,
+    theme.colors.songBorderHover,
+    theme.colors.songShadowHover,
+  ]);
 
   // Memoized button content
   const buttonContent = useMemo(() => {
@@ -156,13 +214,7 @@ const TrendingSong = ({ song, list, rank }) => {
       className={`
         group relative flex items-center gap-4 p-3 rounded-lg cursor-pointer
         transition-all duration-500 ease-out transform
-        ${
-          isCurrentSong
-            ? "bg-green-500/10 border border-green-500/20 shadow-lg shadow-green-500/10"
-            : isHovered
-            ? "bg-white/8 shadow-xl shadow-black/20 scale-[1.02]"
-            : "hover:bg-white/5"
-        }
+        ${cardStyle}
         ${isHovered ? "backdrop-blur-sm" : ""}
       `}
       onClick={playAudio}
@@ -184,27 +236,29 @@ const TrendingSong = ({ song, list, rank }) => {
             {rank}
           </span>
 
-          {/* Play Button */}
+          {/* Play Button với theme color */}
           <button
             className={`
               w-8 h-8 flex items-center justify-center rounded-full 
-              bg-green-500 hover:bg-green-400 
+              bg-${theme.colors.songButton} hover:bg-${theme.colors.songButtonHover}
               transition-all duration-300 ease-out transform
               hover:scale-110 active:scale-95
-              shadow-lg shadow-green-500/30
+              shadow-lg shadow-${theme.colors.songShadow}
               ${showPlayButton ? "opacity-100 scale-100" : "opacity-0 scale-75"}
             `}
             onClick={togglePlayPause}
             style={{ pointerEvents: showPlayButton ? "auto" : "none" }}
           >
-            {buttonContent}
+            <div className={`text-${theme.colors.songButtonText}`}>
+              {buttonContent}
+            </div>
           </button>
         </div>
       </div>
 
       {/* Album Art */}
       <div className="flex-shrink-0 relative">
-        <div className="w-12 h-12 overflow-hidden rounded-md shadow-md transition-all duration-300 group-hover:shadow-lg">
+        <div className={`w-12 h-12 overflow-hidden rounded-md shadow-md transition-all duration-300 group-hover:shadow-lg border border-${theme.colors.songBorder}`}>
           <img
             className="w-full h-full object-cover transition-all duration-500 ease-out group-hover:scale-110 group-hover:brightness-110"
             src={song.image}
@@ -212,18 +266,18 @@ const TrendingSong = ({ song, list, rank }) => {
             loading="lazy"
           />
 
-          {/* Hover overlay */}
+          {/* Hover overlay với theme overlay */}
           <div
             className={`
-            absolute inset-0 bg-black transition-opacity duration-300
-            ${isHovered ? "bg-opacity-10" : "bg-opacity-0"}
+            absolute inset-0 transition-opacity duration-300
+            ${isHovered ? `bg-gradient-to-br ${theme.colors.songOverlay} opacity-50` : "opacity-0"}
           `}
           />
         </div>
 
-        {/* Now Playing Indicator */}
+        {/* Now Playing Indicator với theme color */}
         {isCurrentSong && isPlaying && (
-          <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center shadow-lg animate-pulse">
+          <div className={`absolute -bottom-1 -right-1 w-4 h-4 bg-${theme.colors.songIndicator} rounded-full flex items-center justify-center shadow-lg animate-pulse`}>
             <div className="w-2 h-2 bg-white rounded-full"></div>
           </div>
         )}
@@ -249,18 +303,12 @@ const TrendingSong = ({ song, list, rank }) => {
         )}
       </div>
 
-      {/* Song Info */}
+      {/* Song Info với theme colors - UPDATED */}
       <div className="flex-1 min-w-0">
         <h3
           className={`
             text-sm font-medium truncate transition-all duration-300 ease-out
-            ${
-              isCurrentSong
-                ? "text-green-500 drop-shadow-sm"
-                : isHovered
-                ? "text-white transform translate-x-1"
-                : "text-gray-200 group-hover:text-white"
-            }
+            ${songInfoStyle.titleClass}
           `}
         >
           {song.song_name || "Unknown Title"}
@@ -268,47 +316,39 @@ const TrendingSong = ({ song, list, rank }) => {
         <p
           className={`
           text-xs truncate transition-all duration-300 ease-out
-          ${
-            isHovered
-              ? "text-gray-300 transform translate-x-1"
-              : "text-gray-400 group-hover:text-gray-300"
-          }
+          ${songInfoStyle.artistClass}
         `}
         >
           {song.singer_name || "Unknown Artist"}
         </p>
       </div>
 
-      {/* Play Count */}
+      {/* Play Count với theme colors - UPDATED */}
       <div
         className={`
         hidden md:flex flex-shrink-0 items-center gap-1 text-xs min-w-0
         transition-all duration-300 ease-out
-        ${isHovered ? "text-emerald-300 scale-105" : "text-teal-400"}
+        ${isHovered ? "scale-105" : ""}
       `}
       >
-        <IconTrendingUp className="w-3 h-3 flex-shrink-0" />
-        <span className="truncate">{formattedPlayCount}</span>
+        <IconTrendingUp className={`w-3 h-3 flex-shrink-0 transition-colors duration-300 ${playCountStyle}`} />
+        <span className={`truncate font-medium transition-colors duration-300 ${playCountStyle}`}>
+          {formattedPlayCount}
+        </span>
       </div>
 
-      {/* Premium Glow Effect */}
+      {/* Premium Glow Effect với theme gradient */}
       {rank <= 5 && isHovered && (
-        <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-orange-500/5 via-pink-500/5 to-purple-500/5 pointer-events-none animate-pulse"></div>
+        <div className={`absolute inset-0 rounded-lg bg-gradient-to-r ${theme.colors.songOverlay} pointer-events-none animate-pulse`}></div>
       )}
 
-      {/* Subtle border animation for top songs */}
+      {/* Subtle border animation for top songs với theme colors */}
       {rank <= 3 && isHovered && (
         <div
           className={`
           absolute inset-0 rounded-lg pointer-events-none
           border transition-all duration-300
-          ${
-            rank === 1
-              ? "border-yellow-400/30"
-              : rank === 2
-              ? "border-gray-300/30"
-              : "border-amber-600/30"
-          }
+          border-${theme.colors.songRing}
         `}
         ></div>
       )}

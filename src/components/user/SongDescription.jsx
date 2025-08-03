@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useAudio } from "../../utils/audioContext";
+import { useTheme } from "../../context/themeContext";
 import Hls from "hls.js";
 import SyncedLyricsDisplay from "../../components/user/SyncedLyricsDisplay";
 import {
@@ -13,6 +14,7 @@ import {
 import { Box, Text } from "@mantine/core";
 
 const SongDescription = () => {
+  const { theme } = useTheme();
   const {
     currentSong,
     audio,
@@ -308,14 +310,14 @@ const SongDescription = () => {
 
   return (
     <div
-      className={`fixed inset-0 z-50 bg-gradient-to-t from-teal-900/50 via-teal-800/50 to-teal-700/50 flex flex-col md:relative md:inset-auto md:max-w-[400px] md:shadow-lg md:rounded-lg transition-all duration-300 ease-out backdrop-blur-md ${
+      className={`fixed inset-0 z-50 bg-gradient-to-t ${theme.colors.backgroundOverlay} flex flex-col md:relative md:inset-auto md:max-w-[400px] md:shadow-lg md:rounded-lg transition-all duration-300 ease-out backdrop-blur-md ${
         isVisible && !isClosing
           ? "translate-y-0 opacity-100 md:translate-x-0"
           : "translate-y-full opacity-0 md:translate-y-0 md:translate-x-full"
       }`}
     >
       <div
-        className={`flex items-center justify-between p-4 md:hidden transition-all duration-300 delay-100 bg-gradient-to-r from-teal-900/50 to-teal-800/50 backdrop-blur-md ${
+        className={`flex items-center justify-between p-4 md:hidden transition-all duration-300 delay-100 bg-gradient-to-r ${theme.colors.backgroundOverlay} backdrop-blur-md ${
           isVisible && !isClosing
             ? "translate-y-0 opacity-100"
             : "translate-y-4 opacity-0"
@@ -323,29 +325,29 @@ const SongDescription = () => {
       >
         <button
           onClick={handleClose}
-          className="p-2 rounded-full hover:bg-teal-600/50 transition-colors"
+          className={`p-2 rounded-full hover:bg-${theme.colors.primary}-600/50 transition-colors`}
         >
-          <IconChevronDown size={24} className="text-teal-300" />
+          <IconChevronDown size={24} className={`text-${theme.colors.text}`} />
         </button>
-        <span className="text-sm text-teal-300 font-medium">
+        <span className={`text-sm text-${theme.colors.text} font-medium`}>
           {isVideoFullscreen ? "Video Playing" : "Now Playing"}
         </span>
         <div className="w-10" />
       </div>
 
       <div
-        className={`hidden md:flex items-center justify-between p-3 border-b border-teal-700/50 transition-all duration-300 delay-100 bg-gradient-to-r from-teal-900/50 to-teal-800/50 backdrop-blur-md ${
+        className={`hidden md:flex items-center justify-between p-3 border-b border-${theme.colors.border} transition-all duration-300 delay-100 bg-gradient-to-r ${theme.colors.backgroundOverlay} backdrop-blur-md ${
           isVisible && !isClosing
             ? "translate-y-0 opacity-100"
             : "translate-y-4 opacity-0"
         }`}
       >
-        <h2 className="text-lg font-semibold text-teal-300">Now Playing</h2>
+        <h2 className={`text-lg font-semibold text-${theme.colors.text}`}>Now Playing</h2>
         <button
           onClick={handleClose}
-          className="p-2 rounded-full hover:bg-teal-600/50 transition-colors"
+          className={`p-2 rounded-full hover:bg-${theme.colors.primary}-600/50 transition-colors`}
         >
-          <IconX size={20} className="text-teal-300" />
+          <IconX size={20} className={`text-${theme.colors.text}`} />
         </button>
       </div>
 
@@ -358,7 +360,7 @@ const SongDescription = () => {
           }`}
         >
           <div
-            className={`relative bg-gradient-to-br from-teal-900/50 to-teal-800/50 rounded-lg overflow-hidden shadow-xl ${
+            className={`relative bg-gradient-to-br from-${theme.colors.primary}-900/50 to-${theme.colors.secondary}-800/50 rounded-lg overflow-hidden shadow-xl ${
               showLyrics && hasLyrics ? "aspect-[16/9]" : "aspect-video"
             }`}
           >
@@ -387,7 +389,7 @@ const SongDescription = () => {
                 )}
               </>
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-teal-600 to-emerald-500">
+              <div className={`w-full h-full flex items-center justify-center bg-gradient-to-br from-${theme.colors.primary}-600 to-${theme.colors.secondary}-500`}>
                 <img
                   src={currentSong.image}
                   alt={currentSong.song_name}
@@ -417,7 +419,7 @@ const SongDescription = () => {
               {currentSong.song_name || "Unknown Title"}
             </h3>
             <p
-              className={`text-teal-300 mb-2 line-clamp-1 ${
+              className={`text-${theme.colors.text} mb-2 line-clamp-1 ${
                 showLyrics && hasLyrics ? "text-xs" : "text-base md:text-sm"
               }`}
             >
@@ -427,14 +429,14 @@ const SongDescription = () => {
             <div className="flex items-center justify-center md:justify-start space-x-3">
               <button
                 onClick={handleLike}
-                className="p-2 rounded-full hover:bg-teal-600/50 transition-colors"
+                className={`p-2 rounded-full hover:bg-${theme.colors.primary}-600/50 transition-colors`}
               >
                 {isLiked ? (
-                  <IconHeartFilled size={18} className="text-emerald-400" />
+                  <IconHeartFilled size={18} className={`text-${theme.colors.secondary}-400`} />
                 ) : (
                   <IconHeart
                     size={18}
-                    className="text-teal-300 hover:text-emerald-400"
+                    className={`text-${theme.colors.text} hover:text-${theme.colors.secondary}-400`}
                   />
                 )}
               </button>
@@ -444,8 +446,8 @@ const SongDescription = () => {
                   onClick={() => setShowLyrics(!showLyrics)}
                   className={`p-2 rounded-full transition-colors ${
                     showLyrics
-                      ? "bg-teal-300/70 text-teal-900"
-                      : "hover:bg-teal-600/50 text-teal-300 hover:text-emerald-400"
+                      ? `bg-${theme.colors.button} text-${theme.colors.primary}-900`
+                      : `hover:bg-${theme.colors.primary}-600/50 text-${theme.colors.text} hover:text-${theme.colors.textHover}`
                   }`}
                   title={showLyrics ? "Hide Lyrics" : "Show Lyrics"}
                 >
@@ -487,7 +489,7 @@ const SongDescription = () => {
                 >
                   <Text
                     style={{
-                      color: "rgba(209, 250, 229, 0.8)", // teal-300/80
+                      color: `rgba(209, 250, 229, 0.8)`, // Using theme text color with opacity
                       fontSize: "14px",
                       fontWeight: 400,
                       lineHeight: 1.5,
@@ -518,7 +520,7 @@ const SongDescription = () => {
                 : "translate-y-4 opacity-0"
             }`}
           >
-            <p className="text-sm text-teal-300/80">
+            <p className={`text-sm text-${theme.colors.text}/80`}>
               {isVideoFullscreen
                 ? "Exit fullscreen to control playback"
                 : "Swipe down to close"}

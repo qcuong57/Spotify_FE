@@ -19,9 +19,11 @@ import {
 } from "@tabler/icons-react";
 import { Menu, Button, Anchor } from "@mantine/core";
 import { useAudio } from "../../utils/audioContext";
+import { useTheme } from "../../context/themeContext";
 import { formatTime } from "../../utils/timeFormat";
 
 const PlayerControls = ({ isVisible, onToggleVisibility }) => {
+  const { theme } = useTheme();
   const {
     currentSong,
     audio,
@@ -72,11 +74,71 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
   const getRepeatIcon = () => {
     switch (repeatMode) {
       case "one":
-        return <IconRepeatOnce size={18} className="text-teal-400" />;
+        return (
+          <IconRepeatOnce
+            size={18}
+            className={`text-${theme.colors.secondary}-400`}
+          />
+        );
       default:
-        return <IconRepeat size={18} className="text-teal-400" />;
+        return (
+          <IconRepeat
+            size={18}
+            className={`text-${theme.colors.secondary}-400`}
+          />
+        );
     }
   };
+
+  // Get theme-specific progress colors
+  const getProgressColors = () => {
+    switch (theme.id) {
+      case "ocean":
+        return {
+          trackBg: "bg-teal-600/50",
+          progressBg: "bg-teal-300",
+          progressHover: "hover:bg-emerald-400",
+          thumbColor: "#5eead4",
+        };
+      case "forest":
+        return {
+          trackBg: "bg-green-600/50",
+          progressBg: "bg-amber-400",
+          progressHover: "hover:bg-amber-300",
+          thumbColor: "#fbbf24",
+        };
+      case "space":
+        return {
+          trackBg: "bg-purple-600/50",
+          progressBg: "bg-purple-300",
+          progressHover: "hover:bg-pink-400",
+          thumbColor: "#a855f7",
+        };
+      case "sunset":
+        return {
+          trackBg: "bg-orange-600/50",
+          progressBg: "bg-orange-300",
+          progressHover: "hover:bg-amber-400",
+          thumbColor: "#fb923c",
+        };
+      case "neon":
+        return {
+          trackBg: "bg-gray-600/50",
+          progressBg: "bg-cyan-300",
+          progressHover: "hover:bg-fuchsia-400",
+          thumbColor: "#06b6d4",
+        };
+      default:
+        return {
+          trackBg: "bg-teal-600/50",
+          progressBg: "bg-teal-300",
+          progressHover: "hover:bg-emerald-400",
+          thumbColor: "#5eead4",
+        };
+    }
+  };
+
+  const progressColors = getProgressColors();
 
   const isValidDuration = duration && !isNaN(duration) && duration > 0;
   const isValidCurrentTime =
@@ -193,13 +255,15 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
 
   return (
     <div
-      className={`fixed bottom-0 left-0 right-0 bg-gradient-to-t from-teal-900/50 via-teal-800/50 to-teal-700/50 px-2 sm:px-4 py-2 sm:py-3 z-50 pb-safe transition-transform duration-300 ease-in-out backdrop-blur-md ${
+      className={`fixed bottom-0 left-0 right-0 bg-gradient-to-t ${
+        theme.colors.backgroundOverlay
+      } px-2 sm:px-4 py-2 sm:py-3 z-50 pb-safe transition-transform duration-300 ease-in-out backdrop-blur-md ${
         isVisible ? "translate-y-0" : "translate-y-full"
       }`}
     >
       <button
         onClick={onToggleVisibility}
-        className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-teal-500/70 to-emerald-500/70 hover:from-teal-400/70 hover:to-emerald-400/70 text-white rounded-full w-12 h-6 shadow-lg transition-all duration-300 ease-out hover:scale-105 hover:shadow-teal-500/30 flex items-center justify-center group"
+        className={`absolute -top-10 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-${theme.colors.primary}-500/70 to-${theme.colors.secondary}-500/70 hover:from-${theme.colors.primary}-400/70 hover:to-${theme.colors.secondary}-400/70 text-white rounded-full w-12 h-6 shadow-lg transition-all duration-300 ease-out hover:scale-105 hover:shadow-${theme.colors.primary}-500/30 flex items-center justify-center group`}
         title={isVisible ? "Ẩn player" : "Hiện player"}
       >
         <div className="absolute inset-0 bg-white/10 rounded-full opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
@@ -219,13 +283,16 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
       </button>
 
       <div className="flex items-center justify-between max-w-full mx-auto">
+        {/* Mobile Layout */}
         <div className="flex flex-col w-full sm:hidden">
           <div className="w-full flex items-center gap-2 mb-3 px-2">
-            <span className="text-xs text-teal-300 font-medium min-w-[32px] text-right">
+            <span
+              className={`text-xs text-${theme.colors.text} font-medium min-w-[32px] text-right`}
+            >
               {formatTime(currentTime)}
             </span>
             <div
-              className="h-3 flex-1 bg-teal-600/50 rounded-full cursor-pointer group relative"
+              className={`h-3 flex-1 ${progressColors.trackBg} rounded-full cursor-pointer group relative`}
               ref={progressRef}
               onClick={handleProgressClick}
               onMouseDown={handleProgressMouseDown}
@@ -241,11 +308,11 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
               }}
             >
               <div
-                className="h-3 bg-teal-300/70 rounded-full relative group-hover:bg-emerald-400/70 transition-colors pointer-events-none"
+                className={`h-3 ${progressColors.progressBg} ${progressColors.progressHover} rounded-full relative transition-colors pointer-events-none`}
                 style={{ width: `${progressPercent}%` }}
               >
                 <div
-                  className="absolute right-0 top-1/2 transform -translate-y-1/2 w-5 h-5 bg-teal-300/70 rounded-full shadow-lg"
+                  className={`absolute right-0 top-1/2 transform -translate-y-1/2 w-5 h-5 ${progressColors.progressBg} rounded-full shadow-lg`}
                   style={{
                     opacity: isDragging ? 1 : 0,
                     transition: "opacity 0.2s",
@@ -253,7 +320,9 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
                 ></div>
               </div>
             </div>
-            <span className="text-xs text-teal-300 font-medium min-w-[32px]">
+            <span
+              className={`text-xs text-${theme.colors.text} font-medium min-w-[32px]`}
+            >
               {formatTime(duration)}
             </span>
           </div>
@@ -269,7 +338,9 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
                 <h4 className="text-white text-sm font-medium truncate hover:underline cursor-pointer">
                   {currentSong.song_name}
                 </h4>
-                <p className="text-xs text-teal-300 truncate hover:underline cursor-pointer hover:text-white">
+                <p
+                  className={`text-xs text-${theme.colors.text} truncate hover:underline cursor-pointer hover:text-white`}
+                >
                   {currentSong.singer_name}
                 </p>
               </div>
@@ -277,25 +348,29 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
 
             <div className="flex items-center gap-2 mx-4">
               <button
-                className="text-teal-300 hover:text-white transition-colors p-1 touch-manipulation"
+                className={`text-${theme.colors.text} hover:text-white transition-colors p-1 touch-manipulation`}
                 onClick={playBackSong}
               >
                 <IconPlayerSkipBackFilled size={18} />
               </button>
 
               <button
-                className="bg-teal-300/70 rounded-full p-2 hover:scale-105 transition-transform shadow-lg touch-manipulation"
+                className={`bg-${theme.colors.button} rounded-full p-2 hover:scale-105 transition-transform shadow-lg touch-manipulation`}
                 onClick={togglePlayPause}
               >
                 {isPlaying ? (
-                  <IconPlayerPauseFilled className="text-teal-900 w-4 h-4" />
+                  <IconPlayerPauseFilled
+                    className={`text-${theme.colors.primary}-900 w-4 h-4`}
+                  />
                 ) : (
-                  <IconPlayerPlayFilled className="text-teal-900 w-4 h-4 ml-0.5" />
+                  <IconPlayerPlayFilled
+                    className={`text-${theme.colors.primary}-900 w-4 h-4 ml-0.5`}
+                  />
                 )}
               </button>
 
               <button
-                className="text-teal-300 hover:text-white transition-colors p-1 touch-manipulation"
+                className={`text-${theme.colors.text} hover:text-white transition-colors p-1 touch-manipulation`}
                 onClick={playNextSong}
               >
                 <IconPlayerSkipForwardFilled size={18} />
@@ -304,13 +379,17 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
 
             <Menu shadow="md" position="top">
               <Menu.Target>
-                <button className="text-teal-300 hover:text-white transition-colors p-2 touch-manipulation">
+                <button
+                  className={`text-${theme.colors.text} hover:text-white transition-colors p-2 touch-manipulation`}
+                >
                   <IconDotsVertical size={18} />
                 </button>
               </Menu.Target>
-              <Menu.Dropdown className="bg-teal-800/50 border-none backdrop-blur-md">
+              <Menu.Dropdown
+                className={`bg-${theme.colors.card} border-none backdrop-blur-md`}
+              >
                 <Menu.Item
-                  className="text-white hover:bg-teal-700/50"
+                  className={`text-white hover:bg-${theme.colors.cardHover}`}
                   onClick={toggleRepeat}
                 >
                   <div className="flex items-center gap-2">
@@ -319,12 +398,15 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
                   </div>
                 </Menu.Item>
                 <Menu.Item
-                  className="text-white hover:bg-teal-700/50"
+                  className={`text-white hover:bg-${theme.colors.cardHover}`}
                   onClick={toggleLike}
                 >
                   <div className="flex items-center gap-2">
                     {isLiked ? (
-                      <IconHeartFilled size={16} className="text-emerald-400" />
+                      <IconHeartFilled
+                        size={16}
+                        className={`text-${theme.colors.secondary}-400`}
+                      />
                     ) : (
                       <IconHeart size={16} />
                     )}
@@ -332,7 +414,7 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
                   </div>
                 </Menu.Item>
                 <Menu.Item
-                  className="text-white hover:bg-teal-700/50"
+                  className={`text-white hover:bg-${theme.colors.cardHover}`}
                   onClick={handleAvailable}
                 >
                   <div className="flex items-center gap-2">
@@ -340,7 +422,9 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
                     <span>Now Playing</span>
                   </div>
                 </Menu.Item>
-                <Menu.Item className="text-white hover:bg-teal-700/50">
+                <Menu.Item
+                  className={`text-white hover:bg-${theme.colors.cardHover}`}
+                >
                   <Anchor
                     href={currentSong.video_download_url}
                     underline="never"
@@ -351,7 +435,9 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
                     Download video
                   </Anchor>
                 </Menu.Item>
-                <Menu.Item className="text-white hover:bg-teal-700/50">
+                <Menu.Item
+                  className={`text-white hover:bg-${theme.colors.cardHover}`}
+                >
                   <Anchor
                     href={currentSong.audio_download_url}
                     underline="never"
@@ -367,6 +453,7 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
           </div>
         </div>
 
+        {/* Desktop Layout */}
         <div className="hidden sm:flex items-center justify-between w-full">
           <div className="flex items-center w-1/4 min-w-0">
             <div className="flex items-center gap-3 md:gap-4 min-w-0">
@@ -379,16 +466,21 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
                 <h4 className="text-white text-sm font-medium truncate hover:underline cursor-pointer">
                   {currentSong.song_name}
                 </h4>
-                <p className="text-xs text-teal-300 truncate hover:underline cursor-pointer hover:text-white">
+                <p
+                  className={`text-xs text-${theme.colors.text} truncate hover:underline cursor-pointer hover:text-white`}
+                >
                   {currentSong.singer_name}
                 </p>
               </div>
               <button
-                className="text-teal-300 hover:text-white transition-colors ml-2"
+                className={`text-${theme.colors.text} hover:text-white transition-colors ml-2`}
                 onClick={toggleLike}
               >
                 {isLiked ? (
-                  <IconHeartFilled size={16} className="text-emerald-400" />
+                  <IconHeartFilled
+                    size={16}
+                    className={`text-${theme.colors.secondary}-400`}
+                  />
                 ) : (
                   <IconHeart size={16} />
                 )}
@@ -399,32 +491,36 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
           <div className="flex flex-col items-center w-1/2 max-w-2xl">
             <div className="flex items-center gap-4 mb-2">
               <button
-                className="text-teal-300 hover:text-white transition-colors"
+                className={`text-${theme.colors.text} hover:text-white transition-colors`}
                 onClick={playBackSong}
               >
                 <IconPlayerSkipBackFilled size={20} />
               </button>
 
               <button
-                className="bg-teal-300/70 rounded-full p-2 hover:scale-105 transition-transform shadow-lg"
+                className={`bg-${theme.colors.button} rounded-full p-2 hover:scale-105 transition-transform shadow-lg`}
                 onClick={togglePlayPause}
               >
                 {isPlaying ? (
-                  <IconPlayerPauseFilled className="text-teal-900 w-5 h-5" />
+                  <IconPlayerPauseFilled
+                    className={`text-${theme.colors.primary}-900 w-5 h-5`}
+                  />
                 ) : (
-                  <IconPlayerPlayFilled className="text-teal-900 w-5 h-5 ml-0.5" />
+                  <IconPlayerPlayFilled
+                    className={`text-${theme.colors.primary}-900 w-5 h-5 ml-0.5`}
+                  />
                 )}
               </button>
 
               <button
-                className="text-teal-300 hover:text-white transition-colors"
+                className={`text-${theme.colors.text} hover:text-white transition-colors`}
                 onClick={playNextSong}
               >
                 <IconPlayerSkipForwardFilled size={20} />
               </button>
 
               <button
-                className="text-teal-400 transition-colors"
+                className={`text-${theme.colors.secondary}-400 transition-colors`}
                 onClick={toggleRepeat}
                 title={`Repeat: ${repeatMode === "all" ? "All" : "One"}`}
               >
@@ -433,11 +529,13 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
             </div>
 
             <div className="w-full flex items-center gap-2">
-              <span className="text-xs text-teal-300 font-medium min-w-[40px] text-right">
+              <span
+                className={`text-xs text-${theme.colors.text} font-medium min-w-[40px] text-right`}
+              >
                 {formatTime(currentTime)}
               </span>
               <div
-                className="h-1 flex-1 bg-teal-600/50 rounded-full cursor-pointer group relative"
+                className={`h-1 flex-1 ${progressColors.trackBg} rounded-full cursor-pointer group relative`}
                 ref={progressRef}
                 onClick={handleProgressClick}
                 onMouseDown={handleProgressMouseDown}
@@ -447,13 +545,17 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
                 }}
               >
                 <div
-                  className="h-1 bg-teal-300/70 rounded-full relative group-hover:bg-emerald-400/70 transition-colors"
+                  className={`h-1 ${progressColors.progressBg} ${progressColors.progressHover} rounded-full relative transition-colors`}
                   style={{ width: `${progressPercent}%` }}
                 >
-                  <div className="absolute right-0 top-1/2 transform -translate-y-1/2 w-3 h-3 bg-teal-300/70 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"></div>
+                  <div
+                    className={`absolute right-0 top-1/2 transform -translate-y-1/2 w-3 h-3 ${progressColors.progressBg} rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg`}
+                  ></div>
                 </div>
               </div>
-              <span className="text-xs text-teal-300 font-medium min-w-[40px]">
+              <span
+                className={`text-xs text-${theme.colors.text} font-medium min-w-[40px]`}
+              >
                 {formatTime(duration)}
               </span>
             </div>
@@ -461,7 +563,7 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
 
           <div className="flex items-center gap-2 md:gap-3 w-1/4 justify-end">
             <button
-              className="text-teal-300 hover:text-white transition-colors"
+              className={`text-${theme.colors.text} hover:text-white transition-colors`}
               onClick={handleAvailable}
             >
               <IconArticle size={18} />
@@ -469,12 +571,18 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
 
             <Menu shadow="md" position="top">
               <Menu.Target>
-                <button className="text-teal-300 hover:text-white transition-colors">
+                <button
+                  className={`text-${theme.colors.text} hover:text-white transition-colors`}
+                >
                   <IconDownload size={18} />
                 </button>
               </Menu.Target>
-              <Menu.Dropdown className="bg-teal-800/50 border-none backdrop-blur-md">
-                <Menu.Item className="text-white hover:bg-teal-700/50">
+              <Menu.Dropdown
+                className={`bg-${theme.colors.card} border-none backdrop-blur-md`}
+              >
+                <Menu.Item
+                  className={`text-white hover:bg-${theme.colors.cardHover}`}
+                >
                   <Anchor
                     href={currentSong.video_download_url}
                     underline="never"
@@ -484,7 +592,9 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
                     Download video
                   </Anchor>
                 </Menu.Item>
-                <Menu.Item className="text-white hover:bg-teal-700/50">
+                <Menu.Item
+                  className={`text-white hover:bg-${theme.colors.cardHover}`}
+                >
                   <Anchor
                     href={currentSong.audio_download_url}
                     underline="never"
@@ -500,7 +610,7 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
             <div className="hidden md:flex items-center gap-2">
               <button
                 onClick={() => setIsMute(!isMute)}
-                className="text-teal-300 hover:text-white transition-colors flex-shrink-0"
+                className={`text-${theme.colors.text} hover:text-white transition-colors flex-shrink-0`}
               >
                 {isMute ? <IconVolume3 size={18} /> : <IconVolume size={18} />}
               </button>
@@ -511,9 +621,9 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
                   max="100"
                   value={volume}
                   onChange={handleVolumeChange}
-                  className="w-full h-1 bg-teal-600/50 rounded-lg appearance-none cursor-pointer slider"
+                  className="w-full h-1 rounded-lg appearance-none cursor-pointer slider"
                   style={{
-                    background: `linear-gradient(to right, #2dd4bf 0%, #2dd4bf ${volume}%, #4d4d4d ${volume}%, #4d4d4d 100%)`,
+                    background: `linear-gradient(to right, ${progressColors.thumbColor} 0%, ${progressColors.thumbColor} ${volume}%, #4d4d4d ${volume}%, #4d4d4d 100%)`,
                   }}
                 />
               </div>
@@ -536,7 +646,7 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
           width: 12px;
           height: 12px;
           border-radius: 50%;
-          background: #2dd4bf;
+          background: ${progressColors.thumbColor};
           cursor: pointer;
           opacity: 0;
           transition: opacity 0.2s;
@@ -550,7 +660,7 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
           width: 12px;
           height: 12px;
           border-radius: 50%;
-          background: #2dd4bf;
+          background: ${progressColors.thumbColor};
           cursor: pointer;
           border: none;
           opacity: 0;
