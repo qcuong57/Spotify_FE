@@ -200,6 +200,17 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
             >
               <IconHome stroke={2} className="w-full h-full text-white" />
             </div>
+
+            {/* Theme Button for Mobile */}
+            <div
+              className={`
+                ${styles.themeButton} md:hidden w-8 h-8 cursor-pointer rounded-full 
+                flex items-center justify-center transition-all duration-300 hover:scale-110
+              `}
+              onClick={() => setShowThemeSelector(true)}
+            >
+              <IconPalette stroke={2} className="w-5 h-5 text-white" />
+            </div>
           </div>
 
           {/* Desktop Search - only scale on hover, no glow */}
@@ -212,7 +223,6 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
               relative overflow-hidden
             `}
           >
-            {/* Removed shimmer effect */}
             <IconSearch
               stroke={2}
               className={`w-5 h-5 md:w-6 md:h-6 cursor-pointer text-white hover:text-${theme.colors.secondary}-300 transition-colors z-10`}
@@ -384,7 +394,7 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
               </div>
             </div>
             <div className="flex flex-col space-y-4">
-              {/* Enhanced Theme Button in Mobile Menu */}
+              {/* Theme Button in Mobile Menu */}
               <button
                 onClick={() => {
                   setShowThemeSelector(true);
