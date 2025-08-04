@@ -758,7 +758,7 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
                 className={`text-${theme.colors.text} hover:text-white transition-colors`}
                 onClick={() => setShowPlaylistModal(true)}
                 disabled={!user}
-                title={!user ? "Đăng nhập để sử dụng" : "Thêm vào playlist"}
+                title scheduled tasks={!user ? "Đăng nhập để sử dụng" : "Thêm vào playlist"}
               >
                 <IconPlaylistAdd size={18} />
               </button>
@@ -822,7 +822,7 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
                     max="100"
                     value={volume}
                     onChange={handleVolumeChange}
-                    className="w-full h-1 rounded-lg appearance-none cursor-pointer slider"
+                    className="w>See full conversation (3 messages)full h-1 rounded-lg appearance-none cursor-pointer slider"
                     style={{
                       background: `linear-gradient(to right, ${progressColors.thumbColor} 0%, ${progressColors.thumbColor} ${volume}%, #4d4d4d ${volume}%, #4d4d4d 100%)`,
                     }}
@@ -898,41 +898,41 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
         opened={showPlaylistModal}
         onClose={() => setShowPlaylistModal(false)}
         title={
-          <Text className="text-lg font-bold text-white">
+          <Text className="text-lg font-bold text-black">
             Thêm vào playlist
           </Text>
         }
         size="md"
         styles={{
           modal: {
-            backgroundColor: theme.colors.card,
-            border: `1px solid ${theme.colors.border}`,
+            backgroundColor: '#ffffff',
+            border: '1px solid #e5e7eb',
           },
           header: {
-            backgroundColor: theme.colors.card,
-            borderBottom: `1px solid ${theme.colors.border}`,
+            backgroundColor: '#ffffff',
+            borderBottom: '1px solid #e5e7eb',
           },
           close: {
-            color: theme.colors.text,
+            color: '#000000',
             '&:hover': {
-              backgroundColor: theme.colors.cardHover,
+              backgroundColor: '#f3f4f6',
             },
           },
         }}
       >
         <div className="space-y-3">
           {currentSong && (
-            <div className="flex items-center gap-3 p-3 bg-gray-800/30 rounded-lg">
+            <div className="flex items-center gap-3 p-3 bg-gray-100/30 rounded-lg">
               <img
                 src={currentSong.image}
                 alt="Song cover"
                 className="w-12 h-12 rounded-lg object-cover"
               />
               <div className="flex-1 min-w-0">
-                <h4 className="text-white text-sm font-medium truncate">
+                <h4 className="text-black text-sm font-medium truncate">
                   {currentSong.song_name}
                 </h4>
-                <p className={`text-xs text-${theme.colors.text} truncate`}>
+                <p className={`text-xs text-gray-600 truncate`}>
                   {currentSong.singer_name}
                 </p>
               </div>
@@ -941,7 +941,7 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
 
           {!user ? (
             <div className="text-center py-8">
-              <Text className={`text-${theme.colors.text} mb-4`}>
+              <Text className={`text-gray-600 mb-4`}>
                 Vui lòng đăng nhập để sử dụng chức năng này
               </Text>
               <Button
@@ -955,10 +955,10 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
             </div>
           ) : userPlaylists.length === 0 ? (
             <div className="text-center py-8">
-              <Text className={`text-${theme.colors.text} mb-4`}>
+              <Text className={`text-gray-600 mb-4`}>
                 Bạn chưa có playlist nào
               </Text>
-              <Text className={`text-xs text-${theme.colors.text}`}>
+              <Text className={`text-xs text-gray-600`}>
                 Hãy tạo playlist đầu tiên trong thư viện
               </Text>
             </div>
@@ -968,7 +968,7 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
                 {userPlaylists.map((playlist) => (
                   <div
                     key={playlist.id}
-                    className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all duration-200 hover:bg-${theme.colors.cardHover} ${
+                    className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all duration-200 hover:bg-gray-100 ${
                       loadingPlaylist ? 'opacity-50 pointer-events-none' : ''
                     }`}
                     onClick={() => handleAddToPlaylist(playlist.id)}
@@ -985,15 +985,15 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <h4 className="text-white text-sm font-medium truncate">
+                      <h4 className="text-black text-sm font-medium truncate">
                         {playlist.title}
                       </h4>
-                      <p className={`text-xs text-${theme.colors.text} truncate`}>
+                      <p className={`text-xs text-gray-600 truncate`}>
                         {playlist.song_count || 0} bài hát
                       </p>
                     </div>
                     {loadingPlaylist && (
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
                     )}
                   </div>
                 ))}
