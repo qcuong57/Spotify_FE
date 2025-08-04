@@ -289,17 +289,17 @@ const Song = ({
       const opacity = isActive ? "/80" : "/60";
       switch (theme.id) {
         case "ocean":
-          return `bg-gradient-to-br from-teal-800${opacity} via-teal-600${opacity} to-emerald-800${opacity}`;
+          return `bg-gradient-to-br from-teal-900${opacity} via-teal-900${opacity} to-emerald-900${opacity}`;
         case "forest":
-          return `bg-gradient-to-br from-green-800${opacity} via-green-600${opacity} to-emerald-800${opacity}`;
+          return `bg-gradient-to-br from-green-900${opacity} via-green-900${opacity} to-emerald-900${opacity}`;
         case "space":
-          return `bg-gradient-to-br from-purple-800${opacity} via-purple-400${opacity} to-indigo-800${opacity}`;
+          return `bg-gradient-to-br from-purple-900${opacity} via-purple-900${opacity} to-indigo-800${opacity}`;
         case "sunset":
-          return `bg-gradient-to-br from-orange-800${opacity} via-red-600${opacity} to-yellow-800${opacity}`;
+          return `bg-gradient-to-br from-orange-900${opacity} via-red-900${opacity} to-yellow-900${opacity}`;
         case "neon":
-          return `bg-gradient-to-br from-gray-800${opacity} via-blue-300${opacity} to-purple-800${opacity}`;
+          return `bg-gradient-to-br from-gray-900${opacity} via-blue-900${opacity} to-purple-900${opacity}`;
         default:
-          return `bg-gradient-to-br from-teal-800${opacity} via-teal-700${opacity} to-emerald-600${opacity}`;
+          return `bg-gradient-to-br from-teal-900${opacity} via-teal-900${opacity} to-emerald-900${opacity}`;
       }
     };
 

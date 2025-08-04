@@ -149,28 +149,28 @@ const SongCardSkeleton = memo(() => {
     switch (theme.id) {
       case "ocean":
         return {
-          card: "from-teal-800/60 via-teal-700/60 to-emerald-600/60",
+          card: "from-teal-800/60 via-teal-800/60 to-emerald-800/60",
           image: "from-teal-600 to-teal-500",
           shimmer: "from-transparent via-teal-400/30 to-transparent",
           text: "from-teal-600 to-teal-500",
         };
       case "forest":
         return {
-          card: "from-green-800/60 via-green-700/60 to-emerald-600/60",
+          card: "from-green-800/60 via-green-800/60 to-emerald-800/60",
           image: "from-green-600 to-green-500",
           shimmer: "from-transparent via-amber-400/30 to-transparent",
           text: "from-green-600 to-green-500",
         };
       case "space":
         return {
-          card: "from-purple-800/60 via-purple-700/60 to-indigo-600/60",
+          card: "from-purple-800/60 via-purple-800/60 to-indigo-800/60",
           image: "from-purple-600 to-purple-500",
           shimmer: "from-transparent via-purple-400/30 to-transparent",
           text: "from-purple-600 to-purple-500",
         };
       case "sunset":
         return {
-          card: "from-orange-800/60 via-red-700/60 to-yellow-600/60",
+          card: "from-orange-800/60 via-red-800/60 to-yellow-800/60",
           image: "from-orange-600 to-orange-500",
           shimmer: "from-transparent via-orange-400/30 to-transparent",
           text: "from-orange-600 to-orange-500",
@@ -184,7 +184,7 @@ const SongCardSkeleton = memo(() => {
         };
       default:
         return {
-          card: "from-teal-800/60 via-teal-700/60 to-emerald-600/60",
+          card: "from-teal-800/60 via-teal-800/60 to-emerald-800/60",
           image: "from-teal-600 to-teal-500",
           shimmer: "from-transparent via-teal-400/30 to-transparent",
           text: "from-teal-600 to-teal-500",

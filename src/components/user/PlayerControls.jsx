@@ -24,17 +24,13 @@ import { useAudio } from "../../utils/audioContext";
 import { useTheme } from "../../context/themeContext";
 import { usePlayList } from "../../utils/playlistContext";
 import { formatTime } from "../../utils/timeFormat";
-import { 
-  addToLikedSongsService, 
-  removeFromLikedSongsService, 
-  getLikedSongsService 
+import {
+  addToLikedSongsService,
+  removeFromLikedSongsService,
+  getLikedSongsService,
 } from "../../services/SongPlaylistService";
-import { 
-  addSongToPlaylistService 
-} from "../../services/SongPlaylistService";
-import { 
-  getUserPlaylistByIdService 
-} from "../../services/playlistService";
+import { addSongToPlaylistService } from "../../services/SongPlaylistService";
+import { getUserPlaylistByIdService } from "../../services/playlistService";
 
 const PlayerControls = ({ isVisible, onToggleVisibility }) => {
   const { theme } = useTheme();
@@ -57,7 +53,7 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
     repeatMode,
     setRepeatMode,
   } = useAudio();
-  
+
   const progressRef = useRef(null);
   const [isLiked, setIsLiked] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -71,7 +67,7 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     const accessToken = localStorage.getItem("access_token");
-    
+
     if (storedUser && accessToken) {
       const userData = JSON.parse(storedUser);
       setUser(userData);
@@ -82,13 +78,13 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
   useEffect(() => {
     const fetchUserPlaylists = async () => {
       if (!user?.id) return;
-      
+
       try {
         const response = await getUserPlaylistByIdService(user.id);
         if (response?.data?.playlists) {
           // Lọc bỏ playlist "Liked Songs"
           const regularPlaylists = response.data.playlists.filter(
-            playlist => !playlist.is_liked_song
+            (playlist) => !playlist.is_liked_song
           );
           setUserPlaylists(regularPlaylists);
         }
@@ -107,14 +103,14 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
         setIsLiked(false);
         return;
       }
-      
+
       try {
         console.log("Checking liked status for song:", currentSong.id);
         const response = await getLikedSongsService();
         if (response?.data?.results) {
           const likedSongs = response.data.results;
           const isCurrentSongLiked = likedSongs.some(
-            song => song.id === currentSong.id
+            (song) => song.id === currentSong.id
           );
           console.log("Song liked status:", isCurrentSongLiked);
           setIsLiked(isCurrentSongLiked);
@@ -162,8 +158,13 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
 
     try {
       setLoadingLike(true);
-      console.log("Toggling like for song:", currentSong.id, "Current state:", isLiked);
-      
+      console.log(
+        "Toggling like for song:",
+        currentSong.id,
+        "Current state:",
+        isLiked
+      );
+
       if (isLiked) {
         // Bỏ like - remove from liked songs
         console.log("Removing from liked songs...");
@@ -174,8 +175,8 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
         // Thêm like - add to liked songs
         console.log("Adding to liked songs...");
         const formData = new FormData();
-        formData.append('song_id', currentSong.id.toString());
-        
+        formData.append("song_id", currentSong.id.toString());
+
         await addToLikedSongsService(formData);
         setIsLiked(true);
         console.log("Song added to liked songs successfully");
@@ -183,7 +184,7 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
     } catch (error) {
       console.error("Error toggling like:", error);
       console.error("Error details:", error.response?.data);
-      
+
       // Show specific error message
       if (error.response?.status === 400) {
         alert("Bài hát này đã có trong danh sách yêu thích hoặc đã bị xóa!");
@@ -192,14 +193,14 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
       } else {
         alert("Có lỗi xảy ra khi cập nhật trạng thái yêu thích!");
       }
-      
+
       // Reset to correct state by checking again
       try {
         const response = await getLikedSongsService();
         if (response?.data?.results) {
           const likedSongs = response.data.results;
           const isCurrentSongLiked = likedSongs.some(
-            song => song.id === currentSong.id
+            (song) => song.id === currentSong.id
           );
           setIsLiked(isCurrentSongLiked);
         }
@@ -216,13 +217,13 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
 
     try {
       setLoadingPlaylist(true);
-      
+
       const formData = new FormData();
-      formData.append('playlist_id', playlistId);
-      formData.append('song_id', currentSong.id);
-      
+      formData.append("playlist_id", playlistId);
+      formData.append("song_id", currentSong.id);
+
       await addSongToPlaylistService(formData);
-      
+
       setShowPlaylistModal(false);
       alert("Đã thêm bài hát vào playlist!");
       console.log("Song added to playlist:", playlistId);
@@ -569,7 +570,9 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
                   >
                     <div className="flex items-center gap-2">
                       {getRepeatIcon()}
-                      <span>Repeat: {repeatMode === "all" ? "All" : "One"}</span>
+                      <span>
+                        Repeat: {repeatMode === "all" ? "All" : "One"}
+                      </span>
                     </div>
                   </Menu.Item>
                   <Menu.Item
@@ -588,7 +591,13 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
                       ) : (
                         <IconHeart size={16} />
                       )}
-                      <span>{loadingLike ? "Đang xử lý..." : isLiked ? "Bỏ yêu thích" : "Yêu thích"}</span>
+                      <span>
+                        {loadingLike
+                          ? "Đang xử lý..."
+                          : isLiked
+                          ? "Bỏ yêu thích"
+                          : "Yêu thích"}
+                      </span>
                     </div>
                   </Menu.Item>
                   <Menu.Item
@@ -598,7 +607,9 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
                   >
                     <div className="flex items-center gap-2">
                       <IconPlaylistAdd size={16} />
-                      <span>{!user ? "Đăng nhập để thêm" : "Thêm vào playlist"}</span>
+                      <span>
+                        {!user ? "Đăng nhập để thêm" : "Thêm vào playlist"}
+                      </span>
                     </div>
                   </Menu.Item>
                   <Menu.Item
@@ -661,10 +672,20 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
                   </p>
                 </div>
                 <button
-                  className={`text-${theme.colors.text} hover:text-white transition-colors ml-2 ${loadingLike ? 'opacity-50' : ''}`}
+                  className={`text-${
+                    theme.colors.text
+                  } hover:text-white transition-colors ml-2 ${
+                    loadingLike ? "opacity-50" : ""
+                  }`}
                   onClick={toggleLike}
                   disabled={loadingLike || !user}
-                  title={!user ? "Đăng nhập để sử dụng" : isLiked ? "Bỏ yêu thích" : "Yêu thích"}
+                  title={
+                    !user
+                      ? "Đăng nhập để sử dụng"
+                      : isLiked
+                      ? "Bỏ yêu thích"
+                      : "Yêu thích"
+                  }
                 >
                   {loadingLike ? (
                     <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
@@ -758,7 +779,9 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
                 className={`text-${theme.colors.text} hover:text-white transition-colors`}
                 onClick={() => setShowPlaylistModal(true)}
                 disabled={!user}
-                title scheduled tasks={!user ? "Đăng nhập để sử dụng" : "Thêm vào playlist"}
+                title
+                scheduled
+                tasks={!user ? "Đăng nhập để sử dụng" : "Thêm vào playlist"}
               >
                 <IconPlaylistAdd size={18} />
               </button>
@@ -813,7 +836,11 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
                   onClick={() => setIsMute(!isMute)}
                   className={`text-${theme.colors.text} hover:text-white transition-colors flex-shrink-0`}
                 >
-                  {isMute ? <IconVolume3 size={18} /> : <IconVolume size={18} />}
+                  {isMute ? (
+                    <IconVolume3 size={18} />
+                  ) : (
+                    <IconVolume size={18} />
+                  )}
                 </button>
                 <div className="w-20 lg:w-24 group flex items-center">
                   <input
@@ -898,41 +925,105 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
         opened={showPlaylistModal}
         onClose={() => setShowPlaylistModal(false)}
         title={
-          <Text className="text-lg font-bold text-black">
+          <Text className={`text-lg font-bold ${theme.colors.songText}`}>
             Thêm vào playlist
           </Text>
         }
         size="md"
         styles={{
           modal: {
-            backgroundColor: '#ffffff',
-            border: '1px solid #e5e7eb',
+            backgroundColor:
+              theme.id === "ocean"
+                ? "#0f172a"
+                : theme.id === "forest"
+                ? "#0c1f0a"
+                : theme.id === "space"
+                ? "#1a0f2e"
+                : theme.id === "sunset"
+                ? "#1a0f0a"
+                : "#0f172a",
+            border:
+              theme.id === "ocean"
+                ? "1px solid rgb(45 212 191 / 0.3)"
+                : theme.id === "forest"
+                ? "1px solid rgb(251 191 36 / 0.4)"
+                : theme.id === "space"
+                ? "1px solid rgb(168 85 247 / 0.3)"
+                : theme.id === "sunset"
+                ? "1px solid rgb(251 146 60 / 0.3)"
+                : "1px solid rgb(45 212 191 / 0.3)",
+            backdropFilter: "blur(16px)",
+            boxShadow:
+              theme.id === "ocean"
+                ? "0 25px 50px -12px rgba(45, 212, 191, 0.25)"
+                : theme.id === "forest"
+                ? "0 25px 50px -12px rgba(34, 197, 94, 0.25)"
+                : theme.id === "space"
+                ? "0 25px 50px -12px rgba(168, 85, 247, 0.25)"
+                : theme.id === "sunset"
+                ? "0 25px 50px -12px rgba(251, 146, 60, 0.25)"
+                : "0 25px 50px -12px rgba(45, 212, 191, 0.25)",
           },
           header: {
-            backgroundColor: '#ffffff',
-            borderBottom: '1px solid #e5e7eb',
+            backgroundColor: "transparent",
+            borderBottom:
+              theme.id === "ocean"
+                ? "1px solid rgb(45 212 191 / 0.2)"
+                : theme.id === "forest"
+                ? "1px solid rgb(251 191 36 / 0.3)"
+                : theme.id === "space"
+                ? "1px solid rgb(168 85 247 / 0.2)"
+                : theme.id === "sunset"
+                ? "1px solid rgb(251 146 60 / 0.2)"
+                : "1px solid rgb(45 212 191 / 0.2)",
+            paddingBottom: "12px",
           },
           close: {
-            color: '#000000',
-            '&:hover': {
-              backgroundColor: '#f3f4f6',
+            color:
+              theme.id === "ocean"
+                ? "#5eead4"
+                : theme.id === "forest"
+                ? "#fbbf24"
+                : theme.id === "space"
+                ? "#c084fc"
+                : theme.id === "sunset"
+                ? "#fb923c"
+                : "#5eead4",
+            "&:hover": {
+              backgroundColor:
+                theme.id === "ocean"
+                  ? "rgba(45, 212, 191, 0.1)"
+                  : theme.id === "forest"
+                  ? "rgba(34, 197, 94, 0.1)"
+                  : theme.id === "space"
+                  ? "rgba(168, 85, 247, 0.1)"
+                  : theme.id === "sunset"
+                  ? "rgba(251, 146, 60, 0.1)"
+                  : "rgba(45, 212, 191, 0.1)",
             },
+          },
+          body: {
+            paddingTop: "16px",
           },
         }}
       >
         <div className="space-y-3">
           {currentSong && (
-            <div className="flex items-center gap-3 p-3 bg-gray-100/30 rounded-lg">
+            <div
+              className={`flex items-center gap-3 p-3 ${theme.colors.card} rounded-lg ${theme.colors.border} border`}
+            >
               <img
                 src={currentSong.image}
                 alt="Song cover"
-                className="w-12 h-12 rounded-lg object-cover"
+                className="w-12 h-12 rounded-lg object-cover shadow-md"
               />
               <div className="flex-1 min-w-0">
-                <h4 className="text-black text-sm font-medium truncate">
+                <h4
+                  className={`${theme.colors.songText} text-sm font-medium truncate`}
+                >
                   {currentSong.song_name}
                 </h4>
-                <p className={`text-xs text-gray-600 truncate`}>
+                <p className={`text-xs ${theme.colors.text} truncate`}>
                   {currentSong.singer_name}
                 </p>
               </div>
@@ -941,13 +1032,50 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
 
           {!user ? (
             <div className="text-center py-8">
-              <Text className={`text-gray-600 mb-4`}>
+              <Text className={`${theme.colors.text} mb-4`}>
                 Vui lòng đăng nhập để sử dụng chức năng này
               </Text>
               <Button
-                className={`bg-${theme.colors.button} hover:bg-${theme.colors.buttonHover} text-${theme.colors.primary}-900`}
+                className={`${theme.colors.button} ${theme.colors.buttonHover} ${theme.colors.buttonText} border-none font-medium transition-all duration-200 hover:scale-105`}
                 onClick={() => {
-                  window.location.href = '/login';
+                  window.location.href = "/login";
+                }}
+                styles={{
+                  root: {
+                    backgroundColor:
+                      theme.id === "ocean"
+                        ? "rgb(94 234 212 / 0.8)"
+                        : theme.id === "forest"
+                        ? "rgb(251 191 36 / 0.8)"
+                        : theme.id === "space"
+                        ? "rgb(196 181 253 / 0.8)"
+                        : theme.id === "sunset"
+                        ? "rgb(251 146 60 / 0.8)"
+                        : "rgb(94 234 212 / 0.8)",
+                    color:
+                      theme.id === "ocean"
+                        ? "#134e4a"
+                        : theme.id === "forest"
+                        ? "#ffffff"
+                        : theme.id === "space"
+                        ? "#ffffff"
+                        : theme.id === "sunset"
+                        ? "#ffffff"
+                        : "#134e4a",
+                    "&:hover": {
+                      backgroundColor:
+                        theme.id === "ocean"
+                          ? "rgb(52 211 153 / 0.9)"
+                          : theme.id === "forest"
+                          ? "rgb(245 158 11 / 0.9)"
+                          : theme.id === "space"
+                          ? "rgb(236 72 153 / 0.9)"
+                          : theme.id === "sunset"
+                          ? "rgb(251 191 36 / 0.9)"
+                          : "rgb(52 211 153 / 0.9)",
+                      transform: "scale(1.05)",
+                    },
+                  },
                 }}
               >
                 Đăng nhập
@@ -955,21 +1083,45 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
             </div>
           ) : userPlaylists.length === 0 ? (
             <div className="text-center py-8">
-              <Text className={`text-gray-600 mb-4`}>
+              <Text className={`${theme.colors.text} mb-4`}>
                 Bạn chưa có playlist nào
               </Text>
-              <Text className={`text-xs text-gray-600`}>
+              <Text className={`text-xs ${theme.colors.text} opacity-70`}>
                 Hãy tạo playlist đầu tiên trong thư viện
               </Text>
             </div>
           ) : (
-            <ScrollArea className="max-h-96">
+            <ScrollArea
+              className="max-h-96"
+              styles={{
+                scrollbar: {
+                  '&[data-orientation="vertical"] .mantine-ScrollArea-thumb': {
+                    backgroundColor:
+                      theme.id === "ocean"
+                        ? "rgb(45 212 191 / 0.5)"
+                        : theme.id === "forest"
+                        ? "rgb(34 197 94 / 0.5)"
+                        : theme.id === "space"
+                        ? "rgb(168 85 247 / 0.5)"
+                        : theme.id === "sunset"
+                        ? "rgb(251 146 60 / 0.5)"
+                        : "rgb(45 212 191 / 0.5)",
+                  },
+                },
+              }}
+            >
               <div className="space-y-2">
                 {userPlaylists.map((playlist) => (
                   <div
                     key={playlist.id}
-                    className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all duration-200 hover:bg-gray-100 ${
-                      loadingPlaylist ? 'opacity-50 pointer-events-none' : ''
+                    className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all duration-200 ${
+                      theme.colors.cardHover
+                    } ${
+                      theme.colors.border
+                    } border hover:border-opacity-50 hover:scale-[1.02] ${
+                      theme.colors.songShadow
+                    } hover:${theme.colors.songShadowHover} ${
+                      loadingPlaylist ? "opacity-50 pointer-events-none" : ""
                     }`}
                     onClick={() => handleAddToPlaylist(playlist.id)}
                   >
@@ -977,23 +1129,47 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
                       <img
                         src={playlist.image}
                         alt={playlist.title}
-                        className="w-10 h-10 rounded-lg object-cover"
+                        className="w-10 h-10 rounded-lg object-cover shadow-md"
                       />
                     ) : (
-                      <div className={`w-10 h-10 rounded-lg bg-gradient-to-br from-${theme.colors.primary}-800/30 to-${theme.colors.secondary}-800/30 flex items-center justify-center`}>
-                        <IconMusic size={20} className={`text-${theme.colors.text}`} />
+                      <div
+                        className={`w-10 h-10 rounded-lg ${theme.colors.gradient} bg-gradient-to-br opacity-80 flex items-center justify-center shadow-md`}
+                      >
+                        <IconMusic
+                          size={20}
+                          className={`${theme.colors.songText}`}
+                        />
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <h4 className="text-black text-sm font-medium truncate">
+                      <h4
+                        className={`${theme.colors.songText} text-sm font-medium truncate ${theme.colors.songTextHover} transition-colors`}
+                      >
                         {playlist.title}
                       </h4>
-                      <p className={`text-xs text-gray-600 truncate`}>
+                      <p
+                        className={`text-xs ${theme.colors.text} truncate opacity-80`}
+                      >
                         {playlist.song_count || 0} bài hát
                       </p>
                     </div>
                     {loadingPlaylist && (
-                      <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
+                      <div
+                        className="w-5 h-5 border-2 border-t-transparent rounded-full animate-spin"
+                        style={{
+                          borderColor:
+                            theme.id === "ocean"
+                              ? "rgb(45 212 191 / 0.3)"
+                              : theme.id === "forest"
+                              ? "rgb(34 197 94 / 0.3)"
+                              : theme.id === "space"
+                              ? "rgb(168 85 247 / 0.3)"
+                              : theme.id === "sunset"
+                              ? "rgb(251 146 60 / 0.3)"
+                              : "rgb(45 212 191 / 0.3)",
+                          borderTopColor: "transparent",
+                        }}
+                      />
                     )}
                   </div>
                 ))}
