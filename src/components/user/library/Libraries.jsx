@@ -7,7 +7,10 @@ import {
   IconWorld,
 } from "@tabler/icons-react";
 import { useTheme } from "../../../context/themeContext";
-import { createPlaylistService, getUserPlaylistByIdService } from "../../../services/playlistService";
+import {
+  createPlaylistService,
+  getUserPlaylistByIdService,
+} from "../../../services/playlistService";
 import { usePlayList } from "../../../utils/playlistContext";
 
 const Library = ({ playlist, setCurrentView, index, theme }) => {
@@ -95,10 +98,15 @@ const Libraries = ({ setCurrentView, onClose }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
-  
+
   // Sử dụng context để quản lý playlists
-  const { playlists, setPlaylists, refreshKeyPlayLists, setRefreshKeyPlayLists } = usePlayList();
-  
+  const {
+    playlists,
+    setPlaylists,
+    refreshKeyPlayLists,
+    setRefreshKeyPlayLists,
+  } = usePlayList();
+
   // State cho filtered playlists
   const [filteredPlaylists, setFilteredPlaylists] = useState([]);
 
@@ -113,9 +121,12 @@ const Libraries = ({ setCurrentView, onClose }) => {
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     const accessToken = localStorage.getItem("access_token");
-    
-    console.log("Libraries - checking user login:", { storedUser: !!storedUser, accessToken: !!accessToken });
-    
+
+    console.log("Libraries - checking user login:", {
+      storedUser: !!storedUser,
+      accessToken: !!accessToken,
+    });
+
     if (storedUser && accessToken) {
       const userData = JSON.parse(storedUser);
       setUser(userData);
@@ -131,38 +142,40 @@ const Libraries = ({ setCurrentView, onClose }) => {
         setPlaylists([]); // Clear playlists khi không có user
         return;
       }
-      
+
       try {
         setLoading(true);
         console.log("Libraries - fetching playlists for user:", user.id);
         console.log("Libraries - refreshKeyPlayLists:", refreshKeyPlayLists);
-        
+
         const response = await getUserPlaylistByIdService(user.id);
         console.log("Libraries - fetch response:", response);
-        
+
         // SỬA LẠI: Check response.data.playlists thay vì response.data.results
         if (response && response.data && response.data.playlists) {
           const playlistsData = response.data.playlists;
           console.log("Libraries - setting playlists:", playlistsData);
           console.log("Libraries - playlist count:", playlistsData.length);
-          
+
           // Log chi tiết từng playlist
           playlistsData.forEach((playlist, index) => {
             console.log(`Playlist ${index + 1}:`, {
               id: playlist.id,
               title: playlist.title,
               song_count: playlist.song_count,
-              is_liked_song: playlist.is_liked_song
+              is_liked_song: playlist.is_liked_song,
             });
           });
-          
+
           setPlaylists(playlistsData);
         } else {
-          console.log("Libraries - no playlists in response, setting empty array");
+          console.log(
+            "Libraries - no playlists in response, setting empty array"
+          );
           console.log("Libraries - response structure:", {
             hasData: !!response?.data,
             dataKeys: response?.data ? Object.keys(response.data) : [],
-            fullResponse: response
+            fullResponse: response,
           });
           setPlaylists([]);
         }
@@ -186,7 +199,7 @@ const Libraries = ({ setCurrentView, onClose }) => {
     if (!searchValue.trim()) {
       setFilteredPlaylists(playlists);
     } else {
-      const filtered = playlists.filter(playlist =>
+      const filtered = playlists.filter((playlist) =>
         playlist.title.toLowerCase().includes(searchValue.toLowerCase())
       );
       setFilteredPlaylists(filtered);
@@ -207,22 +220,22 @@ const Libraries = ({ setCurrentView, onClose }) => {
       setShowLoginPrompt(true);
       return;
     }
-    
+
     try {
       setLoading(true);
-      
+
       // Prepare form data theo format cần thiết
       const playlistData = {
         title: `Danh sách phát của tôi #${playlists.length + 1}`,
         description: "Danh sách phát mới",
-        image: null
+        image: null,
       };
-      
+
       console.log("Libraries - creating playlist with data:", playlistData);
-      
+
       const response = await createPlaylistService(playlistData);
       console.log("Libraries - create playlist response:", response);
-      
+
       if (response && response.data) {
         // Tạo playlist object hoàn chỉnh
         const newPlaylist = {
@@ -234,29 +247,28 @@ const Libraries = ({ setCurrentView, onClose }) => {
           song_count: 0,
           user_id: user.id,
           created_at: response.data.created_at || new Date().toISOString(),
-          updated_at: response.data.updated_at || new Date().toISOString()
+          updated_at: response.data.updated_at || new Date().toISOString(),
         };
-        
+
         console.log("Libraries - new playlist object:", newPlaylist);
-        
+
         // Thêm playlist mới vào đầu danh sách
-        setPlaylists(prevPlaylists => {
+        setPlaylists((prevPlaylists) => {
           const updatedPlaylists = [newPlaylist, ...prevPlaylists];
           console.log("Libraries - updated playlists list:", updatedPlaylists);
           return updatedPlaylists;
         });
-        
+
         // Trigger refresh cho các component khác
         setRefreshKeyPlayLists(Date.now());
         console.log("Libraries - refresh key updated");
-        
+
         // Navigate to new playlist sau khi state đã update
         setTimeout(() => {
           console.log("Libraries - navigating to new playlist:", newPlaylist);
           setCurrentView(newPlaylist);
           handleClose();
         }, 100);
-        
       } else {
         console.error("Libraries - Invalid response format:", response);
         alert("Có lỗi xảy ra khi tạo playlist!");
@@ -265,7 +277,13 @@ const Libraries = ({ setCurrentView, onClose }) => {
       console.error("Libraries - error creating playlist:", error);
       if (error.response) {
         console.error("Error response:", error.response.data);
-        alert(`Có lỗi xảy ra: ${error.response.data.message || error.response.data.error || 'Unknown error'}`);
+        alert(
+          `Có lỗi xảy ra: ${
+            error.response.data.message ||
+            error.response.data.error ||
+            "Unknown error"
+          }`
+        );
       } else {
         alert("Có lỗi xảy ra khi tạo playlist!");
       }
@@ -292,7 +310,7 @@ const Libraries = ({ setCurrentView, onClose }) => {
     filteredPlaylistsCount: filteredPlaylists.length,
     loading,
     searchValue,
-    refreshKeyPlayLists
+    refreshKeyPlayLists,
   });
 
   return (
@@ -434,20 +452,15 @@ const Libraries = ({ setCurrentView, onClose }) => {
             <p className={`text-xs md:text-sm text-${theme.colors.text} mb-4`}>
               Đăng nhập để tạo và quản lý danh sách phát của bạn
             </p>
-            <button
-              className={`text-xs md:text-sm font-bold bg-${theme.colors.button} hover:bg-${theme.colors.buttonHover} text-${theme.colors.primary}-900 rounded-full py-2 px-4 transition-all duration-200 hover:scale-105 shadow-md`}
-              onClick={() => {
-                window.location.href = '/login';
-              }}
-            >
-              Đăng nhập
-            </button>
           </div>
         ) : loading ? (
           // Loading state
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
-              <div key={i} className={`bg-${theme.colors.card} p-4 rounded-lg transition-all duration-200 shadow-lg`}>
+              <div
+                key={i}
+                className={`bg-${theme.colors.card} p-4 rounded-lg transition-all duration-200 shadow-lg`}
+              >
                 <div className="animate-pulse flex space-x-4">
                   <div className="rounded bg-gray-600 h-12 w-12 flex-shrink-0"></div>
                   <div className="flex-1 space-y-2 py-1">
@@ -464,19 +477,20 @@ const Libraries = ({ setCurrentView, onClose }) => {
             className={`bg-${theme.colors.card} p-4 md:p-6 rounded-lg transition-all duration-200 hover:bg-${theme.colors.cardHover} shadow-lg`}
           >
             <h3 className="font-bold text-sm md:text-base mb-2 text-white">
-              {searchValue ? 'Không tìm thấy playlist' : 'Debug: Checking playlists...'}
+              {searchValue
+                ? "Không tìm thấy playlist"
+                : "Debug: Checking playlists..."}
             </h3>
             <p className={`text-xs md:text-sm text-${theme.colors.text} mb-4`}>
-              {searchValue ? 
-                `Không có playlist nào khớp với "${searchValue}"` : 
-                `Total playlists: ${playlists.length}, Filtered: ${filteredPlaylists.length}, Loading: ${loading}`
-              }
+              {searchValue
+                ? `Không có playlist nào khớp với "${searchValue}"`
+                : `Total playlists: ${playlists.length}, Filtered: ${filteredPlaylists.length}, Loading: ${loading}`}
             </p>
             <div className="text-xs text-gray-300 mt-2 space-y-1">
-              <div>User ID: {user?.id || 'Not logged in'}</div>
+              <div>User ID: {user?.id || "Not logged in"}</div>
               <div>Refresh Key: {refreshKeyPlayLists}</div>
               <div>Search Value: "{searchValue}"</div>
-              <div>Has Playlists: {playlists.length > 0 ? 'Yes' : 'No'}</div>
+              <div>Has Playlists: {playlists.length > 0 ? "Yes" : "No"}</div>
             </div>
             {!searchValue && (
               <button

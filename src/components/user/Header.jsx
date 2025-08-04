@@ -454,14 +454,13 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
         </div>
       )}
 
-      {/* Profile Popup */}
-      {showProfilePopup && (
+      {/* {showProfilePopup && (
         <ProfilePopup
           user={user}
           onClose={toggleProfilePopup}
           onUpdate={handleProfileUpdate}
         />
-      )}
+      )} */}
     </>
   );
 };
