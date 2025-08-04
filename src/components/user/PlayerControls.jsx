@@ -931,6 +931,10 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
         }
         size="md"
         styles={{
+          overlay: {
+            backgroundColor: "rgba(0, 0, 0, 0.7)",
+            backdropFilter: "blur(8px)",
+          },
           modal: {
             backgroundColor:
               theme.id === "ocean"
@@ -963,6 +967,17 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
                 : theme.id === "sunset"
                 ? "0 25px 50px -12px rgba(251, 146, 60, 0.25)"
                 : "0 25px 50px -12px rgba(45, 212, 191, 0.25)",
+            // Thêm background gradient overlay
+            backgroundImage:
+              theme.id === "ocean"
+                ? "linear-gradient(135deg, rgba(20, 184, 166, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%)"
+                : theme.id === "forest"
+                ? "linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(251, 191, 36, 0.05) 100%)"
+                : theme.id === "space"
+                ? "linear-gradient(135deg, rgba(168, 85, 247, 0.1) 0%, rgba(236, 72, 153, 0.05) 100%)"
+                : theme.id === "sunset"
+                ? "linear-gradient(135deg, rgba(251, 146, 60, 0.1) 0%, rgba(239, 68, 68, 0.05) 100%)"
+                : "linear-gradient(135deg, rgba(20, 184, 166, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%)",
           },
           header: {
             backgroundColor: "transparent",
@@ -1004,18 +1019,66 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
           },
           body: {
             paddingTop: "16px",
+            // Thêm background pattern cho body
+            backgroundImage:
+              theme.id === "ocean"
+                ? `radial-gradient(circle at 20% 80%, rgba(45, 212, 191, 0.05) 0%, transparent 50%),
+             radial-gradient(circle at 80% 20%, rgba(16, 185, 129, 0.05) 0%, transparent 50%)`
+                : theme.id === "forest"
+                ? `radial-gradient(circle at 20% 80%, rgba(34, 197, 94, 0.05) 0%, transparent 50%),
+             radial-gradient(circle at 80% 20%, rgba(251, 191, 36, 0.05) 0%, transparent 50%)`
+                : theme.id === "space"
+                ? `radial-gradient(circle at 20% 80%, rgba(168, 85, 247, 0.05) 0%, transparent 50%),
+             radial-gradient(circle at 80% 20%, rgba(236, 72, 153, 0.05) 0%, transparent 50%)`
+                : theme.id === "sunset"
+                ? `radial-gradient(circle at 20% 80%, rgba(251, 146, 60, 0.05) 0%, transparent 50%),
+             radial-gradient(circle at 80% 20%, rgba(239, 68, 68, 0.05) 0%, transparent 50%)`
+                : `radial-gradient(circle at 20% 80%, rgba(45, 212, 191, 0.05) 0%, transparent 50%),
+             radial-gradient(circle at 80% 20%, rgba(16, 185, 129, 0.05) 0%, transparent 50%)`,
           },
         }}
       >
         <div className="space-y-3">
           {currentSong && (
             <div
-              className={`flex items-center gap-3 p-3 ${theme.colors.card} rounded-lg ${theme.colors.border} border`}
+              className={`flex items-center gap-3 p-3 rounded-lg border transition-all duration-200 hover:scale-[1.01]`}
+              style={{
+                backgroundColor:
+                  theme.id === "ocean"
+                    ? "rgba(15, 118, 110, 0.3)"
+                    : theme.id === "forest"
+                    ? "rgba(22, 163, 74, 0.3)"
+                    : theme.id === "space"
+                    ? "rgba(126, 34, 206, 0.3)"
+                    : theme.id === "sunset"
+                    ? "rgba(234, 88, 12, 0.3)"
+                    : "rgba(15, 118, 110, 0.3)",
+                borderColor:
+                  theme.id === "ocean"
+                    ? "rgba(45, 212, 191, 0.3)"
+                    : theme.id === "forest"
+                    ? "rgba(251, 191, 36, 0.4)"
+                    : theme.id === "space"
+                    ? "rgba(168, 85, 247, 0.3)"
+                    : theme.id === "sunset"
+                    ? "rgba(251, 146, 60, 0.3)"
+                    : "rgba(45, 212, 191, 0.3)",
+                boxShadow:
+                  theme.id === "ocean"
+                    ? "0 4px 12px rgba(45, 212, 191, 0.15)"
+                    : theme.id === "forest"
+                    ? "0 4px 12px rgba(34, 197, 94, 0.15)"
+                    : theme.id === "space"
+                    ? "0 4px 12px rgba(168, 85, 247, 0.15)"
+                    : theme.id === "sunset"
+                    ? "0 4px 12px rgba(251, 146, 60, 0.15)"
+                    : "0 4px 12px rgba(45, 212, 191, 0.15)",
+              }}
             >
               <img
                 src={currentSong.image}
                 alt="Song cover"
-                className="w-12 h-12 rounded-lg object-cover shadow-md"
+                className="w-12 h-12 rounded-lg object-cover shadow-lg"
               />
               <div className="flex-1 min-w-0">
                 <h4
@@ -1023,7 +1086,9 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
                 >
                   {currentSong.song_name}
                 </h4>
-                <p className={`text-xs ${theme.colors.text} truncate`}>
+                <p
+                  className={`text-xs ${theme.colors.text} truncate opacity-80`}
+                >
                   {currentSong.singer_name}
                 </p>
               </div>
@@ -1032,11 +1097,11 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
 
           {!user ? (
             <div className="text-center py-8">
-              <Text className={`${theme.colors.text} mb-4`}>
+              <Text className={`${theme.colors.text} mb-4 opacity-90`}>
                 Vui lòng đăng nhập để sử dụng chức năng này
               </Text>
               <Button
-                className={`${theme.colors.button} ${theme.colors.buttonHover} ${theme.colors.buttonText} border-none font-medium transition-all duration-200 hover:scale-105`}
+                className="border-none font-medium transition-all duration-200 hover:scale-105"
                 onClick={() => {
                   window.location.href = "/login";
                 }}
@@ -1044,36 +1109,56 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
                   root: {
                     backgroundColor:
                       theme.id === "ocean"
-                        ? "rgb(94 234 212 / 0.8)"
+                        ? "rgb(94 234 212)"
                         : theme.id === "forest"
-                        ? "rgb(251 191 36 / 0.8)"
+                        ? "rgb(251 191 36)"
                         : theme.id === "space"
-                        ? "rgb(196 181 253 / 0.8)"
+                        ? "rgb(196 181 253)"
                         : theme.id === "sunset"
-                        ? "rgb(251 146 60 / 0.8)"
-                        : "rgb(94 234 212 / 0.8)",
+                        ? "rgb(251 146 60)"
+                        : "rgb(94 234 212)",
                     color:
                       theme.id === "ocean"
                         ? "#134e4a"
                         : theme.id === "forest"
-                        ? "#ffffff"
+                        ? "#92400e"
                         : theme.id === "space"
-                        ? "#ffffff"
+                        ? "#581c87"
                         : theme.id === "sunset"
-                        ? "#ffffff"
+                        ? "#9a3412"
                         : "#134e4a",
+                    boxShadow:
+                      theme.id === "ocean"
+                        ? "0 8px 25px rgba(45, 212, 191, 0.3)"
+                        : theme.id === "forest"
+                        ? "0 8px 25px rgba(251, 191, 36, 0.3)"
+                        : theme.id === "space"
+                        ? "0 8px 25px rgba(168, 85, 247, 0.3)"
+                        : theme.id === "sunset"
+                        ? "0 8px 25px rgba(251, 146, 60, 0.3)"
+                        : "0 8px 25px rgba(45, 212, 191, 0.3)",
                     "&:hover": {
                       backgroundColor:
                         theme.id === "ocean"
-                          ? "rgb(52 211 153 / 0.9)"
+                          ? "rgb(52 211 153)"
                           : theme.id === "forest"
-                          ? "rgb(245 158 11 / 0.9)"
+                          ? "rgb(245 158 11)"
                           : theme.id === "space"
-                          ? "rgb(236 72 153 / 0.9)"
+                          ? "rgb(236 72 153)"
                           : theme.id === "sunset"
-                          ? "rgb(251 191 36 / 0.9)"
-                          : "rgb(52 211 153 / 0.9)",
+                          ? "rgb(251 191 36)"
+                          : "rgb(52 211 153)",
                       transform: "scale(1.05)",
+                      boxShadow:
+                        theme.id === "ocean"
+                          ? "0 12px 35px rgba(45, 212, 191, 0.4)"
+                          : theme.id === "forest"
+                          ? "0 12px 35px rgba(251, 191, 36, 0.4)"
+                          : theme.id === "space"
+                          ? "0 12px 35px rgba(168, 85, 247, 0.4)"
+                          : theme.id === "sunset"
+                          ? "0 12px 35px rgba(251, 146, 60, 0.4)"
+                          : "0 12px 35px rgba(45, 212, 191, 0.4)",
                     },
                   },
                 }}
@@ -1083,10 +1168,10 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
             </div>
           ) : userPlaylists.length === 0 ? (
             <div className="text-center py-8">
-              <Text className={`${theme.colors.text} mb-4`}>
+              <Text className={`${theme.colors.text} mb-4 opacity-90`}>
                 Bạn chưa có playlist nào
               </Text>
-              <Text className={`text-xs ${theme.colors.text} opacity-70`}>
+              <Text className={`text-xs ${theme.colors.text} opacity-60`}>
                 Hãy tạo playlist đầu tiên trong thư viện
               </Text>
             </div>
@@ -1098,14 +1183,27 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
                   '&[data-orientation="vertical"] .mantine-ScrollArea-thumb': {
                     backgroundColor:
                       theme.id === "ocean"
-                        ? "rgb(45 212 191 / 0.5)"
+                        ? "rgb(45 212 191 / 0.6)"
                         : theme.id === "forest"
-                        ? "rgb(34 197 94 / 0.5)"
+                        ? "rgb(34 197 94 / 0.6)"
                         : theme.id === "space"
-                        ? "rgb(168 85 247 / 0.5)"
+                        ? "rgb(168 85 247 / 0.6)"
                         : theme.id === "sunset"
-                        ? "rgb(251 146 60 / 0.5)"
-                        : "rgb(45 212 191 / 0.5)",
+                        ? "rgb(251 146 60 / 0.6)"
+                        : "rgb(45 212 191 / 0.6)",
+                    borderRadius: "6px",
+                  },
+                  '&[data-orientation="vertical"]': {
+                    backgroundColor:
+                      theme.id === "ocean"
+                        ? "rgba(45, 212, 191, 0.1)"
+                        : theme.id === "forest"
+                        ? "rgba(34, 197, 94, 0.1)"
+                        : theme.id === "space"
+                        ? "rgba(168, 85, 247, 0.1)"
+                        : theme.id === "sunset"
+                        ? "rgba(251, 146, 60, 0.1)"
+                        : "rgba(45, 212, 191, 0.1)",
                   },
                 },
               }}
@@ -1114,41 +1212,121 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
                 {userPlaylists.map((playlist) => (
                   <div
                     key={playlist.id}
-                    className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all duration-200 ${
-                      theme.colors.cardHover
-                    } ${
-                      theme.colors.border
-                    } border hover:border-opacity-50 hover:scale-[1.02] ${
-                      theme.colors.songShadow
-                    } hover:${theme.colors.songShadowHover} ${
+                    className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all duration-200 hover:scale-[1.02] ${
                       loadingPlaylist ? "opacity-50 pointer-events-none" : ""
                     }`}
+                    style={{
+                      backgroundColor:
+                        theme.id === "ocean"
+                          ? "rgba(15, 118, 110, 0.2)"
+                          : theme.id === "forest"
+                          ? "rgba(22, 163, 74, 0.2)"
+                          : theme.id === "space"
+                          ? "rgba(126, 34, 206, 0.2)"
+                          : theme.id === "sunset"
+                          ? "rgba(234, 88, 12, 0.2)"
+                          : "rgba(15, 118, 110, 0.2)",
+                      borderColor:
+                        theme.id === "ocean"
+                          ? "rgba(45, 212, 191, 0.2)"
+                          : theme.id === "forest"
+                          ? "rgba(251, 191, 36, 0.3)"
+                          : theme.id === "space"
+                          ? "rgba(168, 85, 247, 0.2)"
+                          : theme.id === "sunset"
+                          ? "rgba(251, 146, 60, 0.2)"
+                          : "rgba(45, 212, 191, 0.2)",
+                      border: "1px solid",
+                      boxShadow:
+                        theme.id === "ocean"
+                          ? "0 2px 8px rgba(45, 212, 191, 0.1)"
+                          : theme.id === "forest"
+                          ? "0 2px 8px rgba(34, 197, 94, 0.1)"
+                          : theme.id === "space"
+                          ? "0 2px 8px rgba(168, 85, 247, 0.1)"
+                          : theme.id === "sunset"
+                          ? "0 2px 8px rgba(251, 146, 60, 0.1)"
+                          : "0 2px 8px rgba(45, 212, 191, 0.1)",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.backgroundColor =
+                        theme.id === "ocean"
+                          ? "rgba(15, 118, 110, 0.4)"
+                          : theme.id === "forest"
+                          ? "rgba(22, 163, 74, 0.4)"
+                          : theme.id === "space"
+                          ? "rgba(126, 34, 206, 0.4)"
+                          : theme.id === "sunset"
+                          ? "rgba(234, 88, 12, 0.4)"
+                          : "rgba(15, 118, 110, 0.4)";
+                      e.target.style.boxShadow =
+                        theme.id === "ocean"
+                          ? "0 8px 25px rgba(45, 212, 191, 0.2)"
+                          : theme.id === "forest"
+                          ? "0 8px 25px rgba(34, 197, 94, 0.2)"
+                          : theme.id === "space"
+                          ? "0 8px 25px rgba(168, 85, 247, 0.2)"
+                          : theme.id === "sunset"
+                          ? "0 8px 25px rgba(251, 146, 60, 0.2)"
+                          : "0 8px 25px rgba(45, 212, 191, 0.2)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.backgroundColor =
+                        theme.id === "ocean"
+                          ? "rgba(15, 118, 110, 0.2)"
+                          : theme.id === "forest"
+                          ? "rgba(22, 163, 74, 0.2)"
+                          : theme.id === "space"
+                          ? "rgba(126, 34, 206, 0.2)"
+                          : theme.id === "sunset"
+                          ? "rgba(234, 88, 12, 0.2)"
+                          : "rgba(15, 118, 110, 0.2)";
+                      e.target.style.boxShadow =
+                        theme.id === "ocean"
+                          ? "0 2px 8px rgba(45, 212, 191, 0.1)"
+                          : theme.id === "forest"
+                          ? "0 2px 8px rgba(34, 197, 94, 0.1)"
+                          : theme.id === "space"
+                          ? "0 2px 8px rgba(168, 85, 247, 0.1)"
+                          : theme.id === "sunset"
+                          ? "0 2px 8px rgba(251, 146, 60, 0.1)"
+                          : "0 2px 8px rgba(45, 212, 191, 0.1)";
+                    }}
                     onClick={() => handleAddToPlaylist(playlist.id)}
                   >
                     {playlist.image ? (
                       <img
                         src={playlist.image}
                         alt={playlist.title}
-                        className="w-10 h-10 rounded-lg object-cover shadow-md"
+                        className="w-10 h-10 rounded-lg object-cover shadow-lg"
                       />
                     ) : (
                       <div
-                        className={`w-10 h-10 rounded-lg ${theme.colors.gradient} bg-gradient-to-br opacity-80 flex items-center justify-center shadow-md`}
+                        className="w-10 h-10 rounded-lg opacity-90 flex items-center justify-center shadow-lg"
+                        style={{
+                          background:
+                            theme.id === "ocean"
+                              ? "linear-gradient(135deg, #14b8a6, #10b981)"
+                              : theme.id === "forest"
+                              ? "linear-gradient(135deg, #22c55e, #fbbf24)"
+                              : theme.id === "space"
+                              ? "linear-gradient(135deg, #a855f7, #ec4899)"
+                              : theme.id === "sunset"
+                              ? "linear-gradient(135deg, #fb923c, #fbbf24)"
+                              : "linear-gradient(135deg, #14b8a6, #10b981)",
+                        }}
                       >
-                        <IconMusic
-                          size={20}
-                          className={`${theme.colors.songText}`}
-                        />
+                        <IconMusic size={20} className="text-white" />
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
                       <h4
-                        className={`${theme.colors.songText} text-sm font-medium truncate ${theme.colors.songTextHover} transition-colors`}
+                        className={`${theme.colors.songText} text-sm font-medium truncate transition-colors`}
                       >
                         {playlist.title}
                       </h4>
                       <p
-                        className={`text-xs ${theme.colors.text} truncate opacity-80`}
+                        className={`text-xs ${theme.colors.text} truncate opacity-70`}
                       >
                         {playlist.song_count || 0} bài hát
                       </p>
@@ -1159,14 +1337,14 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
                         style={{
                           borderColor:
                             theme.id === "ocean"
-                              ? "rgb(45 212 191 / 0.3)"
+                              ? "rgb(45 212 191 / 0.5)"
                               : theme.id === "forest"
-                              ? "rgb(34 197 94 / 0.3)"
+                              ? "rgb(34 197 94 / 0.5)"
                               : theme.id === "space"
-                              ? "rgb(168 85 247 / 0.3)"
+                              ? "rgb(168 85 247 / 0.5)"
                               : theme.id === "sunset"
-                              ? "rgb(251 146 60 / 0.3)"
-                              : "rgb(45 212 191 / 0.3)",
+                              ? "rgb(251 146 60 / 0.5)"
+                              : "rgb(45 212 191 / 0.5)",
                           borderTopColor: "transparent",
                         }}
                       />
