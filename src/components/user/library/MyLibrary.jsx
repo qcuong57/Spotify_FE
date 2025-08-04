@@ -1,7 +1,5 @@
 import { useState, useEffect } from "react";
-import {
-  searchSongs,
-} from "../../../services/SongsService";
+import { searchSongs } from "../../../services/SongsService";
 import {
   getSongsFromPlaylistService,
   deleteSongFromPlaylistService,
@@ -16,26 +14,34 @@ import {
   IconClockHour3,
   IconSearch,
   IconX,
+  IconTrash,
 } from "@tabler/icons-react";
 import Song from "./_Song";
 import SearchedSong from "./_SearchedSong";
 import EditPlaylistForm from "./_EditPlaylistForm";
 import { usePlayList } from "../../../utils/playlistContext";
-import { IconTrash } from "@tabler/icons-react";
 import { deletePlaylistService } from "../../../services/playlistService";
 import { useAudio } from "../../../utils/audioContext";
+import { useTheme } from "../../../context/themeContext";
 
 const MyLibrary = ({ playlist, setCurrentView }) => {
-  const [available, setAvailable] = useState(false);
+  const { theme } = useTheme();
   const [songs, setSongs] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [referesh, setRefresh] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
-  const { playlists, setPlaylists, refreshKeyPlayLists, setRefreshKeyPlayLists } = usePlayList();
+  const [isSearching, setIsSearching] = useState(false);
+  const {
+    playlists,
+    setPlaylists,
+    refreshKeyPlayLists,
+    setRefreshKeyPlayLists,
+  } = usePlayList();
   const [user, setUser] = useState(null);
   const { setNewPlaylist } = useAudio();
 
+  // Kiểm tra user đăng nhập
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
@@ -43,58 +49,168 @@ const MyLibrary = ({ playlist, setCurrentView }) => {
     }
   }, []);
 
+  // Fetch songs từ playlist
   useEffect(() => {
     const fetchSongs = async () => {
-      if (!playlist || !playlist.id) return;
+      if (!playlist || !playlist.id) {
+        console.log("MyLibrary - No playlist or playlist.id");
+        return;
+      }
+
       try {
-        const formData = {
-          token: localStorage.getItem("access_token"),
-        };
-        const response = await getSongsFromPlaylistService(playlist.id, formData);
-        setSongs(response.data.songs);
+        console.log("MyLibrary - Fetching songs for playlist:", playlist.id);
+        const response = await getSongsFromPlaylistService(playlist.id);
+        console.log("MyLibrary - Songs response:", response);
+
+        if (response && response.data && response.data.songs) {
+          setSongs(response.data.songs);
+          console.log("MyLibrary - Songs set:", response.data.songs);
+
+          // CẬP NHẬT SONG COUNT TRONG CONTEXT DỰA TRÊN DỮ LIỆU THỰC TẾ
+          const actualSongCount = response.data.songs.length;
+          setPlaylists((prevPlaylists) =>
+            prevPlaylists.map((p) =>
+              p.id === playlist.id ? { ...p, song_count: actualSongCount } : p
+            )
+          );
+        } else {
+          setSongs([]);
+          // Nếu không có songs, set song_count = 0
+          setPlaylists((prevPlaylists) =>
+            prevPlaylists.map((p) =>
+              p.id === playlist.id ? { ...p, song_count: 0 } : p
+            )
+          );
+        }
       } catch (error) {
-        console.error("Error fetching songs:", error);
+        console.error("MyLibrary - Error fetching songs:", error);
+        setSongs([]);
       }
     };
 
     fetchSongs();
-  }, [playlist, referesh]);
+  }, [playlist, referesh, setPlaylists]);
 
   const handleSearch = async (e) => {
-    if (e.key === "Enter") {
+    if (e.key === "Enter" && searchQuery.trim()) {
+      setIsSearching(true);
       try {
+        console.log("MyLibrary - Searching for:", searchQuery);
         const response = await searchSongs(searchQuery);
-        setSearchResults(response.data.results || []);
+        console.log("MyLibrary - Search response:", response);
+
+        if (response && response.data && response.data.results) {
+          setSearchResults(response.data.results);
+        } else {
+          setSearchResults([]);
+        }
       } catch (error) {
-        console.error("Error searching songs:", error);
+        console.error("MyLibrary - Error searching songs:", error);
         setSearchResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    }
+  };
+
+  const handleSearchClick = async () => {
+    if (searchQuery.trim()) {
+      setIsSearching(true);
+      try {
+        console.log("MyLibrary - Searching for:", searchQuery);
+        const response = await searchSongs(searchQuery);
+        console.log("MyLibrary - Search response:", response);
+
+        if (response && response.data && response.data.results) {
+          setSearchResults(response.data.results);
+        } else {
+          setSearchResults([]);
+        }
+      } catch (error) {
+        console.error("MyLibrary - Error searching songs:", error);
+        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
       }
     }
   };
 
   const deleteSong = async (songId) => {
+    if (!playlist || !playlist.id) return;
+
     try {
+      console.log(
+        "MyLibrary - Deleting song:",
+        songId,
+        "from playlist:",
+        playlist.id
+      );
       await deleteSongFromPlaylistService(playlist.id, songId);
-      setRefreshKeyPlayLists(Date.now());
-      setRefresh(Date.now());
+
+      // Cập nhật UI ngay lập tức bằng cách xóa song khỏi state
+      setSongs(prevSongs => prevSongs.filter(song => song.id !== songId));
+      
+      // Cập nhật song count trong context
+      setPlaylists((prevPlaylists) =>
+        prevPlaylists.map((p) =>
+          p.id === playlist.id 
+            ? { ...p, song_count: Math.max((p.song_count || 1) - 1, 0) } 
+            : p
+        )
+      );
+
+      console.log("MyLibrary - Song deleted successfully");
     } catch (error) {
-      console.error("Lỗi khi xóa bài hát:", error);
+      console.error("MyLibrary - Error deleting song:", error);
+      alert("Có lỗi xảy ra khi xóa bài hát!");
+      // Refresh lại nếu có lỗi
+      setRefresh(Date.now());
     }
   };
 
   const addSongToPlaylist = async (songId) => {
+    if (!playlist || !playlist.id) return;
+
     try {
+      console.log(
+        "MyLibrary - Adding song:",
+        songId,
+        "to playlist:",
+        playlist.id
+      );
+
       const formData = {
         playlist_id: playlist.id,
         song_id: songId,
         token: localStorage.getItem("access_token"),
       };
+
       await addSongToPlaylistService(formData);
-      alert("Thêm bài hát vào playlist thành công!");
-      setRefresh(Date.now());
-      setRefreshKeyPlayLists(Date.now());
+
+      // Tìm bài hát trong searchResults để thêm vào songs
+      const addedSong = searchResults.find(song => song.id === songId);
+      if (addedSong) {
+        // Cập nhật songs state ngay lập tức
+        setSongs(prevSongs => [...prevSongs, addedSong]);
+        
+        // Cập nhật song count trong context
+        setPlaylists((prevPlaylists) =>
+          prevPlaylists.map((p) =>
+            p.id === playlist.id 
+              ? { ...p, song_count: (p.song_count || 0) + 1 } 
+              : p
+          )
+        );
+      }
+
+      // Clear search results sau khi thêm thành công
+      setSearchResults([]);
+      setSearchQuery("");
+
+      console.log("MyLibrary - Song added successfully");
     } catch (error) {
-      console.error("Error adding song to playlist:", error);
+      console.error("MyLibrary - Error adding song to playlist:", error);
+      alert("Có lỗi xảy ra khi thêm bài hát!");
     }
   };
 
@@ -104,139 +220,306 @@ const MyLibrary = ({ playlist, setCurrentView }) => {
   };
 
   const playSongFromThisList = () => {
-    setNewPlaylist(songs, 0);
+    if (songs.length > 0) {
+      setNewPlaylist(songs, 0);
+    }
   };
 
   const handleRemove = async () => {
+    if (!playlist || !playlist.id) return;
+
     try {
       const isConfirmed = confirm("Bạn có chắc chắn xóa danh sách này không?");
       if (isConfirmed) {
+        console.log("MyLibrary - Deleting playlist:", playlist.id);
         await deletePlaylistService(playlist.id);
-        alert("Xóa thành công");
+
+        // Xóa playlist khỏi danh sách trong context
+        setPlaylists((prevPlaylists) =>
+          prevPlaylists.filter((p) => p.id !== playlist.id)
+        );
         setRefreshKeyPlayLists(Date.now());
+
+        alert("Xóa thành công");
+        console.log("MyLibrary - Playlist deleted successfully");
         setCurrentView("main");
       }
     } catch (error) {
-      console.error("Error deleting playlist:", error);
+      console.error("MyLibrary - Error deleting playlist:", error);
       alert("Đã xảy ra lỗi khi xóa danh sách");
     }
   };
 
+  const handleEditComplete = (updatedPlaylist) => {
+    // Cập nhật playlist trong context sau khi edit
+    setPlaylists((prevPlaylists) =>
+      prevPlaylists.map((p) =>
+        p.id === playlist.id ? { ...p, ...updatedPlaylist } : p
+      )
+    );
+    setRefreshKeyPlayLists(Date.now());
+    setCurrentView(updatedPlaylist);
+  };
+
+  // Nếu không có playlist, hiển thị loading hoặc error
+  if (!playlist) {
+    return (
+      <div
+        className={`bg-gradient-to-b ${theme.colors.backgroundOverlay} backdrop-blur-md text-white flex-1 mr-0 sm:mr-2 rounded-lg overflow-y-auto flex items-center justify-center`}
+      >
+        <div className="text-center">
+          <IconMusic
+            stroke={2}
+            className="w-16 h-16 mx-auto mb-4 text-gray-400"
+          />
+          <h2 className="text-xl font-bold mb-2">Không tìm thấy playlist</h2>
+          <p className="text-gray-400">
+            Vui lòng chọn một playlist từ thư viện
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="bg-[#131313] text-white flex-1 mr-0 sm:mr-2 rounded-lg overflow-y-auto">
+    <div
+      className={`bg-gradient-to-b ${theme.colors.backgroundOverlay} backdrop-blur-md text-white flex-1 mr-0 sm:mr-2 rounded-lg overflow-y-auto`}
+    >
       <div className="flex flex-col">
-        <div className="flex flex-col sm:flex-row items-center sm:items-end gap-2 sm:gap-4 p-4 pb-4 sm:pb-6 bg-gradient-to-b from-[#666666] to-[#595959]">
-          <div className="w-[150px] h-[150px] sm:w-[232px] sm:h-[232px] bg-gradient-to-br from-[#333333] to-[#121212] flex items-center justify-center">
+        {/* Header Section */}
+        <div
+          className={`flex flex-col sm:flex-row items-center sm:items-end gap-2 sm:gap-4 p-4 pb-4 sm:pb-6 bg-gradient-to-b ${theme.colors.background}`}
+        >
+          <div
+            className={`w-[150px] h-[150px] sm:w-[232px] sm:h-[232px] bg-gradient-to-br from-${theme.colors.card} to-gray-800/30 flex items-center justify-center rounded-lg shadow-lg`}
+          >
             {playlist.image ? (
-              <img src={playlist.image} alt={playlist.title} className="w-full h-full object-cover" />
+              <img
+                src={playlist.image}
+                alt={playlist.title}
+                className="w-full h-full object-cover rounded-lg"
+                onError={(e) => {
+                  console.log("MyLibrary - Image load error:", e);
+                  e.target.style.display = "none";
+                  e.target.nextSibling.style.display = "flex";
+                }}
+              />
             ) : (
-              <div className="w-full h-full bg-gradient-to-br from-[#333333] to-[#121212] flex items-center justify-center">
-                <IconMusic stroke={2} className="w-16 h-16 sm:w-24 sm:h-24 text-gray-400" />
+              <div
+                className={`w-full h-full bg-gradient-to-br from-${theme.colors.card} to-gray-800/30 flex items-center justify-center rounded-lg`}
+              >
+                <IconMusic
+                  stroke={2}
+                  className={`w-16 h-16 sm:w-24 sm:h-24 text-${theme.colors.text}`}
+                />
               </div>
             )}
           </div>
-          <div className="flex flex-col gap-2 sm:gap-4 cursor-pointer" onClick={() => !playlist.is_liked_song && setIsEditing(true)}>
+
+          <div
+            className="flex flex-col gap-2 sm:gap-4 cursor-pointer flex-1"
+            onClick={() => !playlist.is_liked_song && setIsEditing(true)}
+          >
             <div>
-              <h1 className="text-3xl sm:text-5xl font-bold mt-2 cursor-pointer">{playlist.title}</h1>
+              <span className={`text-sm text-${theme.colors.text}`}>
+                Danh sách phát
+              </span>
+              <h1
+                className={`text-3xl sm:text-5xl font-bold mt-2 cursor-pointer text-white bg-gradient-to-r ${theme.colors.gradient} bg-clip-text text-transparent`}
+              >
+                {playlist.title || "Playlist"}
+              </h1>
             </div>
-            <h3 className="text-xs sm:text-sm text-gray-400">{playlist.description}</h3>
+            <h3 className={`text-xs sm:text-sm text-${theme.colors.text}`}>
+              {playlist.description || "Không có mô tả"}
+            </h3>
             {user && (
               <div className="flex items-center gap-2">
-                <img src={user.avatar} alt="User Avatar" className="w-5 h-5 sm:w-6 sm:h-6 rounded-full" />
-                <span className="text-xs sm:text-sm font-semibold">{user.first_name}</span>
+                <img
+                  src={user.avatar}
+                  alt="User Avatar"
+                  className="w-5 h-5 sm:w-6 sm:h-6 rounded-full"
+                  onError={(e) => {
+                    e.target.src =
+                      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'%3E%3C/path%3E%3Ccircle cx='12' cy='7' r='4'%3E%3C/circle%3E%3C/svg%3E";
+                  }}
+                />
+                <span className="text-xs sm:text-sm font-semibold text-white">
+                  {user.first_name || user.username || "User"}
+                </span>
+                <span
+                  className={`text-xs sm:text-sm text-${theme.colors.text}`}
+                >
+                  • {songs.length} bài hát
+                </span>
               </div>
             )}
           </div>
-          <div className="flex flex-1 justify-end">
-            <IconTrash stroke={2} className="cursor-pointer size-5 sm:size-6" onClick={handleRemove} />
-          </div>
+
+          {!playlist.is_liked_song && (
+            <div className="flex justify-end">
+              <IconTrash
+                stroke={2}
+                className={`cursor-pointer size-5 sm:size-6 text-${theme.colors.text} hover:text-red-400 transition-colors`}
+                onClick={handleRemove}
+              />
+            </div>
+          )}
         </div>
-        <div className="flex flex-row justify-between items-center mx-4 sm:mx-6">
-          <div className="flex flex-row items-center">
-            {songs.length > 0 ? (
-              <div
-                onClick={playSongFromThisList}
-                className="mr-2 sm:mr-4 bg-green-500 cursor-pointer rounded-full group-hover:block transition-all duration-300 hover:scale-110 hover:bg-green-400"
+
+        {/* Controls Section với Search đơn giản */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mx-4 sm:mx-6 py-4 gap-4">
+          {/* Play button và List info */}
+          <div className="flex flex-row justify-between items-center w-full sm:w-auto">
+            <div className="flex flex-row items-center">
+              {songs.length > 0 ? (
+                <div
+                  onClick={playSongFromThisList}
+                  className={`mr-2 sm:mr-4 bg-${theme.colors.primary}-500 cursor-pointer rounded-full transition-all duration-300 hover:scale-110 hover:bg-${theme.colors.primary}-400 shadow-lg`}
+                >
+                  <IconPlayerPlayFilled className="size-8 sm:size-12 p-2 sm:p-3 text-black" />
+                </div>
+              ) : (
+                <div className="mr-2 sm:mr-4 bg-gray-600 rounded-full">
+                  <IconPlayerPlayFilled className="size-8 sm:size-12 p-2 sm:p-3 text-gray-400" />
+                </div>
+              )}
+            </div>
+            <div className="flex flex-row items-center sm:hidden">
+              <h3 className={`text-sm text-${theme.colors.text} mr-2`}>
+                Danh sách
+              </h3>
+              <IconList
+                stroke={2}
+                className={`size-4 text-${theme.colors.text}`}
+              />
+            </div>
+          </div>
+
+          {/* Search Section đơn giản */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full sm:w-auto">
+            <div className="hidden sm:flex flex-row items-center">
+              <h3 className={`text-sm text-${theme.colors.text} mr-2`}>
+                Danh sách
+              </h3>
+              <IconList
+                stroke={2}
+                className={`size-4 text-${theme.colors.text}`}
+              />
+            </div>
+
+            <div className="flex flex-row items-center gap-3 w-full sm:w-auto">
+              <div className="relative flex-1 sm:flex-none">
+                <input
+                  type="text"
+                  placeholder="Tìm bài hát..."
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={handleSearch}
+                  value={searchQuery}
+                  disabled={isSearching}
+                  className={`w-full sm:w-[280px] bg-${theme.colors.card} px-4 py-2 pl-10 rounded-full text-sm placeholder:text-${theme.colors.text} border border-${theme.colors.border} focus:border-${theme.colors.primary}-500 focus:outline-none transition-all duration-300 text-white hover:bg-${theme.colors.cardHover}`}
+                />
+                <IconSearch
+                  className={`w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-${theme.colors.text}`}
+                />
+                {isSearching && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <div
+                      className={`w-4 h-4 border-2 border-${theme.colors.primary}-400 border-t-transparent rounded-full animate-spin`}
+                    ></div>
+                  </div>
+                )}
+              </div>
+
+              <button
+                onClick={handleSearchClick}
+                disabled={!searchQuery.trim() || isSearching}
+                className={`px-4 py-2 bg-${theme.colors.button} hover:bg-${theme.colors.buttonHover} disabled:opacity-50 disabled:cursor-not-allowed rounded-full text-${theme.colors.buttonText} text-sm font-medium transition-all duration-300 hover:scale-105 shadow-md flex-shrink-0`}
               >
-                <IconPlayerPlayFilled className="size-8 sm:size-12 p-2 sm:p-3 text-black" />
-              </div>
-            ) : (
-              <IconDotsVertical stroke={2} className="size-6 sm:size-8" />
-            )}
-          </div>
-          <div className="flex flex-row items-center py-4 sm:py-8">
-            <h3 className="text-sm sm:text-md text-gray-300 mr-2">Danh sách</h3>
-            <IconList stroke={2} className="size-4 sm:size-5" />
+                {isSearching ? (
+                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  "Tìm"
+                )}
+              </button>
+
+              {(searchQuery || searchResults.length > 0) && (
+                <button
+                  onClick={removeSearch}
+                  className={`p-2 bg-${theme.colors.card} hover:bg-${theme.colors.cardHover} border border-${theme.colors.border} rounded-full text-${theme.colors.text} hover:text-white transition-all duration-300 hover:scale-105 shadow-md flex-shrink-0`}
+                >
+                  <IconX className="size-4" />
+                </button>
+              )}
+            </div>
           </div>
         </div>
+
+        {/* Songs List Section */}
         <div className="mx-4 sm:mx-12 mb-4">
-          <div className="grid grid-cols-[16px_4fr_2fr_1fr] sm:grid-cols-[16px_4fr_2fr_1fr] gap-2 sm:gap-4 text-xs sm:text-sm text-gray-400 border-b border-gray-700/50 pb-2">
+          <div
+            className={`grid grid-cols-[16px_1fr_auto] gap-2 sm:gap-4 text-xs sm:text-sm text-${theme.colors.text} border-b border-${theme.colors.border} pb-2 mb-4`}
+          >
             <div>#</div>
             <div>Tiêu đề</div>
-            <div>Album</div>
-            <div className="flex justify-end">
-              <IconClockHour3 stroke={2} className="w-4 h-4 sm:w-5 sm:h-5" />
-            </div>
+            <div className="w-8"></div>
           </div>
 
           {songs.length > 0 ? (
             songs.map((song, index) => (
               <Song
-                key={song.id}
+                key={`song-${song.id}-${index}`}
                 song={song}
                 playlist={playlist}
                 deleteSong={deleteSong}
                 songs={songs}
                 index={index}
+                list={songs}
               />
             ))
           ) : (
-            <div className="text-gray-400 mt-4 text-xs sm:text-sm">
-              Chưa có bài hát nào trong playlist này
+            <div className={`text-${theme.colors.text} mt-8 text-center`}>
+              <IconMusic
+                stroke={2}
+                className={`w-16 h-16 mx-auto mb-4 text-${theme.colors.text}/60`}
+              />
+              <h3 className="text-lg font-bold mb-2 text-white">
+                Playlist trống
+              </h3>
+              <p className="text-sm mb-4">
+                Chưa có bài hát nào trong playlist này
+              </p>
             </div>
           )}
         </div>
-        <div className="mx-4 sm:mx-6 border-t border-t-gray-700/50 pt-4 sm:pt-5">
-          <h3 className="text-xl sm:text-2xl font-bold">
-            Hãy cùng tìm nội dung cho danh sách phát của bạn
-          </h3>
-          <div className="flex flex-row justify-between items-center">
-            <div className="w-full max-w-[300px] sm:max-w-[364px] relative mt-4">
-              <input
-                type="text"
-                placeholder="Tìm bài hát và tập podcast"
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={handleSearch}
-                value={searchQuery}
-                className="w-full bg-[#242424] px-8 sm:px-10 py-2 rounded-full text-xs sm:text-sm placeholder:text-gray-400"
-              />
-              <IconSearch
-                className="w-4 h-4 sm:w-5 sm:h-5 absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 text-gray-400"
-              />
-            </div>
-            <IconX
-              className="size-5 sm:size-6 text-gray-400 cursor-pointer"
-              onClick={removeSearch}
-            />
-          </div>
-        </div>
+
+        {/* Search Results */}
         <div className="pb-6 mx-4">
-          {searchResults.length > 0 &&
-            searchResults.map((song, index) => (
-              <SearchedSong
-                key={index}
-                song={song}
-                playlist={playlist}
-                addSongToPlaylist={addSongToPlaylist}
-              />
-            ))}
+          {searchResults.length > 0 && (
+            <div className="mt-6">
+              <h4 className="text-lg font-bold mb-4 mx-2 text-white">
+                Kết quả tìm kiếm
+              </h4>
+              {searchResults.map((song, index) => (
+                <SearchedSong
+                  key={`search-${song.id}-${index}`}
+                  song={song}
+                  playlist={playlist}
+                  addSongToPlaylist={addSongToPlaylist}
+                  songs={songs}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Edit Playlist Modal */}
       {isEditing && (
         <EditPlaylistForm
           playlist={playlist}
           onClose={() => setIsEditing(false)}
-          setCurrentView={setCurrentView}
+          setCurrentView={handleEditComplete}
         />
       )}
     </div>

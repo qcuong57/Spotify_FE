@@ -1,5 +1,5 @@
 import React from "react";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import {
   IconPlayerSkipBackFilled,
   IconPlayerSkipForwardFilled,
@@ -16,14 +16,29 @@ import {
   IconRepeatOnce,
   IconChevronDown,
   IconChevronUp,
+  IconPlaylistAdd,
+  IconMusic,
 } from "@tabler/icons-react";
-import { Menu, Button, Anchor } from "@mantine/core";
+import { Menu, Button, Anchor, Modal, Text, ScrollArea } from "@mantine/core";
 import { useAudio } from "../../utils/audioContext";
 import { useTheme } from "../../context/themeContext";
+import { usePlayList } from "../../utils/playlistContext";
 import { formatTime } from "../../utils/timeFormat";
+import { 
+  addToLikedSongsService, 
+  removeFromLikedSongsService, 
+  getLikedSongsService 
+} from "../../services/SongPlaylistService";
+import { 
+  addSongToPlaylistService 
+} from "../../services/SongPlaylistService";
+import { 
+  getUserPlaylistByIdService 
+} from "../../services/playlistService";
 
 const PlayerControls = ({ isVisible, onToggleVisibility }) => {
   const { theme } = useTheme();
+  const { playlists } = usePlayList();
   const {
     currentSong,
     audio,
@@ -42,9 +57,80 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
     repeatMode,
     setRepeatMode,
   } = useAudio();
+  
   const progressRef = useRef(null);
   const [isLiked, setIsLiked] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [showPlaylistModal, setShowPlaylistModal] = useState(false);
+  const [userPlaylists, setUserPlaylists] = useState([]);
+  const [loadingLike, setLoadingLike] = useState(false);
+  const [loadingPlaylist, setLoadingPlaylist] = useState(false);
+  const [user, setUser] = useState(null);
+
+  // Kiểm tra user đăng nhập
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    const accessToken = localStorage.getItem("access_token");
+    
+    if (storedUser && accessToken) {
+      const userData = JSON.parse(storedUser);
+      setUser(userData);
+    }
+  }, []);
+
+  // Lấy danh sách playlist của user
+  useEffect(() => {
+    const fetchUserPlaylists = async () => {
+      if (!user?.id) return;
+      
+      try {
+        const response = await getUserPlaylistByIdService(user.id);
+        if (response?.data?.playlists) {
+          // Lọc bỏ playlist "Liked Songs"
+          const regularPlaylists = response.data.playlists.filter(
+            playlist => !playlist.is_liked_song
+          );
+          setUserPlaylists(regularPlaylists);
+        }
+      } catch (error) {
+        console.error("Error fetching user playlists:", error);
+      }
+    };
+
+    fetchUserPlaylists();
+  }, [user, playlists]);
+
+  // Kiểm tra trạng thái like của bài hát hiện tại
+  useEffect(() => {
+    const checkLikedStatus = async () => {
+      if (!currentSong?.id || !user) {
+        setIsLiked(false);
+        return;
+      }
+      
+      try {
+        console.log("Checking liked status for song:", currentSong.id);
+        const response = await getLikedSongsService();
+        if (response?.data?.results) {
+          const likedSongs = response.data.results;
+          const isCurrentSongLiked = likedSongs.some(
+            song => song.id === currentSong.id
+          );
+          console.log("Song liked status:", isCurrentSongLiked);
+          setIsLiked(isCurrentSongLiked);
+        } else {
+          setIsLiked(false);
+        }
+      } catch (error) {
+        console.error("Error checking liked status:", error);
+        setIsLiked(false);
+      }
+    };
+
+    // Reset trạng thái like khi chuyển bài hát mới
+    setIsLiked(false);
+    checkLikedStatus();
+  }, [currentSong?.id, user]);
 
   const togglePlayPause = () => {
     setIsPlaying(!isPlaying);
@@ -60,8 +146,96 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
     setVolume(newVolume);
   };
 
-  const toggleLike = () => {
-    setIsLiked(!isLiked);
+  const toggleLike = async () => {
+    if (!user) {
+      alert("Vui lòng đăng nhập để sử dụng chức năng này!");
+      return;
+    }
+
+    if (!currentSong?.id) {
+      console.error("No current song ID");
+      return;
+    }
+
+    // Prevent multiple clicks while processing
+    if (loadingLike) return;
+
+    try {
+      setLoadingLike(true);
+      console.log("Toggling like for song:", currentSong.id, "Current state:", isLiked);
+      
+      if (isLiked) {
+        // Bỏ like - remove from liked songs
+        console.log("Removing from liked songs...");
+        await removeFromLikedSongsService(currentSong.id);
+        setIsLiked(false);
+        console.log("Song removed from liked songs successfully");
+      } else {
+        // Thêm like - add to liked songs
+        console.log("Adding to liked songs...");
+        const formData = new FormData();
+        formData.append('song_id', currentSong.id.toString());
+        
+        await addToLikedSongsService(formData);
+        setIsLiked(true);
+        console.log("Song added to liked songs successfully");
+      }
+    } catch (error) {
+      console.error("Error toggling like:", error);
+      console.error("Error details:", error.response?.data);
+      
+      // Show specific error message
+      if (error.response?.status === 400) {
+        alert("Bài hát này đã có trong danh sách yêu thích hoặc đã bị xóa!");
+      } else if (error.response?.status === 404) {
+        alert("Không tìm thấy bài hát này!");
+      } else {
+        alert("Có lỗi xảy ra khi cập nhật trạng thái yêu thích!");
+      }
+      
+      // Reset to correct state by checking again
+      try {
+        const response = await getLikedSongsService();
+        if (response?.data?.results) {
+          const likedSongs = response.data.results;
+          const isCurrentSongLiked = likedSongs.some(
+            song => song.id === currentSong.id
+          );
+          setIsLiked(isCurrentSongLiked);
+        }
+      } catch (recheckError) {
+        console.error("Error rechecking liked status:", recheckError);
+      }
+    } finally {
+      setLoadingLike(false);
+    }
+  };
+
+  const handleAddToPlaylist = async (playlistId) => {
+    if (!currentSong?.id || !user) return;
+
+    try {
+      setLoadingPlaylist(true);
+      
+      const formData = new FormData();
+      formData.append('playlist_id', playlistId);
+      formData.append('song_id', currentSong.id);
+      
+      await addSongToPlaylistService(formData);
+      
+      setShowPlaylistModal(false);
+      alert("Đã thêm bài hát vào playlist!");
+      console.log("Song added to playlist:", playlistId);
+    } catch (error) {
+      console.error("Error adding song to playlist:", error);
+      if (error.response?.status === 400) {
+        alert("Bài hát đã có trong playlist này!");
+      } else {
+        alert("Có lỗi xảy ra khi thêm vào playlist!");
+      }
+    } finally {
+      setLoadingPlaylist(false);
+    }
   };
 
   const toggleRepeat = () => {
@@ -254,443 +428,581 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
   if (!currentSong) return null;
 
   return (
-    <div
-      className={`fixed bottom-0 left-0 right-0 bg-gradient-to-t ${
-        theme.colors.backgroundOverlay
-      } px-2 sm:px-4 py-2 sm:py-3 z-50 pb-safe transition-transform duration-300 ease-in-out backdrop-blur-md ${
-        isVisible ? "translate-y-0" : "translate-y-full"
-      }`}
-    >
-      <button
-        onClick={onToggleVisibility}
-        className={`absolute -top-10 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-${theme.colors.primary}-500/70 to-${theme.colors.secondary}-500/70 hover:from-${theme.colors.primary}-400/70 hover:to-${theme.colors.secondary}-400/70 text-white rounded-full w-12 h-6 shadow-lg transition-all duration-300 ease-out hover:scale-105 hover:shadow-${theme.colors.primary}-500/30 flex items-center justify-center group`}
-        title={isVisible ? "Ẩn player" : "Hiện player"}
+    <>
+      <div
+        className={`fixed bottom-0 left-0 right-0 bg-gradient-to-t ${
+          theme.colors.backgroundOverlay
+        } px-2 sm:px-4 py-2 sm:py-3 z-50 pb-safe transition-transform duration-300 ease-in-out backdrop-blur-md ${
+          isVisible ? "translate-y-0" : "translate-y-full"
+        }`}
       >
-        <div className="absolute inset-0 bg-white/10 rounded-full opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
-        <div className="relative z-10 flex items-center justify-center">
-          {isVisible ? (
-            <IconChevronDown
-              stroke={2.5}
-              className="w-4 h-4 group-hover:animate-bounce"
-            />
-          ) : (
-            <IconChevronUp
-              stroke={2.5}
-              className="w-4 h-4 group-hover:animate-bounce"
-            />
-          )}
-        </div>
-      </button>
-
-      <div className="flex items-center justify-between max-w-full mx-auto">
-        {/* Mobile Layout */}
-        <div className="flex flex-col w-full sm:hidden">
-          <div className="w-full flex items-center gap-2 mb-3 px-2">
-            <span
-              className={`text-xs text-${theme.colors.text} font-medium min-w-[32px] text-right`}
-            >
-              {formatTime(currentTime)}
-            </span>
-            <div
-              className={`h-3 flex-1 ${progressColors.trackBg} rounded-full cursor-pointer group relative`}
-              ref={progressRef}
-              onClick={handleProgressClick}
-              onMouseDown={handleProgressMouseDown}
-              onTouchStart={handleProgressTouchStart}
-              style={{
-                touchAction: "none",
-                minHeight: "24px",
-                padding: "4px 0",
-                display: "flex",
-                alignItems: "center",
-                WebkitTapHighlightColor: "transparent",
-                opacity: isValidDuration ? 1 : 0.5,
-              }}
-            >
-              <div
-                className={`h-3 ${progressColors.progressBg} ${progressColors.progressHover} rounded-full relative transition-colors pointer-events-none`}
-                style={{ width: `${progressPercent}%` }}
-              >
-                <div
-                  className={`absolute right-0 top-1/2 transform -translate-y-1/2 w-5 h-5 ${progressColors.progressBg} rounded-full shadow-lg`}
-                  style={{
-                    opacity: isDragging ? 1 : 0,
-                    transition: "opacity 0.2s",
-                  }}
-                ></div>
-              </div>
-            </div>
-            <span
-              className={`text-xs text-${theme.colors.text} font-medium min-w-[32px]`}
-            >
-              {formatTime(duration)}
-            </span>
-          </div>
-
-          <div className="flex items-center justify-between pb-2">
-            <div className="flex items-center gap-2 flex-1 min-w-0">
-              <img
-                src={currentSong.image}
-                alt="Song cover"
-                className="h-10 w-10 rounded-lg shadow-lg object-cover flex-shrink-0"
+        <button
+          onClick={onToggleVisibility}
+          className={`absolute -top-10 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-${theme.colors.primary}-500/70 to-${theme.colors.secondary}-500/70 hover:from-${theme.colors.primary}-400/70 hover:to-${theme.colors.secondary}-400/70 text-white rounded-full w-12 h-6 shadow-lg transition-all duration-300 ease-out hover:scale-105 hover:shadow-${theme.colors.primary}-500/30 flex items-center justify-center group`}
+          title={isVisible ? "Ẩn player" : "Hiện player"}
+        >
+          <div className="absolute inset-0 bg-white/10 rounded-full opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+          <div className="relative z-10 flex items-center justify-center">
+            {isVisible ? (
+              <IconChevronDown
+                stroke={2.5}
+                className="w-4 h-4 group-hover:animate-bounce"
               />
-              <div className="min-w-0 flex-1">
-                <h4 className="text-white text-sm font-medium truncate hover:underline cursor-pointer">
-                  {currentSong.song_name}
-                </h4>
-                <p
-                  className={`text-xs text-${theme.colors.text} truncate hover:underline cursor-pointer hover:text-white`}
-                >
-                  {currentSong.singer_name}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 mx-4">
-              <button
-                className={`text-${theme.colors.text} hover:text-white transition-colors p-1 touch-manipulation`}
-                onClick={playBackSong}
-              >
-                <IconPlayerSkipBackFilled size={18} />
-              </button>
-
-              <button
-                className={`bg-${theme.colors.button} rounded-full p-2 hover:scale-105 transition-transform shadow-lg touch-manipulation`}
-                onClick={togglePlayPause}
-              >
-                {isPlaying ? (
-                  <IconPlayerPauseFilled
-                    className={`text-${theme.colors.primary}-900 w-4 h-4`}
-                  />
-                ) : (
-                  <IconPlayerPlayFilled
-                    className={`text-${theme.colors.primary}-900 w-4 h-4 ml-0.5`}
-                  />
-                )}
-              </button>
-
-              <button
-                className={`text-${theme.colors.text} hover:text-white transition-colors p-1 touch-manipulation`}
-                onClick={playNextSong}
-              >
-                <IconPlayerSkipForwardFilled size={18} />
-              </button>
-            </div>
-
-            <Menu shadow="md" position="top">
-              <Menu.Target>
-                <button
-                  className={`text-${theme.colors.text} hover:text-white transition-colors p-2 touch-manipulation`}
-                >
-                  <IconDotsVertical size={18} />
-                </button>
-              </Menu.Target>
-              <Menu.Dropdown
-                className={`bg-${theme.colors.card} border-none backdrop-blur-md`}
-              >
-                <Menu.Item
-                  className={`text-white hover:bg-${theme.colors.cardHover}`}
-                  onClick={toggleRepeat}
-                >
-                  <div className="flex items-center gap-2">
-                    {getRepeatIcon()}
-                    <span>Repeat: {repeatMode === "all" ? "All" : "One"}</span>
-                  </div>
-                </Menu.Item>
-                <Menu.Item
-                  className={`text-white hover:bg-${theme.colors.cardHover}`}
-                  onClick={toggleLike}
-                >
-                  <div className="flex items-center gap-2">
-                    {isLiked ? (
-                      <IconHeartFilled
-                        size={16}
-                        className={`text-${theme.colors.secondary}-400`}
-                      />
-                    ) : (
-                      <IconHeart size={16} />
-                    )}
-                    <span>{isLiked ? "Unlike" : "Like"}</span>
-                  </div>
-                </Menu.Item>
-                <Menu.Item
-                  className={`text-white hover:bg-${theme.colors.cardHover}`}
-                  onClick={handleAvailable}
-                >
-                  <div className="flex items-center gap-2">
-                    <IconArticle size={16} />
-                    <span>Now Playing</span>
-                  </div>
-                </Menu.Item>
-                <Menu.Item
-                  className={`text-white hover:bg-${theme.colors.cardHover}`}
-                >
-                  <Anchor
-                    href={currentSong.video_download_url}
-                    underline="never"
-                    size="sm"
-                    className="text-white flex items-center gap-2"
-                  >
-                    <IconDownload size={16} />
-                    Download video
-                  </Anchor>
-                </Menu.Item>
-                <Menu.Item
-                  className={`text-white hover:bg-${theme.colors.cardHover}`}
-                >
-                  <Anchor
-                    href={currentSong.audio_download_url}
-                    underline="never"
-                    size="sm"
-                    className="text-white flex items-center gap-2"
-                  >
-                    <IconDownload size={16} />
-                    Download audio
-                  </Anchor>
-                </Menu.Item>
-              </Menu.Dropdown>
-            </Menu>
-          </div>
-        </div>
-
-        {/* Desktop Layout */}
-        <div className="hidden sm:flex items-center justify-between w-full">
-          <div className="flex items-center w-1/4 min-w-0">
-            <div className="flex items-center gap-3 md:gap-4 min-w-0">
-              <img
-                src={currentSong.image}
-                alt="Song cover"
-                className="h-12 w-12 md:h-14 md:w-14 rounded-lg shadow-lg object-cover"
+            ) : (
+              <IconChevronUp
+                stroke={2.5}
+                className="w-4 h-4 group-hover:animate-bounce"
               />
-              <div className="min-w-0 flex-1">
-                <h4 className="text-white text-sm font-medium truncate hover:underline cursor-pointer">
-                  {currentSong.song_name}
-                </h4>
-                <p
-                  className={`text-xs text-${theme.colors.text} truncate hover:underline cursor-pointer hover:text-white`}
-                >
-                  {currentSong.singer_name}
-                </p>
-              </div>
-              <button
-                className={`text-${theme.colors.text} hover:text-white transition-colors ml-2`}
-                onClick={toggleLike}
-              >
-                {isLiked ? (
-                  <IconHeartFilled
-                    size={16}
-                    className={`text-${theme.colors.secondary}-400`}
-                  />
-                ) : (
-                  <IconHeart size={16} />
-                )}
-              </button>
-            </div>
+            )}
           </div>
+        </button>
 
-          <div className="flex flex-col items-center w-1/2 max-w-2xl">
-            <div className="flex items-center gap-4 mb-2">
-              <button
-                className={`text-${theme.colors.text} hover:text-white transition-colors`}
-                onClick={playBackSong}
-              >
-                <IconPlayerSkipBackFilled size={20} />
-              </button>
-
-              <button
-                className={`bg-${theme.colors.button} rounded-full p-2 hover:scale-105 transition-transform shadow-lg`}
-                onClick={togglePlayPause}
-              >
-                {isPlaying ? (
-                  <IconPlayerPauseFilled
-                    className={`text-${theme.colors.primary}-900 w-5 h-5`}
-                  />
-                ) : (
-                  <IconPlayerPlayFilled
-                    className={`text-${theme.colors.primary}-900 w-5 h-5 ml-0.5`}
-                  />
-                )}
-              </button>
-
-              <button
-                className={`text-${theme.colors.text} hover:text-white transition-colors`}
-                onClick={playNextSong}
-              >
-                <IconPlayerSkipForwardFilled size={20} />
-              </button>
-
-              <button
-                className={`text-${theme.colors.secondary}-400 transition-colors`}
-                onClick={toggleRepeat}
-                title={`Repeat: ${repeatMode === "all" ? "All" : "One"}`}
-              >
-                {getRepeatIcon()}
-              </button>
-            </div>
-
-            <div className="w-full flex items-center gap-2">
+        <div className="flex items-center justify-between max-w-full mx-auto">
+          {/* Mobile Layout */}
+          <div className="flex flex-col w-full sm:hidden">
+            <div className="w-full flex items-center gap-2 mb-3 px-2">
               <span
-                className={`text-xs text-${theme.colors.text} font-medium min-w-[40px] text-right`}
+                className={`text-xs text-${theme.colors.text} font-medium min-w-[32px] text-right`}
               >
                 {formatTime(currentTime)}
               </span>
               <div
-                className={`h-1 flex-1 ${progressColors.trackBg} rounded-full cursor-pointer group relative`}
+                className={`h-3 flex-1 ${progressColors.trackBg} rounded-full cursor-pointer group relative`}
                 ref={progressRef}
                 onClick={handleProgressClick}
                 onMouseDown={handleProgressMouseDown}
                 onTouchStart={handleProgressTouchStart}
                 style={{
+                  touchAction: "none",
+                  minHeight: "24px",
+                  padding: "4px 0",
+                  display: "flex",
+                  alignItems: "center",
+                  WebkitTapHighlightColor: "transparent",
                   opacity: isValidDuration ? 1 : 0.5,
                 }}
               >
                 <div
-                  className={`h-1 ${progressColors.progressBg} ${progressColors.progressHover} rounded-full relative transition-colors`}
+                  className={`h-3 ${progressColors.progressBg} ${progressColors.progressHover} rounded-full relative transition-colors pointer-events-none`}
                   style={{ width: `${progressPercent}%` }}
                 >
                   <div
-                    className={`absolute right-0 top-1/2 transform -translate-y-1/2 w-3 h-3 ${progressColors.progressBg} rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg`}
+                    className={`absolute right-0 top-1/2 transform -translate-y-1/2 w-5 h-5 ${progressColors.progressBg} rounded-full shadow-lg`}
+                    style={{
+                      opacity: isDragging ? 1 : 0,
+                      transition: "opacity 0.2s",
+                    }}
                   ></div>
                 </div>
               </div>
               <span
-                className={`text-xs text-${theme.colors.text} font-medium min-w-[40px]`}
+                className={`text-xs text-${theme.colors.text} font-medium min-w-[32px]`}
               >
                 {formatTime(duration)}
               </span>
             </div>
+
+            <div className="flex items-center justify-between pb-2">
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <img
+                  src={currentSong.image}
+                  alt="Song cover"
+                  className="h-10 w-10 rounded-lg shadow-lg object-cover flex-shrink-0"
+                />
+                <div className="min-w-0 flex-1">
+                  <h4 className="text-white text-sm font-medium truncate hover:underline cursor-pointer">
+                    {currentSong.song_name}
+                  </h4>
+                  <p
+                    className={`text-xs text-${theme.colors.text} truncate hover:underline cursor-pointer hover:text-white`}
+                  >
+                    {currentSong.singer_name}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 mx-4">
+                <button
+                  className={`text-${theme.colors.text} hover:text-white transition-colors p-1 touch-manipulation`}
+                  onClick={playBackSong}
+                >
+                  <IconPlayerSkipBackFilled size={18} />
+                </button>
+
+                <button
+                  className={`bg-${theme.colors.button} rounded-full p-2 hover:scale-105 transition-transform shadow-lg touch-manipulation`}
+                  onClick={togglePlayPause}
+                >
+                  {isPlaying ? (
+                    <IconPlayerPauseFilled
+                      className={`text-${theme.colors.primary}-900 w-4 h-4`}
+                    />
+                  ) : (
+                    <IconPlayerPlayFilled
+                      className={`text-${theme.colors.primary}-900 w-4 h-4 ml-0.5`}
+                    />
+                  )}
+                </button>
+
+                <button
+                  className={`text-${theme.colors.text} hover:text-white transition-colors p-1 touch-manipulation`}
+                  onClick={playNextSong}
+                >
+                  <IconPlayerSkipForwardFilled size={18} />
+                </button>
+              </div>
+
+              <Menu shadow="md" position="top">
+                <Menu.Target>
+                  <button
+                    className={`text-${theme.colors.text} hover:text-white transition-colors p-2 touch-manipulation`}
+                  >
+                    <IconDotsVertical size={18} />
+                  </button>
+                </Menu.Target>
+                <Menu.Dropdown
+                  className={`bg-${theme.colors.card} border-none backdrop-blur-md`}
+                >
+                  <Menu.Item
+                    className={`text-white hover:bg-${theme.colors.cardHover}`}
+                    onClick={toggleRepeat}
+                  >
+                    <div className="flex items-center gap-2">
+                      {getRepeatIcon()}
+                      <span>Repeat: {repeatMode === "all" ? "All" : "One"}</span>
+                    </div>
+                  </Menu.Item>
+                  <Menu.Item
+                    className={`text-white hover:bg-${theme.colors.cardHover}`}
+                    onClick={toggleLike}
+                    disabled={loadingLike}
+                  >
+                    <div className="flex items-center gap-2">
+                      {loadingLike ? (
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      ) : isLiked ? (
+                        <IconHeartFilled
+                          size={16}
+                          className={`text-${theme.colors.secondary}-400`}
+                        />
+                      ) : (
+                        <IconHeart size={16} />
+                      )}
+                      <span>{loadingLike ? "Đang xử lý..." : isLiked ? "Bỏ yêu thích" : "Yêu thích"}</span>
+                    </div>
+                  </Menu.Item>
+                  <Menu.Item
+                    className={`text-white hover:bg-${theme.colors.cardHover}`}
+                    onClick={() => setShowPlaylistModal(true)}
+                    disabled={!user}
+                  >
+                    <div className="flex items-center gap-2">
+                      <IconPlaylistAdd size={16} />
+                      <span>{!user ? "Đăng nhập để thêm" : "Thêm vào playlist"}</span>
+                    </div>
+                  </Menu.Item>
+                  <Menu.Item
+                    className={`text-white hover:bg-${theme.colors.cardHover}`}
+                    onClick={handleAvailable}
+                  >
+                    <div className="flex items-center gap-2">
+                      <IconArticle size={16} />
+                      <span>Now Playing</span>
+                    </div>
+                  </Menu.Item>
+                  <Menu.Item
+                    className={`text-white hover:bg-${theme.colors.cardHover}`}
+                  >
+                    <Anchor
+                      href={currentSong.video_download_url}
+                      underline="never"
+                      size="sm"
+                      className="text-white flex items-center gap-2"
+                    >
+                      <IconDownload size={16} />
+                      Download video
+                    </Anchor>
+                  </Menu.Item>
+                  <Menu.Item
+                    className={`text-white hover:bg-${theme.colors.cardHover}`}
+                  >
+                    <Anchor
+                      href={currentSong.audio_download_url}
+                      underline="never"
+                      size="sm"
+                      className="text-white flex items-center gap-2"
+                    >
+                      <IconDownload size={16} />
+                      Download audio
+                    </Anchor>
+                  </Menu.Item>
+                </Menu.Dropdown>
+              </Menu>
+            </div>
           </div>
 
-          <div className="flex items-center gap-2 md:gap-3 w-1/4 justify-end">
-            <button
-              className={`text-${theme.colors.text} hover:text-white transition-colors`}
-              onClick={handleAvailable}
-            >
-              <IconArticle size={18} />
-            </button>
+          {/* Desktop Layout */}
+          <div className="hidden sm:flex items-center justify-between w-full">
+            <div className="flex items-center w-1/4 min-w-0">
+              <div className="flex items-center gap-3 md:gap-4 min-w-0">
+                <img
+                  src={currentSong.image}
+                  alt="Song cover"
+                  className="h-12 w-12 md:h-14 md:w-14 rounded-lg shadow-lg object-cover"
+                />
+                <div className="min-w-0 flex-1">
+                  <h4 className="text-white text-sm font-medium truncate hover:underline cursor-pointer">
+                    {currentSong.song_name}
+                  </h4>
+                  <p
+                    className={`text-xs text-${theme.colors.text} truncate hover:underline cursor-pointer hover:text-white`}
+                  >
+                    {currentSong.singer_name}
+                  </p>
+                </div>
+                <button
+                  className={`text-${theme.colors.text} hover:text-white transition-colors ml-2 ${loadingLike ? 'opacity-50' : ''}`}
+                  onClick={toggleLike}
+                  disabled={loadingLike || !user}
+                  title={!user ? "Đăng nhập để sử dụng" : isLiked ? "Bỏ yêu thích" : "Yêu thích"}
+                >
+                  {loadingLike ? (
+                    <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                  ) : isLiked ? (
+                    <IconHeartFilled
+                      size={16}
+                      className={`text-${theme.colors.secondary}-400`}
+                    />
+                  ) : (
+                    <IconHeart size={16} />
+                  )}
+                </button>
+              </div>
+            </div>
 
-            <Menu shadow="md" position="top">
-              <Menu.Target>
+            <div className="flex flex-col items-center w-1/2 max-w-2xl">
+              <div className="flex items-center gap-4 mb-2">
                 <button
                   className={`text-${theme.colors.text} hover:text-white transition-colors`}
+                  onClick={playBackSong}
                 >
-                  <IconDownload size={18} />
+                  <IconPlayerSkipBackFilled size={20} />
                 </button>
-              </Menu.Target>
-              <Menu.Dropdown
-                className={`bg-${theme.colors.card} border-none backdrop-blur-md`}
-              >
-                <Menu.Item
-                  className={`text-white hover:bg-${theme.colors.cardHover}`}
-                >
-                  <Anchor
-                    href={currentSong.video_download_url}
-                    underline="never"
-                    size="sm"
-                    className="text-white"
-                  >
-                    Download video
-                  </Anchor>
-                </Menu.Item>
-                <Menu.Item
-                  className={`text-white hover:bg-${theme.colors.cardHover}`}
-                >
-                  <Anchor
-                    href={currentSong.audio_download_url}
-                    underline="never"
-                    size="sm"
-                    className="text-white"
-                  >
-                    Download audio
-                  </Anchor>
-                </Menu.Item>
-              </Menu.Dropdown>
-            </Menu>
 
-            <div className="hidden md:flex items-center gap-2">
-              <button
-                onClick={() => setIsMute(!isMute)}
-                className={`text-${theme.colors.text} hover:text-white transition-colors flex-shrink-0`}
-              >
-                {isMute ? <IconVolume3 size={18} /> : <IconVolume size={18} />}
-              </button>
-              <div className="w-20 lg:w-24 group flex items-center">
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={volume}
-                  onChange={handleVolumeChange}
-                  className="w-full h-1 rounded-lg appearance-none cursor-pointer slider"
+                <button
+                  className={`bg-${theme.colors.button} rounded-full p-2 hover:scale-105 transition-transform shadow-lg`}
+                  onClick={togglePlayPause}
+                >
+                  {isPlaying ? (
+                    <IconPlayerPauseFilled
+                      className={`text-${theme.colors.primary}-900 w-5 h-5`}
+                    />
+                  ) : (
+                    <IconPlayerPlayFilled
+                      className={`text-${theme.colors.primary}-900 w-5 h-5 ml-0.5`}
+                    />
+                  )}
+                </button>
+
+                <button
+                  className={`text-${theme.colors.text} hover:text-white transition-colors`}
+                  onClick={playNextSong}
+                >
+                  <IconPlayerSkipForwardFilled size={20} />
+                </button>
+
+                <button
+                  className={`text-${theme.colors.secondary}-400 transition-colors`}
+                  onClick={toggleRepeat}
+                  title={`Repeat: ${repeatMode === "all" ? "All" : "One"}`}
+                >
+                  {getRepeatIcon()}
+                </button>
+              </div>
+
+              <div className="w-full flex items-center gap-2">
+                <span
+                  className={`text-xs text-${theme.colors.text} font-medium min-w-[40px] text-right`}
+                >
+                  {formatTime(currentTime)}
+                </span>
+                <div
+                  className={`h-1 flex-1 ${progressColors.trackBg} rounded-full cursor-pointer group relative`}
+                  ref={progressRef}
+                  onClick={handleProgressClick}
+                  onMouseDown={handleProgressMouseDown}
+                  onTouchStart={handleProgressTouchStart}
                   style={{
-                    background: `linear-gradient(to right, ${progressColors.thumbColor} 0%, ${progressColors.thumbColor} ${volume}%, #4d4d4d ${volume}%, #4d4d4d 100%)`,
+                    opacity: isValidDuration ? 1 : 0.5,
                   }}
-                />
+                >
+                  <div
+                    className={`h-1 ${progressColors.progressBg} ${progressColors.progressHover} rounded-full relative transition-colors`}
+                    style={{ width: `${progressPercent}%` }}
+                  >
+                    <div
+                      className={`absolute right-0 top-1/2 transform -translate-y-1/2 w-3 h-3 ${progressColors.progressBg} rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg`}
+                    ></div>
+                  </div>
+                </div>
+                <span
+                  className={`text-xs text-${theme.colors.text} font-medium min-w-[40px]`}
+                >
+                  {formatTime(duration)}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 md:gap-3 w-1/4 justify-end">
+              <button
+                className={`text-${theme.colors.text} hover:text-white transition-colors`}
+                onClick={() => setShowPlaylistModal(true)}
+                disabled={!user}
+                title={!user ? "Đăng nhập để sử dụng" : "Thêm vào playlist"}
+              >
+                <IconPlaylistAdd size={18} />
+              </button>
+
+              <button
+                className={`text-${theme.colors.text} hover:text-white transition-colors`}
+                onClick={handleAvailable}
+              >
+                <IconArticle size={18} />
+              </button>
+
+              <Menu shadow="md" position="top">
+                <Menu.Target>
+                  <button
+                    className={`text-${theme.colors.text} hover:text-white transition-colors`}
+                  >
+                    <IconDownload size={18} />
+                  </button>
+                </Menu.Target>
+                <Menu.Dropdown
+                  className={`bg-${theme.colors.card} border-none backdrop-blur-md`}
+                >
+                  <Menu.Item
+                    className={`text-white hover:bg-${theme.colors.cardHover}`}
+                  >
+                    <Anchor
+                      href={currentSong.video_download_url}
+                      underline="never"
+                      size="sm"
+                      className="text-white"
+                    >
+                      Download video
+                    </Anchor>
+                  </Menu.Item>
+                  <Menu.Item
+                    className={`text-white hover:bg-${theme.colors.cardHover}`}
+                  >
+                    <Anchor
+                      href={currentSong.audio_download_url}
+                      underline="never"
+                      size="sm"
+                      className="text-white"
+                    >
+                      Download audio
+                    </Anchor>
+                  </Menu.Item>
+                </Menu.Dropdown>
+              </Menu>
+
+              <div className="hidden md:flex items-center gap-2">
+                <button
+                  onClick={() => setIsMute(!isMute)}
+                  className={`text-${theme.colors.text} hover:text-white transition-colors flex-shrink-0`}
+                >
+                  {isMute ? <IconVolume3 size={18} /> : <IconVolume size={18} />}
+                </button>
+                <div className="w-20 lg:w-24 group flex items-center">
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={volume}
+                    onChange={handleVolumeChange}
+                    className="w-full h-1 rounded-lg appearance-none cursor-pointer slider"
+                    style={{
+                      background: `linear-gradient(to right, ${progressColors.thumbColor} 0%, ${progressColors.thumbColor} ${volume}%, #4d4d4d ${volume}%, #4d4d4d 100%)`,
+                    }}
+                  />
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <style jsx>{`
-        .pb-safe {
-          padding-bottom: env(safe-area-inset-bottom);
-        }
+        <style jsx>{`
+          .pb-safe {
+            padding-bottom: env(safe-area-inset-bottom);
+          }
 
-        .touch-manipulation {
-          touch-action: manipulation;
-        }
+          .touch-manipulation {
+            touch-action: manipulation;
+          }
 
-        .slider::-webkit-slider-thumb {
-          appearance: none;
-          width: 12px;
-          height: 12px;
-          border-radius: 50%;
-          background: ${progressColors.thumbColor};
-          cursor: pointer;
-          opacity: 0;
-          transition: opacity 0.2s;
-        }
+          .slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: ${progressColors.thumbColor};
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s;
+          }
 
-        .slider:hover::-webkit-slider-thumb {
-          opacity: 1;
-        }
-
-        .slider::-moz-range-thumb {
-          width: 12px;
-          height: 12px;
-          border-radius: 50%;
-          background: ${progressColors.thumbColor};
-          cursor: pointer;
-          border: none;
-          opacity: 0;
-          transition: opacity 0.2s;
-        }
-
-        .slider:hover::-moz-range-thumb {
-          opacity: 1;
-        }
-
-        body.dragging {
-          overflow: hidden;
-          touch-action: none;
-        }
-
-        @keyframes pulse-slow {
-          0%,
-          100% {
+          .slider:hover::-webkit-slider-thumb {
             opacity: 1;
           }
-          50% {
-            opacity: 0.6;
-          }
-        }
 
-        .animate-pulse-slow {
-          animation: pulse-slow 3s infinite;
+          .slider::-moz-range-thumb {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: ${progressColors.thumbColor};
+            cursor: pointer;
+            border: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+          }
+
+          .slider:hover::-moz-range-thumb {
+            opacity: 1;
+          }
+
+          body.dragging {
+            overflow: hidden;
+            touch-action: none;
+          }
+
+          @keyframes pulse-slow {
+            0%,
+            100% {
+              opacity: 1;
+            }
+            50% {
+              opacity: 0.6;
+            }
+          }
+
+          .animate-pulse-slow {
+            animation: pulse-slow 3s infinite;
+          }
+        `}</style>
+      </div>
+
+      {/* Playlist Selection Modal */}
+      <Modal
+        opened={showPlaylistModal}
+        onClose={() => setShowPlaylistModal(false)}
+        title={
+          <Text className="text-lg font-bold text-white">
+            Thêm vào playlist
+          </Text>
         }
-      `}</style>
-    </div>
+        size="md"
+        styles={{
+          modal: {
+            backgroundColor: theme.colors.card,
+            border: `1px solid ${theme.colors.border}`,
+          },
+          header: {
+            backgroundColor: theme.colors.card,
+            borderBottom: `1px solid ${theme.colors.border}`,
+          },
+          close: {
+            color: theme.colors.text,
+            '&:hover': {
+              backgroundColor: theme.colors.cardHover,
+            },
+          },
+        }}
+      >
+        <div className="space-y-3">
+          {currentSong && (
+            <div className="flex items-center gap-3 p-3 bg-gray-800/30 rounded-lg">
+              <img
+                src={currentSong.image}
+                alt="Song cover"
+                className="w-12 h-12 rounded-lg object-cover"
+              />
+              <div className="flex-1 min-w-0">
+                <h4 className="text-white text-sm font-medium truncate">
+                  {currentSong.song_name}
+                </h4>
+                <p className={`text-xs text-${theme.colors.text} truncate`}>
+                  {currentSong.singer_name}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {!user ? (
+            <div className="text-center py-8">
+              <Text className={`text-${theme.colors.text} mb-4`}>
+                Vui lòng đăng nhập để sử dụng chức năng này
+              </Text>
+              <Button
+                className={`bg-${theme.colors.button} hover:bg-${theme.colors.buttonHover} text-${theme.colors.primary}-900`}
+                onClick={() => {
+                  window.location.href = '/login';
+                }}
+              >
+                Đăng nhập
+              </Button>
+            </div>
+          ) : userPlaylists.length === 0 ? (
+            <div className="text-center py-8">
+              <Text className={`text-${theme.colors.text} mb-4`}>
+                Bạn chưa có playlist nào
+              </Text>
+              <Text className={`text-xs text-${theme.colors.text}`}>
+                Hãy tạo playlist đầu tiên trong thư viện
+              </Text>
+            </div>
+          ) : (
+            <ScrollArea className="max-h-96">
+              <div className="space-y-2">
+                {userPlaylists.map((playlist) => (
+                  <div
+                    key={playlist.id}
+                    className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all duration-200 hover:bg-${theme.colors.cardHover} ${
+                      loadingPlaylist ? 'opacity-50 pointer-events-none' : ''
+                    }`}
+                    onClick={() => handleAddToPlaylist(playlist.id)}
+                  >
+                    {playlist.image ? (
+                      <img
+                        src={playlist.image}
+                        alt={playlist.title}
+                        className="w-10 h-10 rounded-lg object-cover"
+                      />
+                    ) : (
+                      <div className={`w-10 h-10 rounded-lg bg-gradient-to-br from-${theme.colors.primary}-800/30 to-${theme.colors.secondary}-800/30 flex items-center justify-center`}>
+                        <IconMusic size={20} className={`text-${theme.colors.text}`} />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-white text-sm font-medium truncate">
+                        {playlist.title}
+                      </h4>
+                      <p className={`text-xs text-${theme.colors.text} truncate`}>
+                        {playlist.song_count || 0} bài hát
+                      </p>
+                    </div>
+                    {loadingPlaylist && (
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+          )}
+        </div>
+      </Modal>
+    </>
   );
 };
 

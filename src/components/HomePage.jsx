@@ -55,7 +55,9 @@ const Banner = ({ onClose, theme }) => {
 
       {/* Banner content - Square aspect ratio */}
       <div
-        className={`relative bg-gradient-to-br ${theme.colors.background} shadow-2xl rounded-2xl transform transition-all duration-300 ease-out ${
+        className={`relative bg-gradient-to-br ${
+          theme.colors.background
+        } shadow-2xl rounded-2xl transform transition-all duration-300 ease-out ${
           isVisible && !isClosing
             ? "scale-100 opacity-100"
             : "scale-95 opacity-0"
@@ -83,7 +85,9 @@ const Banner = ({ onClose, theme }) => {
             <div className="text-center space-y-6">
               {/* Icon */}
               <div className="flex justify-center">
-                <div className={`w-16 h-16 bg-${theme.colors.primary}-600 rounded-full flex items-center justify-center text-3xl animate-pulse`}>
+                <div
+                  className={`w-16 h-16 bg-${theme.colors.primary}-600 rounded-full flex items-center justify-center text-3xl animate-pulse`}
+                >
                   <img src="https://yzfbdwvbybecxhbitkmc.supabase.co/storage/v1/object/sign/image/78ed005b-b0aa-427b-bc0d-6f1efb29e653.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV82OTc4ZGU2My0wOWQzLTRhYmYtOWRjZC0wZjY0NTBlN2VlYmIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJpbWFnZS83OGVkMDA1Yi1iMGFhLTQyN2ItYmMwZC02ZjFlZmIyOWU2NTMucG5nIiwiaWF0IjoxNzU0MTM1Mzk4LCJleHAiOjIwNjk0OTUzOTh9.MxsdoFIdkMKWNqhTMN5PTDT2k_K-ELn-q7OzxBEF9PM" />
                 </div>
               </div>
@@ -102,18 +106,23 @@ const Banner = ({ onClose, theme }) => {
                 UIA Cường. Xin cám ơn!
               </p>
               <p className="text-white text-xs italic sm:text-sm opacity-90 leading-relaxed max-w-xs mx-auto">
-                "Inspired by Spotify. Not affiliated with or endorsed by Spotify
-                AB."
+                "Inspired by Spotify®, supported by Claude®."
               </p>
             </div>
           </div>
 
           {/* Animated border */}
-          <div className={`absolute inset-0 rounded-2xl border-2 border-${theme.colors.secondary}-400 opacity-50 animate-pulse`}></div>
+          <div
+            className={`absolute inset-0 rounded-2xl border-2 border-${theme.colors.secondary}-400 opacity-50 animate-pulse`}
+          ></div>
 
           {/* Animated corner accents */}
-          <div className={`absolute top-0 left-0 w-20 h-20 bg-gradient-to-br from-${theme.colors.secondary}-400 to-transparent opacity-30 rounded-tl-2xl`}></div>
-          <div className={`absolute bottom-0 right-0 w-20 h-20 bg-gradient-to-tl from-${theme.colors.secondary}-400 to-transparent opacity-30 rounded-br-2xl`}></div>
+          <div
+            className={`absolute top-0 left-0 w-20 h-20 bg-gradient-to-br from-${theme.colors.secondary}-400 to-transparent opacity-30 rounded-tl-2xl`}
+          ></div>
+          <div
+            className={`absolute bottom-0 right-0 w-20 h-20 bg-gradient-to-tl from-${theme.colors.secondary}-400 to-transparent opacity-30 rounded-br-2xl`}
+          ></div>
         </div>
       </div>
     </div>
@@ -137,8 +146,16 @@ const HomePage = () => {
     setShowPlayerControls(!showPlayerControls);
   };
 
+  const toggleLibraries = () => {
+    setShowLibraries(!showLibraries);
+  };
+
+  const handleCloseLibraries = () => {
+    setShowLibraries(false);
+  };
+
   return (
-    <div 
+    <div
       className="flex flex-1 flex-col h-screen relative"
       style={{
         backgroundImage: `linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url(${theme.backgroundImage})`,
@@ -154,22 +171,50 @@ const HomePage = () => {
       {/* Banner */}
       {showBanner && <Banner onClose={handleCloseBanner} theme={theme} />}
 
+
+
       <Header
         setCurrentView={setCurrentView}
         setListSongsDetail={setListSongsDetail}
       />
-      <div className="flex flex-row flex-1 overflow-hidden">
-        {currentView === "main" ? (
-          <MainContent
-            setCurrentView={setCurrentView}
-            setListSongsDetail={setListSongsDetail}
-          />
-        ) : currentView === "listSongs" ? (
-          <ListSongs listSongs={listSongsDetail} />
-        ) : (
-          <MyLibrary playlist={currentView} setCurrentView={setCurrentView} />
+
+      <div className="flex flex-row flex-1 overflow-hidden relative">
+        {/* Show Libraries button when hidden with theme colors */}
+        {!showLibraries && (
+          <button
+            onClick={() => setShowLibraries(true)}
+            className={`fixed top-1/2 left-4 -translate-y-1/2 z-20 bg-gradient-to-br ${theme.colors.background} hover:bg-gradient-to-br hover:${theme.colors.backgroundOverlay} text-${theme.colors.text} hover:text-white rounded-full p-2 sm:p-3 shadow-lg transition-all duration-300 hover:scale-110 backdrop-blur-sm`}
+            title="Mở thư viện"
+          >
+            <IconMenu2
+              stroke={2}
+              className={`w-5 h-5 sm:w-6 sm:h-6 text-${theme.colors.text} hover:text-white transition-colors duration-200`}
+            />
+          </button>
         )}
-        {songDescriptionAvailable && <SongDescription />}
+
+        {showLibraries && (
+          <Libraries
+            setCurrentView={setCurrentView}
+            currentView={currentView}
+            onClose={() => setShowLibraries(false)}
+          />
+        )}
+
+        {/* Main content area */}
+        <div className="flex-1 flex flex-row overflow-hidden">
+          {currentView === "main" ? (
+            <MainContent
+              setCurrentView={setCurrentView}
+              setListSongsDetail={setListSongsDetail}
+            />
+          ) : currentView === "listSongs" ? (
+            <ListSongs listSongs={listSongsDetail} />
+          ) : (
+            <MyLibrary playlist={currentView} setCurrentView={setCurrentView} />
+          )}
+          {songDescriptionAvailable && <SongDescription />}
+        </div>
       </div>
 
       {/* PlayerControls with integrated toggle button */}
