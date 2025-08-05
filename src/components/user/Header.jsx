@@ -61,106 +61,15 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
     setUser(updatedUser);
   };
 
-  // Dynamic styles based on theme
-  const getThemeStyles = () => {
-    switch (theme.id) {
-      case "ocean":
-        return {
-          headerBg:
-            "bg-gradient-to-r from-teal-900/80 via-teal-800/80 to-emerald-800/80",
-          glowEffect: "shadow-lg shadow-teal-500/20",
-          homeButton:
-            "bg-teal-600/60 hover:bg-teal-500/80 border border-teal-400/30 shadow-lg shadow-teal-500/25",
-          searchBar:
-            "bg-teal-900/60 border border-teal-400/30 shadow-lg shadow-teal-500/25",
-          themeButton:
-            "bg-teal-600/60 hover:bg-teal-500/80 border border-teal-400/30",
-          mobileMenu:
-            "bg-gradient-to-b from-teal-900/95 via-teal-800/95 to-emerald-800/95",
-        };
-      case "forest":
-        return {
-          headerBg:
-            "bg-gradient-to-r from-green-900/80 via-green-800/80 to-emerald-800/80",
-          glowEffect: "shadow-lg shadow-amber-500/20",
-          homeButton:
-            "bg-green-700/60 hover:bg-amber-600/80 border border-amber-400/40 shadow-lg shadow-amber-500/30",
-          searchBar:
-            "bg-green-900/60 border border-amber-400/40 shadow-lg shadow-amber-500/30",
-          themeButton:
-            "bg-green-700/60 hover:bg-amber-600/80 border border-amber-400/40",
-          mobileMenu:
-            "bg-gradient-to-b from-green-900/95 via-green-800/95 to-emerald-800/95",
-        };
-      case "space":
-        return {
-          headerBg:
-            "bg-gradient-to-r from-purple-900/80 via-purple-800/80 to-indigo-800/80",
-          glowEffect: "shadow-lg shadow-purple-500/20",
-          homeButton:
-            "bg-purple-600/60 hover:bg-pink-600/80 border border-purple-400/30 shadow-lg shadow-purple-500/25",
-          searchBar:
-            "bg-purple-900/60 border border-purple-400/30 shadow-lg shadow-purple-500/25",
-          themeButton:
-            "bg-purple-600/60 hover:bg-pink-600/80 border border-purple-400/30",
-          mobileMenu:
-            "bg-gradient-to-b from-purple-900/95 via-purple-800/95 to-indigo-800/95",
-        };
-      case "sunset":
-        return {
-          headerBg:
-            "bg-gradient-to-r from-orange-900/80 via-red-800/80 to-yellow-800/80",
-          glowEffect: "shadow-lg shadow-orange-500/20",
-          homeButton:
-            "bg-orange-600/60 hover:bg-amber-600/80 border border-orange-400/30 shadow-lg shadow-orange-500/25",
-          searchBar:
-            "bg-orange-900/60 border border-orange-400/30 shadow-lg shadow-orange-500/25",
-          themeButton:
-            "bg-orange-600/60 hover:bg-amber-600/80 border border-orange-400/30",
-          mobileMenu:
-            "bg-gradient-to-b from-orange-900/95 via-red-800/95 to-yellow-800/95",
-        };
-      case "neon":
-        return {
-          headerBg:
-            "bg-gradient-to-r from-gray-900/80 via-blue-900/80 to-purple-900/80",
-          glowEffect: "shadow-lg shadow-cyan-500/20",
-          homeButton:
-            "bg-cyan-600/60 hover:bg-fuchsia-600/80 border border-cyan-400/30 shadow-lg shadow-cyan-500/25",
-          searchBar:
-            "bg-gray-900/60 border border-cyan-400/30 shadow-lg shadow-cyan-500/25",
-          themeButton:
-            "bg-cyan-600/60 hover:bg-fuchsia-600/80 border border-cyan-400/30",
-          mobileMenu:
-            "bg-gradient-to-b from-gray-900/95 via-blue-900/95 to-purple-900/95",
-        };
-      default:
-        return {
-          headerBg:
-            "bg-gradient-to-r from-teal-900/80 via-teal-800/80 to-emerald-800/80",
-          glowEffect: "shadow-lg shadow-teal-500/20",
-          homeButton:
-            "bg-teal-600/60 hover:bg-teal-500/80 border border-teal-400/30 shadow-lg shadow-teal-500/25",
-          searchBar:
-            "bg-teal-900/60 border border-teal-400/30 shadow-lg shadow-teal-500/25",
-          themeButton:
-            "bg-teal-600/60 hover:bg-teal-500/80 border border-teal-400/30",
-          mobileMenu:
-            "bg-gradient-to-b from-teal-900/95 via-teal-800/95 to-emerald-800/95",
-        };
-    }
-  };
-
-  const styles = getThemeStyles();
-
   return (
     <>
-      {/* Enhanced header with theme-specific styling */}
+      {/* Enhanced header with dynamic theme styling */}
       <div
         className={`
           relative flex h-16 md:h-20 flex-row items-center text-white 
-          ${styles.headerBg} ${styles.glowEffect}
+          bg-gradient-to-r ${theme.colors.background}
           px-4 md:px-6 backdrop-blur-lg border-b border-white/20
+          shadow-lg shadow-${theme.colors.primary}-500/20
           before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/5 before:to-transparent
         `}
       >
@@ -176,7 +85,7 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Title without animation - just gradient text */}
+            {/* Title with dynamic gradient */}
             <h4
               className={`
                 text-2xl font-extrabold bg-gradient-to-r ${theme.colors.gradient} 
@@ -187,10 +96,11 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
               UIAMusic
             </h4>
 
-            {/* Enhanced Home button with theme-specific styling */}
+            {/* Enhanced Home button with dynamic theme styling */}
             <div
               className={`
-                ${styles.homeButton}
+                bg-${theme.colors.primary}-600/60 hover:bg-${theme.colors.secondary}-600/80 
+                border border-${theme.colors.primary}-400/30 shadow-lg shadow-${theme.colors.primary}-500/25
                 cursor-pointer w-8 h-8 md:w-10 md:h-10 p-2 rounded-full 
                 transition-all duration-300 ease-out
                 hover:scale-110 hover:rotate-12
@@ -204,7 +114,9 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
             {/* Theme Button for Mobile */}
             <div
               className={`
-                ${styles.themeButton} md:hidden w-8 h-8 cursor-pointer rounded-full 
+                bg-${theme.colors.primary}-600/60 hover:bg-${theme.colors.secondary}-600/80 
+                border border-${theme.colors.primary}-400/30
+                md:hidden w-8 h-8 cursor-pointer rounded-full 
                 flex items-center justify-center transition-all duration-300 hover:scale-110
               `}
               onClick={() => setShowThemeSelector(true)}
@@ -213,11 +125,12 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
             </div>
           </div>
 
-          {/* Desktop Search - only scale on hover, no glow */}
+          {/* Desktop Search with dynamic theme */}
           <div
             className={`
               hidden md:flex flex-1 flex-row items-center rounded-full max-w-md mx-4
-              ${styles.searchBar}
+              bg-${theme.colors.card} border border-${theme.colors.border} 
+              shadow-lg shadow-${theme.colors.primary}-500/25
               backdrop-blur-md px-4 py-2
               transition-all duration-300 hover:scale-105
               relative overflow-hidden
@@ -242,11 +155,12 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
             />
           </div>
 
-          {/* Mobile Search Icon with enhanced styling */}
+          {/* Mobile Search Icon with dynamic theme */}
           <div
             className={`
               md:hidden w-8 h-8 cursor-pointer ml-auto mr-3 rounded-full
-              ${styles.homeButton}
+              bg-${theme.colors.primary}-600/60 hover:bg-${theme.colors.secondary}-600/80
+              border border-${theme.colors.primary}-400/30 shadow-lg shadow-${theme.colors.primary}-500/25
               flex items-center justify-center
               transition-all duration-300 hover:scale-110
             `}
@@ -258,12 +172,13 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
 
         {/* Enhanced Desktop Menu */}
         <div className="hidden md:flex flex-row items-center gap-4 relative z-10">
-          {/* Enhanced Theme Button */}
+          {/* Enhanced Theme Button with dynamic styling */}
           <button
             onClick={() => setShowThemeSelector(true)}
             className={`
               flex items-center gap-2 px-3 py-2 rounded-full
-              ${styles.themeButton}
+              bg-${theme.colors.primary}-600/60 hover:bg-${theme.colors.secondary}-600/80
+              border border-${theme.colors.primary}-400/30
               text-white backdrop-blur-sm
               transition-all duration-300 ease-out
               hover:scale-105 hover:shadow-xl
@@ -325,11 +240,12 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
           )}
         </div>
 
-        {/* Mobile Menu Button with enhanced styling */}
+        {/* Mobile Menu Button with dynamic theme */}
         <div
           className={`
             md:hidden w-8 h-8 cursor-pointer rounded-full
-            ${styles.homeButton}
+            bg-${theme.colors.primary}-600/60 hover:bg-${theme.colors.secondary}-600/80
+            border border-${theme.colors.primary}-400/30 shadow-lg shadow-${theme.colors.primary}-500/25
             flex items-center justify-center
             transition-all duration-300 hover:scale-110
           `}
@@ -339,11 +255,11 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
         </div>
       </div>
 
-      {/* Enhanced Mobile Search Modal */}
+      {/* Enhanced Mobile Search Modal with dynamic theme */}
       {showMobileSearch && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 md:hidden">
           <div
-            className={`${styles.mobileMenu} p-4 backdrop-blur-lg border-b border-white/20`}
+            className={`bg-gradient-to-b ${theme.colors.backgroundOverlay} p-4 backdrop-blur-lg border-b border-white/20`}
           >
             <div className="flex items-center mb-4">
               <div
@@ -354,8 +270,9 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
               </div>
               <div
                 className={`
-                  flex-1 ${styles.searchBar} px-4 py-2 rounded-full flex items-center
-                  backdrop-blur-md
+                  flex-1 bg-${theme.colors.card} border border-${theme.colors.border}
+                  shadow-lg shadow-${theme.colors.primary}-500/25
+                  px-4 py-2 rounded-full flex items-center backdrop-blur-md
                 `}
               >
                 <IconSearch stroke={2} className="w-5 h-5 text-white mr-2" />
@@ -378,11 +295,11 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
         </div>
       )}
 
-      {/* Enhanced Mobile Menu */}
+      {/* Enhanced Mobile Menu with dynamic theme */}
       {showMobileMenu && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 md:hidden">
           <div
-            className={`${styles.mobileMenu} h-full w-64 p-4 backdrop-blur-lg border-r border-white/20`}
+            className={`bg-gradient-to-b ${theme.colors.backgroundOverlay} h-full w-64 p-4 backdrop-blur-lg border-r border-white/20`}
           >
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-bold text-white">Menu</h2>
