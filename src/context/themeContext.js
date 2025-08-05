@@ -593,7 +593,7 @@ export const themes = {
   },
   cyberpunk: {
     id: "cyberpunk",
-    name: "Neon",
+    name: "Đỏ cam và đen",
     emoji: "🌃",
     description: "Không có gì",
     colors: {
@@ -665,7 +665,7 @@ export const themes = {
       },
     },
     backgroundImage:
-      "", // sử dụng ảnh bạn đã upload
+      "https://yzfbdwvbybecxhbitkmc.supabase.co/storage/v1/object/sign/image/phongcanh.jpg?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV82OTc4ZGU2My0wOWQzLTRhYmYtOWRjZC0wZjY0NTBlN2VlYmIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJpbWFnZS9waG9uZ2NhbmguanBnIiwiaWF0IjoxNzU0Mzk3NTYzLCJleHAiOjE3ODU5MzM1NjN9.zfxQ_sfSj9RicjxXu6V6e-jDLT7WTcXY695mm46B3K8", // sử dụng ảnh bạn đã upload
     particles: ["🔺", "🟥", "🟩", "🌀", "💡"],
   },
 };
