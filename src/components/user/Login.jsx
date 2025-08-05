@@ -1,5 +1,5 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { login } from "../../services/authService";
 import { jwtDecode } from "jwt-decode";
 import { useAuth } from "../../context/auth/authContext";
@@ -18,6 +18,7 @@ const Login = () => {
     password: "",
     general: "",
   });
+  
   const navigate = useNavigate();
   const location = useLocation();
   const { saveTokens, setUser } = useAuth();
@@ -131,90 +132,81 @@ const Login = () => {
     }, 2000);
   };
 
-  // Dynamic styles based on theme
-  const getThemeStyles = () => {
-    switch (theme.id) {
-      case "ocean":
-        return {
-          background: "bg-gradient-to-b from-teal-900 via-teal-800 to-teal-700",
-          card: "bg-teal-900/40 border border-teal-700/30 shadow-2xl shadow-teal-500/20",
-          input:
-            "bg-teal-900/60 border border-teal-400/30 text-white placeholder-teal-300/70 focus:border-teal-300 focus:shadow-lg focus:shadow-teal-500/25",
-          button:
-            "bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white shadow-lg shadow-teal-500/25 hover:shadow-xl hover:shadow-teal-500/30",
-          googleButton:
-            "border-teal-400/50 hover:border-teal-300 hover:bg-teal-900/30 text-white backdrop-blur-sm",
-          text: "text-teal-300",
-          title: `bg-gradient-to-r ${theme.colors.gradient} text-transparent bg-clip-text`,
-          errorBg: "bg-red-900/30 border border-red-400/30 text-red-300",
-        };
-      case "forest":
-        return {
-          background:
-            "bg-gradient-to-b from-green-900 via-green-800 to-emerald-700",
-          card: "bg-green-900/40 border border-amber-600/40 shadow-2xl shadow-amber-500/20",
-          input:
-            "bg-green-900/60 border border-amber-400/40 text-white placeholder-green-300/70 focus:border-amber-300 focus:shadow-lg focus:shadow-amber-500/30",
-          button:
-            "bg-gradient-to-r from-green-600 to-lime-500 hover:from-green-500 hover:to-lime-400 text-white shadow-lg shadow-amber-500/30 hover:shadow-xl hover:shadow-amber-500/40",
-          googleButton:
-            "border-amber-400/50 hover:border-amber-300 hover:bg-green-900/30 text-white backdrop-blur-sm",
-          text: "text-green-300",
-          title: `bg-gradient-to-r ${theme.colors.gradient} text-transparent bg-clip-text`,
-          errorBg: "bg-red-900/30 border border-red-400/30 text-red-300",
-        };
-      case "space":
-        return {
-          background:
-            "bg-gradient-to-b from-purple-900 via-purple-800 to-indigo-700",
-          card: "bg-purple-900/40 border border-purple-700/30 shadow-2xl shadow-purple-500/20",
-          input:
-            "bg-purple-900/60 border border-purple-400/30 text-white placeholder-purple-300/70 focus:border-purple-300 focus:shadow-lg focus:shadow-purple-500/25",
-          button:
-            "bg-gradient-to-r from-purple-600 to-violet-500 hover:from-indigo-600 hover:to-purple-500 text-white shadow-lg shadow-purple-500/25 hover:shadow-xl hover:shadow-purple-500/30",
-          googleButton:
-            "border-purple-400/50 hover:border-purple-300 hover:bg-purple-900/30 text-white backdrop-blur-sm",
-          text: "text-purple-300",
-          title: `bg-gradient-to-r ${theme.colors.gradient} text-transparent bg-clip-text`,
-          errorBg: "bg-red-900/30 border border-red-400/30 text-red-300",
-        };
-      case "sunset":
-        return {
-          background:
-            "bg-gradient-to-b from-orange-900 via-red-800 to-yellow-700",
-          card: "bg-orange-900/40 border border-orange-700/30 shadow-2xl shadow-orange-500/20",
-          input:
-            "bg-orange-900/60 border border-orange-400/30 text-white placeholder-orange-300/70 focus:border-orange-300 focus:shadow-lg focus:shadow-orange-500/25",
-          button:
-            "bg-gradient-to-r from-orange-600 to-amber-500 hover:from-red-500 hover:to-orange-400 text-white shadow-lg shadow-orange-500/25 hover:shadow-xl hover:shadow-orange-500/30",
-          googleButton:
-            "border-orange-400/50 hover:border-orange-300 hover:bg-orange-900/30 text-white backdrop-blur-sm",
-          text: "text-orange-300",
-          title: `bg-gradient-to-r ${theme.colors.gradient} text-transparent bg-clip-text`,
-          errorBg: "bg-red-900/30 border border-red-400/30 text-red-300",
-        };
-      default:
-        return {
-          background: "bg-gradient-to-b from-teal-900 via-teal-800 to-teal-700",
-          card: "bg-teal-900/40 border border-teal-700/30 shadow-2xl shadow-teal-500/20",
-          input:
-            "bg-teal-900/60 border border-teal-400/30 text-white placeholder-teal-300/70 focus:border-teal-300 focus:shadow-lg focus:shadow-teal-500/25",
-          button:
-            "bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white shadow-lg shadow-teal-500/25 hover:shadow-xl hover:shadow-teal-500/30",
-          googleButton:
-            "border-teal-400/50 hover:border-teal-300 hover:bg-teal-900/30 text-white backdrop-blur-sm",
-          text: "text-teal-300",
-          title: `bg-gradient-to-r ${theme.colors.gradient} text-transparent bg-clip-text`,
-          errorBg: "bg-red-900/30 border border-red-400/30 text-red-300",
-        };
-    }
-  };
+  // Dynamic styles using theme context
+  const themeStyles = useMemo(() => {
+    return {
+      // Background styles using theme colors
+      backgroundStyle: {
+        background: `linear-gradient(to bottom, ${theme.colors.rgb.cardGradient.normal})`,
+      },
+      
+      // Card styles with theme integration
+      cardStyle: {
+        background: `linear-gradient(135deg, ${theme.colors.rgb.cardGradient.hover})`,
+        backdropFilter: "blur(20px)",
+        border: `1px solid rgb(255, 255, 255, 0.1)`,
+        boxShadow: `0 25px 45px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.05)`,
+      },
 
-  const styles = getThemeStyles();
+      // Input styles with theme colors
+      inputStyle: {
+        background: `rgba(255, 255, 255, 0.05)`,
+        border: `1px solid rgba(255, 255, 255, 0.1)`,
+        backdropFilter: "blur(10px)",
+        color: "white",
+      },
+
+      inputFocusStyle: {
+        borderColor: `rgb(${theme.colors.rgb.buttonGradient.hover.split(',')[0].replace('rgb(', '').replace(')', '')})`,
+        boxShadow: `0 0 0 3px rgba(${theme.colors.rgb.buttonGradient.hover.split(',')[0].replace('rgb(', '').replace(')', '')}, 0.1)`,
+      },
+
+      // Button styles with theme gradients
+      primaryButtonStyle: {
+        background: `linear-gradient(135deg, ${theme.colors.rgb.buttonGradient.normal})`,
+        boxShadow: `0 8px 25px rgba(0, 0, 0, 0.3)`,
+      },
+
+      primaryButtonHoverStyle: {
+        background: `linear-gradient(135deg, ${theme.colors.rgb.buttonGradient.hover})`,
+        transform: "translateY(-2px)",
+        boxShadow: `0 12px 35px rgba(0, 0, 0, 0.4)`,
+      },
+
+      // Google button with theme integration
+      googleButtonStyle: {
+        background: "rgba(255, 255, 255, 0.05)",
+        border: "1px solid rgba(255, 255, 255, 0.1)",
+        backdropFilter: "blur(10px)",
+      },
+
+      googleButtonHoverStyle: {
+        background: "rgba(255, 255, 255, 0.1)",
+        borderColor: `rgb(${theme.colors.rgb.buttonGradient.normal.split(',')[0].replace('rgb(', '').replace(')', '')})`,
+      },
+
+      // Error message styles
+      errorStyle: {
+        background: "rgba(239, 68, 68, 0.1)",
+        border: "1px solid rgba(239, 68, 68, 0.3)",
+        backdropFilter: "blur(10px)",
+        color: "rgb(252, 165, 165)",
+      },
+
+      // Text colors based on theme
+      titleStyle: {
+        background: `linear-gradient(135deg, ${theme.colors.rgb.buttonGradient.normal})`,
+        WebkitBackgroundClip: "text",
+        WebkitTextFillColor: "transparent",
+        backgroundClip: "text",
+      },
+    };
+  }, [theme]);
 
   return (
-    <div
-      className={`flex flex-1 flex-col w-full overflow-x-hidden items-center min-h-screen pt-10 ${styles.background} relative`}
+    <div 
+      className="flex flex-1 flex-col w-full overflow-x-hidden items-center min-h-screen pt-10 relative"
+      style={themeStyles.backgroundStyle}
     >
       {/* Background Image with Theme */}
       <div
@@ -243,7 +235,8 @@ const Login = () => {
       </div>
 
       <div
-        className={`${styles.card} w-full max-w-[734px] flex flex-col items-center justify-center rounded-lg px-10 py-10 backdrop-blur-lg relative z-10`}
+        className="w-full max-w-[734px] flex flex-col items-center justify-center rounded-2xl px-10 py-10 relative z-10"
+        style={themeStyles.cardStyle}
       >
         {/* Logo */}
         <div className="mb-4">
@@ -255,14 +248,16 @@ const Login = () => {
         </div>
 
         <h1
-          className={`text-3xl font-bold ${styles.title} mb-10 text-center drop-shadow-lg`}
+          className="text-3xl font-bold mb-10 text-center drop-shadow-lg"
+          style={themeStyles.titleStyle}
         >
           Đăng nhập vào UIAMusic
         </h1>
 
         {errors.general && (
           <div
-            className={`${styles.errorBg} text-center mb-4 px-4 py-2 rounded-md backdrop-blur-sm`}
+            className="text-center mb-4 px-4 py-2 rounded-md"
+            style={themeStyles.errorStyle}
           >
             {errors.general}
           </div>
@@ -271,7 +266,14 @@ const Login = () => {
         <div className="space-y-3">
           <button
             onClick={handleGoogleLogin}
-            className={`w-[330px] flex items-center justify-left gap-2 ${styles.googleButton} rounded-full py-2 px-8 font-medium transition-all duration-300 hover:scale-105`}
+            className="w-[330px] flex items-center justify-left gap-2 rounded-full py-2 px-8 font-medium transition-all duration-300 hover:scale-105 text-white"
+            style={themeStyles.googleButtonStyle}
+            onMouseEnter={(e) => {
+              Object.assign(e.target.style, themeStyles.googleButtonHoverStyle);
+            }}
+            onMouseLeave={(e) => {
+              Object.assign(e.target.style, themeStyles.googleButtonStyle);
+            }}
           >
             <img
               src="https://cdn.freebiesupply.com/logos/large/2x/google-icon-logo-png-transparent.png"
@@ -287,22 +289,34 @@ const Login = () => {
             <div className="w-full border-t border-white/20"></div>
           </div>
           <div className="relative flex justify-center">
-            <span className={`px-4 bg-transparent ${styles.text}`}>hoặc</span>
+            <span className="px-4 bg-transparent text-white/70">hoặc</span>
           </div>
         </div>
 
         <form className="space-y-4" onSubmit={handleLogin}>
           <div className="flex flex-col gap-2 justify-center">
-            <label className={`block ${styles.text} font-medium`}>
+            <label className="block text-white/90 font-medium">
               Tên đăng nhập
             </label>
             <input
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className={`w-[330px] p-3 rounded-[4px] ${styles.input} ${
+              className={`w-[330px] p-3 rounded-lg ${
                 errors.username ? "border-red-400" : ""
-              } focus:outline-none transition-all duration-300 backdrop-blur-sm`}
+              } focus:outline-none transition-all duration-300 placeholder-white/50`}
+              style={themeStyles.inputStyle}
+              onFocus={(e) => {
+                if (!errors.username) {
+                  Object.assign(e.target.style, {
+                    ...themeStyles.inputStyle,
+                    ...themeStyles.inputFocusStyle,
+                  });
+                }
+              }}
+              onBlur={(e) => {
+                Object.assign(e.target.style, themeStyles.inputStyle);
+              }}
               placeholder="Tên đăng nhập"
               required
             />
@@ -310,16 +324,28 @@ const Login = () => {
               <div className="text-red-400 text-sm">{errors.username}</div>
             )}
 
-            <label className={`block ${styles.text} font-medium mt-4`}>
+            <label className="block text-white/90 font-medium mt-4">
               Mật khẩu
             </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className={`w-[330px] p-3 rounded-[4px] ${styles.input} ${
+              className={`w-[330px] p-3 rounded-lg ${
                 errors.password ? "border-red-400" : ""
-              } focus:outline-none transition-all duration-300 backdrop-blur-sm`}
+              } focus:outline-none transition-all duration-300 placeholder-white/50`}
+              style={themeStyles.inputStyle}
+              onFocus={(e) => {
+                if (!errors.password) {
+                  Object.assign(e.target.style, {
+                    ...themeStyles.inputStyle,
+                    ...themeStyles.inputFocusStyle,
+                  });
+                }
+              }}
+              onBlur={(e) => {
+                Object.assign(e.target.style, themeStyles.inputStyle);
+              }}
               placeholder="Mật khẩu"
               required
             />
@@ -331,9 +357,20 @@ const Login = () => {
           <button
             type="submit"
             disabled={isSubmitting}
-            className={`w-full ${styles.button} ${
+            className={`w-full ${
               isSubmitting ? "opacity-70 cursor-not-allowed" : "hover:scale-105"
-            } font-bold py-3 px-8 rounded-full transition-all duration-300 flex justify-center items-center mt-6`}
+            } font-bold py-3 px-8 rounded-full transition-all duration-300 flex justify-center items-center mt-6 text-white`}
+            style={themeStyles.primaryButtonStyle}
+            onMouseEnter={(e) => {
+              if (!isSubmitting) {
+                Object.assign(e.target.style, themeStyles.primaryButtonHoverStyle);
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!isSubmitting) {
+                Object.assign(e.target.style, themeStyles.primaryButtonStyle);
+              }
+            }}
           >
             {isSubmitting ? (
               <span className="flex items-center">
@@ -364,11 +401,14 @@ const Login = () => {
         </form>
 
         <div className="mt-8 text-center">
-          <p className={`${styles.text}`}>
+          <p className="text-white/70">
             Bạn chưa có tài khoản?{" "}
             <Link
               to="/signup"
               className="text-white hover:underline font-medium transition-colors duration-300"
+              style={{ 
+                color: `rgb(${theme.colors.rgb.buttonGradient.normal.split(',')[1].replace('rgb(', '').replace(')', '').trim()})` 
+              }}
             >
               Đăng ký UIAMusic
             </Link>

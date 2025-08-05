@@ -61,6 +61,13 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
     setUser(updatedUser);
   };
 
+  const handleMobileMenuToggle = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log("Mobile menu clicked"); // Debug log
+    setShowMobileMenu(true);
+  };
+
   return (
     <>
       {/* Enhanced header with dynamic theme styling */}
@@ -97,7 +104,7 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
             </h4>
 
             {/* Enhanced Home button with dynamic theme styling */}
-            <div
+            <button
               className={`
                 bg-${theme.colors.primary}-600/60 hover:bg-${theme.colors.secondary}-600/80 
                 border border-${theme.colors.primary}-400/30 shadow-lg shadow-${theme.colors.primary}-500/25
@@ -105,24 +112,26 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
                 transition-all duration-300 ease-out
                 hover:scale-110 hover:rotate-12
                 backdrop-blur-sm
+                active:scale-95
               `}
               onClick={() => setCurrentView("main")}
             >
               <IconHome stroke={2} className="w-full h-full text-white" />
-            </div>
+            </button>
 
             {/* Theme Button for Mobile */}
-            <div
+            <button
               className={`
                 bg-${theme.colors.primary}-600/60 hover:bg-${theme.colors.secondary}-600/80 
                 border border-${theme.colors.primary}-400/30
                 md:hidden w-8 h-8 cursor-pointer rounded-full 
                 flex items-center justify-center transition-all duration-300 hover:scale-110
+                active:scale-95
               `}
               onClick={() => setShowThemeSelector(true)}
             >
               <IconPalette stroke={2} className="w-5 h-5 text-white" />
-            </div>
+            </button>
           </div>
 
           {/* Desktop Search with dynamic theme */}
@@ -156,18 +165,19 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
           </div>
 
           {/* Mobile Search Icon with dynamic theme */}
-          <div
+          <button
             className={`
               md:hidden w-8 h-8 cursor-pointer ml-auto mr-3 rounded-full
               bg-${theme.colors.primary}-600/60 hover:bg-${theme.colors.secondary}-600/80
               border border-${theme.colors.primary}-400/30 shadow-lg shadow-${theme.colors.primary}-500/25
               flex items-center justify-center
               transition-all duration-300 hover:scale-110
+              active:scale-95
             `}
             onClick={() => setShowMobileSearch(true)}
           >
             <IconSearch stroke={2} className="w-5 h-5 text-white" />
-          </div>
+          </button>
         </div>
 
         {/* Enhanced Desktop Menu */}
@@ -183,6 +193,7 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
               transition-all duration-300 ease-out
               hover:scale-105 hover:shadow-xl
               relative overflow-hidden group
+              active:scale-95
             `}
             title="Thay đổi chủ đề"
           >
@@ -240,19 +251,27 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
           )}
         </div>
 
-        {/* Mobile Menu Button with dynamic theme */}
-        <div
+        {/* Mobile Menu Button - FIXED VERSION */}
+        <button
           className={`
-            md:hidden w-8 h-8 cursor-pointer rounded-full
+            md:hidden w-10 h-10 cursor-pointer rounded-full
             bg-${theme.colors.primary}-600/60 hover:bg-${theme.colors.secondary}-600/80
             border border-${theme.colors.primary}-400/30 shadow-lg shadow-${theme.colors.primary}-500/25
             flex items-center justify-center
             transition-all duration-300 hover:scale-110
+            active:scale-95 active:bg-${theme.colors.secondary}-700/80
+            relative z-20
+            touch-manipulation
           `}
-          onClick={() => setShowMobileMenu(true)}
+          onClick={handleMobileMenuToggle}
+          aria-label="Open mobile menu"
+          type="button"
         >
-          <IconMenu2 stroke={2} className="w-5 h-5 text-white" />
-        </div>
+          <IconMenu2
+            stroke={2}
+            className="w-6 h-6 text-white pointer-events-none"
+          />
+        </button>
       </div>
 
       {/* Enhanced Mobile Search Modal with dynamic theme */}
@@ -262,12 +281,12 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
             className={`bg-gradient-to-b ${theme.colors.backgroundOverlay} p-4 backdrop-blur-lg border-b border-white/20`}
           >
             <div className="flex items-center mb-4">
-              <div
+              <button
                 className="w-8 h-8 cursor-pointer rounded-full bg-white/20 flex items-center justify-center mr-3 hover:bg-white/30 transition-colors"
                 onClick={() => setShowMobileSearch(false)}
               >
                 <IconX stroke={2} className="w-5 h-5 text-white" />
-              </div>
+              </button>
               <div
                 className={`
                   flex-1 bg-${theme.colors.card} border border-${theme.colors.border}
@@ -303,12 +322,12 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
           >
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-bold text-white">Menu</h2>
-              <div
+              <button
                 className="w-8 h-8 cursor-pointer rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition-colors"
                 onClick={() => setShowMobileMenu(false)}
               >
                 <IconX stroke={2} className="w-5 h-5 text-white" />
-              </div>
+              </button>
             </div>
             <div className="flex flex-col space-y-4">
               {/* Theme Button in Mobile Menu */}

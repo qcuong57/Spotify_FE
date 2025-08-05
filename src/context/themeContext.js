@@ -510,7 +510,162 @@ export const themes = {
         },
       },
     },
-    backgroundImage: "https://yzfbdwvbybecxhbitkmc.supabase.co/storage/v1/object/sign/image/Cat2.jpeg?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV82OTc4ZGU2My0wOWQzLTRhYmYtOWRjZC0wZjY0NTBlN2VlYmIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJpbWFnZS9DYXQyLmpwZWciLCJpYXQiOjE3NTQzOTAxMDgsImV4cCI6MjA2OTc1MDEwOH0.VKfIEeG4zLVWk93_VCDFH9HBhe-nSx3PJQneg9pMEMs", // Sẽ được cập nhật với URL ảnh mèo
+    backgroundImage:
+      "https://yzfbdwvbybecxhbitkmc.supabase.co/storage/v1/object/sign/image/Cat2.jpeg?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV82OTc4ZGU2My0wOWQzLTRhYmYtOWRjZC0wZjY0NTBlN2VlYmIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJpbWFnZS9DYXQyLmpwZWciLCJpYXQiOjE3NTQzOTAxMDgsImV4cCI6MjA2OTc1MDEwOH0.VKfIEeG4zLVWk93_VCDFH9HBhe-nSx3PJQneg9pMEMs", // Sẽ được cập nhật với URL ảnh mèo
     particles: ["🐱", "🐾", "🧶", "🥛", "🐈", "😸", "🎾", "🦋"],
+  },
+  darkmode: {
+    id: "darkmode",
+    name: "Màu đen bùn bã",
+    emoji: "🖤",
+    description: "Tone lào",
+    colors: {
+      primary: "gray",
+      secondary: "zinc",
+      accent: "lime",
+      background: "from-neutral-900 via-zinc-900 to-gray-800",
+      backgroundOverlay: "from-neutral-900/60 via-zinc-900/60 to-gray-800/60",
+      card: "zinc-900/30",
+      cardHover: "zinc-800/50",
+      text: "zinc-300",
+      textHover: "lime-300",
+      button: "zinc-300/70",
+      buttonHover: "lime-400/70",
+      border: "zinc-700/30",
+      gradient: "from-gray-500 to-lime-400",
+
+      songCard: "zinc-900/30",
+      songCardHover: "zinc-800/50",
+      songBorder: "zinc-700/30",
+      songBorderHover: "gray-400/20",
+      songText: "white",
+      songTextHover: "gray-200",
+      songTextCurrent: "lime-400",
+      songArtist: "zinc-300",
+      songArtistHover: "lime-400",
+      songPlayCount: "zinc-300",
+      songPlayCountHover: "lime-300",
+      songButton: "zinc-300/70",
+      songButtonHover: "lime-400/70",
+      songButtonText: "zinc-900",
+      songShadow: "gray-500/25",
+      songShadowHover: "gray-500/40",
+      songRing: "gray-400/30",
+      songOverlay: "from-gray-600/15 via-transparent to-zinc-900/15",
+      songIndicator: "lime-300",
+
+      cardBg: "from-zinc-900/60 via-neutral-900/60 to-gray-900/60",
+      cardBgHover: "from-zinc-900/80 via-neutral-900/80 to-gray-900/80",
+      cardBgActive: "from-zinc-900/80 via-neutral-900/80 to-gray-900/80",
+
+      albumOverlay: "from-gray-500/15 via-transparent to-zinc-900/15",
+      albumOverlayHover: "from-gray-400/10 via-lime-300/5 to-gray-600/10",
+
+      rankGold: "from-amber-400 to-yellow-500",
+      rankSilver: "from-gray-300 to-gray-400",
+      rankBronze: "from-amber-600 to-orange-500",
+      rankDefault: "from-gray-400 to-lime-500",
+
+      rgb: {
+        cardGradient: {
+          normal:
+            "rgba(24, 24, 27, 0.6), rgba(39, 39, 42, 0.6), rgba(31, 41, 55, 0.6)",
+          hover:
+            "rgba(24, 24, 27, 0.8), rgba(39, 39, 42, 0.8), rgba(31, 41, 55, 0.8)",
+        },
+        buttonGradient: {
+          normal: "rgb(113, 113, 122), rgb(132, 204, 22)", // zinc-500, lime-500
+          hover: "rgb(161, 161, 170), rgb(163, 230, 53)", // zinc-400, lime-400
+        },
+        overlayGradient:
+          "rgba(63, 63, 70, 0.1), rgba(34, 197, 94, 0.05), rgba(24, 24, 27, 0.1)",
+        albumOverlayGradient: {
+          normal:
+            "rgba(113, 113, 122, 0.15), transparent, rgba(24, 24, 27, 0.15)",
+          hover:
+            "rgba(132, 204, 22, 0.1), rgba(113, 113, 122, 0.05), rgba(24, 24, 27, 0.1)",
+        },
+      },
+    },
+    backgroundImage:
+      "https://yzfbdwvbybecxhbitkmc.supabase.co/storage/v1/object/sign/image/Black.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV82OTc4ZGU2My0wOWQzLTRhYmYtOWRjZC0wZjY0NTBlN2VlYmIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJpbWFnZS9CbGFjay5wbmciLCJpYXQiOjE3NTQzOTY3NTMsImV4cCI6MTc4NTkzMjc1M30.PQ_SlY1I8Jl3owGoM8wspTfD7U7WiXBEEh1nmVvFEkc",
+    particles: ["🎧", "🖤", "🎶", "🌑", "🌀"],
+  },
+  cyberpunk: {
+    id: "cyberpunk",
+    name: "Neon",
+    emoji: "🌃",
+    description: "Không có gì",
+    colors: {
+      primary: "red",
+      secondary: "green",
+      accent: "lime",
+      background: "from-black via-zinc-900 to-neutral-900",
+      backgroundOverlay: "from-black/60 via-zinc-900/60 to-neutral-900/60",
+      card: "zinc-900/30",
+      cardHover: "zinc-800/50",
+      text: "red-300",
+      textHover: "green-300",
+      button: "red-300/70",
+      buttonHover: "green-400/70",
+      border: "zinc-700/30",
+      gradient: "from-red-500 to-lime-400",
+
+      songCard: "zinc-900/30",
+      songCardHover: "zinc-800/50",
+      songBorder: "zinc-700/30",
+      songBorderHover: "red-400/20",
+      songText: "white",
+      songTextHover: "green-200",
+      songTextCurrent: "lime-400",
+      songArtist: "red-300",
+      songArtistHover: "lime-400",
+      songPlayCount: "zinc-300",
+      songPlayCountHover: "lime-300",
+      songButton: "red-300/70",
+      songButtonHover: "green-400/70",
+      songButtonText: "zinc-900",
+      songShadow: "red-500/25",
+      songShadowHover: "red-500/40",
+      songRing: "red-400/30",
+      songOverlay: "from-red-600/15 via-transparent to-zinc-900/15",
+      songIndicator: "lime-300",
+
+      cardBg: "from-zinc-900/60 via-neutral-900/60 to-red-900/60",
+      cardBgHover: "from-zinc-900/80 via-neutral-900/80 to-red-900/80",
+      cardBgActive: "from-zinc-900/80 via-neutral-900/80 to-red-900/80",
+
+      albumOverlay: "from-red-500/15 via-transparent to-zinc-900/15",
+      albumOverlayHover: "from-red-400/10 via-lime-300/5 to-red-600/10",
+
+      rankGold: "from-amber-400 to-yellow-500",
+      rankSilver: "from-gray-300 to-gray-400",
+      rankBronze: "from-amber-600 to-orange-500",
+      rankDefault: "from-red-400 to-lime-500",
+
+      rgb: {
+        cardGradient: {
+          normal:
+            "rgba(24, 24, 27, 0.6), rgba(39, 39, 42, 0.6), rgba(220, 38, 38, 0.6)",
+          hover:
+            "rgba(24, 24, 27, 0.8), rgba(39, 39, 42, 0.8), rgba(220, 38, 38, 0.8)",
+        },
+        buttonGradient: {
+          normal: "rgb(239, 68, 68), rgb(132, 204, 22)", // red-500, lime-500
+          hover: "rgb(252, 165, 165), rgb(163, 230, 53)", // red-300, lime-400
+        },
+        overlayGradient:
+          "rgba(239, 68, 68, 0.1), rgba(132, 204, 22, 0.05), rgba(24, 24, 27, 0.1)",
+        albumOverlayGradient: {
+          normal:
+            "rgba(239, 68, 68, 0.15), transparent, rgba(24, 24, 27, 0.15)",
+          hover:
+            "rgba(132, 204, 22, 0.1), rgba(239, 68, 68, 0.05), rgba(24, 24, 27, 0.1)",
+        },
+      },
+    },
+    backgroundImage:
+      "", // sử dụng ảnh bạn đã upload
+    particles: ["🔺", "🟥", "🟩", "🌀", "💡"],
   },
 };
