@@ -665,7 +665,7 @@ export const themes = {
       },
     },
     backgroundImage:
-      "https://yzfbdwvbybecxhbitkmc.supabase.co/storage/v1/object/sign/image/Black.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV82OTc4ZGU2My0wOWQzLTRhYmYtOWRjZC0wZjY0NTBlN2VlYmIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJpbWFnZS9CbGFjay5wbmciLCJpYXQiOjE3NTQzOTY3NTMsImV4cCI6MTc4NTkzMjc1M30.PQ_SlY1I8Jl3owGoM8wspTfD7U7WiXBEEh1nmVvFEkc",
+      "https://yzfbdwvbybecxhbitkmc.supabase.co/storage/v1/object/sign/image/phongcanh.jpg?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV82OTc4ZGU2My0wOWQzLTRhYmYtOWRjZC0wZjY0NTBlN2VlYmIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJpbWFnZS9waG9uZ2NhbmguanBnIiwiaWF0IjoxNzU0Mzk5MjU5LCJleHAiOjE3ODU5MzUyNTl9.3Wx7uceoO7bFTgLjmft6XO9oFB99snllaNiugiNyYCs",
     particles: ["🔺", "🟥", "🟩", "🌀", "💡"],
   },
 };
