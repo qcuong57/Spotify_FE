@@ -8,364 +8,452 @@
   box-sizing: border-box;
 }
 
-/* Hide native controls */
+/* ============ CRITICAL SCROLL PERFORMANCE OPTIMIZATIONS ============ */
+
+/* Enable hardware acceleration and smooth scrolling globally */
+html {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Optimize all elements for better performance */
+*,
+*::before,
+*::after {
+  /* Reduce repaints and reflows */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  
+  /* Better text rendering */
+  text-rendering: optimizeLegibility;
+  
+  /* Improve scrolling on touch devices */
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Critical: Force GPU acceleration for main containers */
+main,
+section,
+.scroll-container {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+  will-change: scroll-position;
+}
+
+/* ============ ULTRA-OPTIMIZED SCROLLBAR STYLES ============ */
+
+/* High-performance custom scrollbar */
+.scrollbar-spotify {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(17, 94, 89, 0.6) rgba(17, 94, 89, 0.2);
+  
+  /* Critical: Optimize for 60fps scrolling */
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  contain: layout style paint;
+}
+
+.scrollbar-spotify::-webkit-scrollbar-thumb {
+  background: rgba(17, 94, 89, 0.6);
+  border-radius: 3px;
+  transition: background-color 0.2s ease;
+  /* Remove complex effects for performance */
+}
+
+.scrollbar-spotify::-webkit-scrollbar-thumb:hover {
+  background: rgba(13, 148, 136, 0.8);
+}
+
+/* ============ PERFORMANCE-OPTIMIZED ANIMATIONS ============ */
+
+/* CRITICAL: Minimize bubble animations for smooth scrolling */
+@keyframes float-minimal {
+  0%, 100% { 
+    transform: translateY(0) translateZ(0); 
+    opacity: 0.3;
+  }
+  50% { 
+    transform: translateY(-15px) translateZ(0); 
+    opacity: 0.6;
+  }
+}
+
+/* Ultra-light bubble animation */
+.bubble {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(45, 212, 191, 0.15);
+  animation: float-minimal 8s ease-in-out infinite;
+  opacity: 0.4;
+  
+  /* Critical performance optimizations */
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  contain: layout style paint;
+}
+
+/* Simplified bubble positions - Reduced count for performance */
+.bubble-1 {
+  width: 4px;
+  height: 4px;
+  left: 10%;
+  animation-delay: 0s;
+}
+
+.bubble-2 {
+  width: 6px;
+  height: 6px;
+  left: 30%;
+  animation-delay: 2s;
+}
+
+.bubble-3 {
+  width: 5px;
+  height: 5px;
+  left: 50%;
+  animation-delay: 4s;
+}
+
+.bubble-4 {
+  width: 7px;
+  height: 7px;
+  left: 70%;
+  animation-delay: 1s;
+}
+
+.bubble-5 {
+  width: 4px;
+  height: 4px;
+  left: 90%;
+  animation-delay: 3s;
+}
+
+/* Remove complex hover effects for better scroll performance */
+.bubble:hover {
+  animation-play-state: running; /* Keep running instead of paused */
+}
+
+/* ============ ULTRA-SMOOTH COMPONENT OPTIMIZATIONS ============ */
+
+/* Song card optimizations */
+.song-card,
+.song-item {
+  contain: layout style;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  
+  /* Smooth transitions only */
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.song-card:hover {
+  transform: scale(1.02) translateZ(0);
+}
+
+/* Grid container optimizations */
+.grid-container {
+  contain: layout;
+  transform: translateZ(0);
+  will-change: contents;
+}
+
+/* ============ CRITICAL SCROLL OPTIMIZATIONS ============ */
+
+/* Optimize main scroll container */
+.main-scroll-container {
+  /* Force hardware acceleration */
+  transform: translate3d(0, 0, 0);
+  -webkit-transform: translate3d(0, 0, 0);
+  
+  /* Improve scroll performance */
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  
+  /* Contain repaints */
+  contain: layout style paint;
+  
+  /* Optimize for scrolling */
+  overscroll-behavior: contain;
+  scroll-snap-stop: normal;
+}
+
+/* ============ REMOVED COMPLEX ANIMATIONS ============ */
+
+/* Remove all complex floating animations that cause lag */
+.bubble-gentle-optimized,
+.bubble-sway-optimized,
+.bubble-drift-optimized {
+  /* Disable for ultra-smooth scrolling */
+  animation: none !important;
+}
+
+/* Simplified shimmer effect for skeletons */
+@keyframes simple-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.6; }
+}
+
+.skeleton-shimmer {
+  animation: simple-pulse 2s ease-in-out infinite;
+  will-change: opacity;
+}
+
+/* ============ MOBILE OPTIMIZATIONS ============ */
+
+@media (max-width: 768px) {
+  /* Disable all non-essential animations on mobile */
+  .bubble,
+  .bubble-container-optimized {
+    display: none !important;
+  }
+  
+  /* Optimize scrolling for mobile */
+  .scrollbar-spotify {
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: none; /* Disable snap for smoother scroll */
+  }
+  
+  /* Reduce will-change usage on mobile */
+  * {
+    will-change: auto !important;
+  }
+  
+  /* Only keep essential GPU acceleration */
+  .main-scroll-container,
+  .song-card {
+    will-change: transform;
+  }
+}
+
+/* ============ REDUCED MOTION PREFERENCES ============ */
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+  
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* ============ HIGH REFRESH RATE OPTIMIZATIONS ============ */
+
+@media (min-resolution: 120dpi) {
+  .main-scroll-container {
+    /* Better performance on high-DPI displays */
+    transform: translate3d(0, 0, 0);
+    image-rendering: -webkit-optimize-contrast;
+  }
+}
+
+/* ============ CONTAINER QUERIES FOR BETTER PERFORMANCE ============ */
+
+@container (width > 768px) {
+  .grid-container {
+    contain: layout style paint;
+  }
+}
+
+/* ============ MEMORY EFFICIENT GRADIENTS ============ */
+
+/* Replace complex gradients with simple ones */
+.simple-gradient {
+  background: linear-gradient(135deg, rgba(20, 184, 166, 0.1), rgba(20, 184, 166, 0.05));
+}
+
+/* ============ SCROLL SNAP FOR SMOOTH SECTIONS ============ */
+
+.scroll-snap-container {
+  scroll-snap-type: y proximity;
+  scroll-padding-top: 2rem;
+}
+
+.scroll-snap-item {
+  scroll-snap-align: start;
+  scroll-snap-stop: normal;
+}
+
+/* ============ EFFICIENT LOADING STATES ============ */
+
+.loading-shimmer {
+  background: linear-gradient(90deg, 
+    rgba(255, 255, 255, 0.1) 0%, 
+    rgba(255, 255, 255, 0.2) 50%, 
+    rgba(255, 255, 255, 0.1) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* ============ INTERSECTION OBSERVER OPTIMIZATION ============ */
+
+.observe-target {
+  contain: layout;
+  min-height: 1px; /* Ensure visibility for intersection observer */
+}
+
+/* ============ CRITICAL CSS FOR ABOVE-THE-FOLD ============ */
+
+/* Ensure immediate visibility of critical content */
+.above-fold {
+  contain: layout style;
+  transform: translateZ(0);
+}
+
+/* ============ TEAL THEME SCROLLBAR (Optimized) ============ */
+
+.scrollbar-teal {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(45, 212, 191, 0.5) rgba(17, 94, 89, 0.2);
+  scroll-behavior: smooth;
+}
+
+.scrollbar-teal::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-teal::-webkit-scrollbar-track {
+  background: rgba(17, 94, 89, 0.2);
+  border-radius: 3px;
+}
+
+.scrollbar-teal::-webkit-scrollbar-thumb {
+  background: rgba(45, 212, 191, 0.5);
+  border-radius: 3px;
+  transition: background-color 0.2s ease;
+}
+
+.scrollbar-teal::-webkit-scrollbar-thumb:hover {
+  background: rgba(45, 212, 191, 0.7);
+}
+
+/* ============ FIREFOX OPTIMIZATIONS ============ */
+
+@-moz-document url-prefix() {
+  .main-scroll-container {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(17, 94, 89, 0.6) rgba(17, 94, 89, 0.2);
+  }
+}
+
+/* ============ SAFARI OPTIMIZATIONS ============ */
+
+@supports (-webkit-appearance: none) {
+  .main-scroll-container {
+    -webkit-overflow-scrolling: touch;
+    -webkit-transform: translate3d(0, 0, 0);
+  }
+}
+
+/* ============ CUSTOM SCROLLBAR VARIANTS ============ */
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(26, 26, 26, 0.5);
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(51, 51, 51, 0.8);
+  border-radius: 3px;
+  transition: background-color 0.2s ease;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(74, 74, 74, 0.9);
+}
+
+/* Horizontal scrollbar */
+.custom-scrollbar-x::-webkit-scrollbar {
+  height: 6px;
+}
+
+.custom-scrollbar-x::-webkit-scrollbar-track {
+  background: rgba(26, 26, 26, 0.5);
+  border-radius: 3px;
+}
+
+.custom-scrollbar-x::-webkit-scrollbar-thumb {
+  background: rgba(51, 51, 51, 0.8);
+  border-radius: 3px;
+  transition: background-color 0.2s ease;
+}
+
+.custom-scrollbar-x::-webkit-scrollbar-thumb:hover {
+  background: rgba(74, 74, 74, 0.9);
+}
+
+/* Firefox scrollbar for custom variants */
+.custom-scrollbar,
+.custom-scrollbar-x {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(51, 51, 51, 0.8) rgba(26, 26, 26, 0.5);
+}
+
+/* ============ HIDE NATIVE MEDIA CONTROLS ============ */
+
 .hide-native-controls::-webkit-media-controls {
   display: none !important;
 }
 
-/* Custom Scrollbar Styles */
-.custom-scrollbar::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
+/* ============ UTILITY CLASSES FOR PERFORMANCE ============ */
 
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: #1a1a1a;
-  border-radius: 10px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #333333;
-  border-radius: 10px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #4a4a4a;
-}
-
-.custom-scrollbar-x::-webkit-scrollbar {
-  height: 8px;
-}
-
-.custom-scrollbar-x::-webkit-scrollbar-track {
-  background: #1a1a1a;
-  border-radius: 10px;
-}
-
-.custom-scrollbar-x::-webkit-scrollbar-thumb {
-  background: #333333;
-  border-radius: 10px;
-}
-
-.custom-scrollbar-x::-webkit-scrollbar-thumb:hover {
-  background: #4a4a4a;
-}
-
-/* Firefox scrollbar */
-.custom-scrollbar {
-  scrollbar-width: thin;
-  scrollbar-color: #333333 #1a1a1a;
-}
-
-.custom-scrollbar-x {
-  scrollbar-width: thin;
-  scrollbar-color: #333333 #1a1a1a;
-}
-
-/* OPTIMIZED Floating Bubble Animations - Reduced complexity */
-@keyframes floating-gentle-optimized {
-  0%,
-  100% {
-    transform: translateY(0) translateX(0) scale(1);
-    opacity: 0.5;
-  }
-  50% {
-    transform: translateY(-8px) translateX(3px) scale(1.05);
-    opacity: 0.7;
-  }
-}
-
-@keyframes floating-sway-optimized {
-  0%,
-  100% {
-    transform: translateY(0) translateX(0) scale(1);
-    opacity: 0.6;
-  }
-  50% {
-    transform: translateY(-6px) translateX(5px) scale(1.03);
-    opacity: 0.8;
-  }
-}
-
-@keyframes floating-drift-optimized {
-  0%,
-  100% {
-    transform: translateY(0) scale(1);
-    opacity: 0.4;
-  }
-  50% {
-    transform: translateY(-10px) scale(1.08);
-    opacity: 0.7;
-  }
-}
-
-/* Simplified shimmer effect */
-@keyframes bubble-shimmer-optimized {
-  0%,
-  100% {
-    box-shadow: 0 0 4px rgba(20, 184, 166, 0.2);
-  }
-  50% {
-    box-shadow: 0 0 8px rgba(20, 184, 166, 0.4);
-  }
-}
-
-/* PERFORMANCE OPTIMIZED animation classes */
-.bubble-gentle-optimized {
-  animation: floating-gentle-optimized 4s ease-in-out infinite;
-  will-change: transform;
-  transform: translateZ(0); /* Force hardware acceleration */
-}
-
-.bubble-sway-optimized {
-  animation: floating-sway-optimized 5s ease-in-out infinite;
-  will-change: transform;
+/* Force GPU layer */
+.gpu-accelerated {
   transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
 }
 
-.bubble-drift-optimized {
-  animation: floating-drift-optimized 6s ease-in-out infinite;
+/* Optimize for animations */
+.will-change-transform {
   will-change: transform;
-  transform: translateZ(0);
 }
 
-/* SIMPLIFIED gradient bubble effects - Much lighter */
-.bubble-optimized {
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.6) 0%,
-    rgba(20, 184, 166, 0.3) 50%,
-    rgba(255, 255, 255, 0.2) 100%
-  );
-  box-shadow: 0 1px 3px rgba(20, 184, 166, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  animation: bubble-shimmer-optimized 3s ease-in-out infinite;
+.will-change-scroll {
+  will-change: scroll-position;
 }
 
-/* OPTIMIZED container with better performance */
-.bubble-container-optimized {
-  contain: layout style paint; /* Better containment */
-  will-change: contents;
-  pointer-events: none;
-  /* Use transform instead of changing layout properties */
-  transform: translateZ(0);
+/* Contain repaints */
+.contain-paint {
+  contain: paint;
 }
 
-/* OPTIMIZED song card container */
-.song-card-optimized {
-  contain: layout style;
-  will-change: transform;
-  transform: translateZ(0);
+.contain-layout {
+  contain: layout;
 }
 
-/* Header Bubbles - Kept original but optimized */
-.bubble {
-  position: absolute;
-  border-radius: 50%;
-  background: radial-gradient(
-    circle at 30% 30%,
-    rgba(45, 212, 191, 0.3),
-    rgba(45, 212, 191, 0.08)
-  );
-  box-shadow: inset 0 0 6px rgba(45, 212, 191, 0.2),
-    0 0 10px rgba(45, 212, 191, 0.1);
-  animation: float 6s ease-in-out infinite;
-  opacity: 0.7;
-  will-change: transform;
-  transform: translateZ(0); /* Hardware acceleration */
+.contain-style {
+  contain: style;
 }
 
-/* Optimized bubble positions */
-.bubble-1 {
-  width: 6px;
-  height: 6px;
-  left: 8%;
-  animation-delay: 0s;
-  animation-duration: 7s;
+.contain-all {
+  contain: layout style paint;
+}-scrollbar {
+  width: 6px; /* Reduced width for better performance */
 }
 
-.bubble-2 {
-  width: 10px;
-  height: 10px;
-  left: 18%;
-  animation-delay: 1.5s;
-  animation-duration: 5.5s;
+.scrollbar-spotify::-webkit-scrollbar-track {
+  background: rgba(17, 94, 89, 0.15);
+  border-radius: 3px;
+  /* Remove complex gradients */
 }
 
-.bubble-3 {
-  width: 4px;
-  height: 4px;
-  left: 32%;
-  animation-delay: 3s;
-  animation-duration: 8s;
-}
-
-.bubble-4 {
-  width: 8px;
-  height: 8px;
-  left: 45%;
-  animation-delay: 0.8s;
-  animation-duration: 6.5s;
-}
-
-.bubble-5 {
-  width: 12px;
-  height: 12px;
-  left: 58%;
-  animation-delay: 2.2s;
-  animation-duration: 4.8s;
-}
-
-.bubble-6 {
-  width: 5px;
-  height: 5px;
-  left: 72%;
-  animation-delay: 4s;
-  animation-duration: 7.2s;
-}
-
-.bubble-7 {
-  width: 9px;
-  height: 9px;
-  left: 85%;
-  animation-delay: 1s;
-  animation-duration: 6s;
-}
-
-.bubble-8 {
-  width: 7px;
-  height: 7px;
-  left: 95%;
-  animation-delay: 2.8s;
-  animation-duration: 5.2s;
-}
-
-.bubble-9 {
-  width: 11px;
-  height: 11px;
-  left: 25%;
-  animation-delay: 3.5s;
-  animation-duration: 6.8s;
-}
-
-.bubble-10 {
-  width: 6px;
-  height: 6px;
-  left: 65%;
-  animation-delay: 0.3s;
-  animation-duration: 7.5s;
-}
-
-.bubble-11 {
-  width: 8px;
-  height: 8px;
-  left: 15%;
-  animation-delay: 4.2s;
-  animation-duration: 5.8s;
-}
-
-.bubble-12 {
-  width: 10px;
-  height: 10px;
-  left: 78%;
-  animation-delay: 1.8s;
-  animation-duration: 6.2s;
-}
-
-/* Optimized float animation for header bubbles */
-@keyframes float {
-  0%,
-  100% {
-    transform: translateY(100%) scale(0) translateZ(0);
-    opacity: 0;
-  }
-  10% {
-    opacity: 0.7;
-    transform: translateY(80%) scale(1) translateZ(0);
-  }
-  25% {
-    transform: translateY(60%) scale(1.05) translateZ(0);
-  }
-  50% {
-    transform: translateY(40%) scale(1) translateZ(0);
-  }
-  75% {
-    transform: translateY(20%) scale(0.95) translateZ(0);
-  }
-  90% {
-    opacity: 0.5;
-    transform: translateY(-10%) scale(0.8) translateZ(0);
-  }
-  100% {
-    transform: translateY(-100%) scale(0) translateZ(0);
-    opacity: 0;
-  }
-}
-
-.bubble:hover {
-  animation-play-state: paused;
-  transform: scale(1.15) translateZ(0) !important;
-  opacity: 0.9 !important;
-  z-index: 20;
-}
-
-/* Scrollbar teal theme */
-.scrollbar-teal::-webkit-scrollbar {
-  width: 8px;
-}
-
-.scrollbar-teal::-webkit-scrollbar-track {
-  background: rgba(20, 184, 166, 0.1);
-  border-radius: 10px;
-}
-
-.scrollbar-teal::-webkit-scrollbar-thumb {
-  background: rgba(20, 184, 166, 0.6);
-  border-radius: 10px;
-}
-
-.scrollbar-teal::-webkit-scrollbar-thumb:hover {
-  background: rgba(20, 184, 166, 0.8);
-}
-
-/* CRITICAL Performance optimizations */
-* {
-  /* Improve scrolling performance */
-  -webkit-overflow-scrolling: touch;
-}
-
-/* Optimize transforms and animations */
-@media (min-width: 768px) {
-  .bubble-container-optimized,
-  .song-card-optimized,
-  .bubble {
-    /* Enable hardware acceleration on desktop only */
-    backface-visibility: hidden;
-    perspective: 1000px;
-  }
-}
-
-/* Reduce motion for users who prefer it */
-@media (prefers-reduced-motion: reduce) {
-  .bubble-gentle-optimized,
-  .bubble-sway-optimized,
-  .bubble-drift-optimized,
-  .bubble {
-    animation: none !important;
-  }
-
-  .song-card-optimized {
-    transition: none !important;
-  }
-}
-
-/* Optimize for lower-end devices */
-@media (max-width: 768px) {
-  .bubble-container-optimized {
-    display: none; /* Hide bubbles on mobile for better performance */
-  }
-
-  .song-card-optimized {
-    will-change: auto; /* Reduce will-change on mobile */
-  }
+.scrollbar-spotify::-webkit -scrollbar-thumb {
+  background: rgba(17, 94, 89, 0.6);
+  border-radius: 3px;
+  transition: background-color 0.2s ease;
 }
