@@ -5,6 +5,8 @@ import {
   IconX,
   IconMusic,
   IconWorld,
+  IconMail,
+  IconCreditCard,
 } from "@tabler/icons-react";
 import { useTheme } from "../../../context/themeContext";
 import {
@@ -516,6 +518,41 @@ const Libraries = ({ setCurrentView, onClose }) => {
             ))}
           </div>
         )}
+      </div>
+
+      {/* Footer */}
+      <div
+        className={`border-t border-${
+          theme.colors.border
+        } mt-4 pt-4 pb-4 transition-all duration-300 delay-400 ${
+          isVisible && !isClosing
+            ? "translate-y-0 opacity-100"
+            : "translate-y-4 opacity-0"
+        }`}
+      >
+        <div className="space-y-2">
+          {/* Gmail */}
+          <div className="flex items-center gap-2">
+            <IconMail
+              stroke={2}
+              className={`w-4 h-4 text-${theme.colors.text} flex-shrink-0`}
+            />
+            <span className={`text-xs text-${theme.colors.text} truncate`}>
+              Gmail: quoccuong572003@gmail.com
+            </span>
+          </div>
+
+          {/* Account Number */}
+          <div className="flex items-center gap-2">
+            <IconCreditCard
+              stroke={2}
+              className={`w-4 h-4 text-${theme.colors.text} flex-shrink-0`}
+            />
+            <span className={`text-xs text-${theme.colors.text}`}>
+              STK: 27805072003 (Hồ Quốc Cường VPBank)
+            </span>
+          </div>
+        </div>
       </div>
     </div>
   );

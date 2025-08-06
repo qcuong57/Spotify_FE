@@ -11,78 +11,117 @@ const GOOGLE_CLIENT_ID =
   process.env.REACT_APP_GOOGLE_CLIENT_ID;
 
 const SignUp = () => {
-  const [formData, setFormData] = useState({
-    username: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-    firstName: "",
-    lastName: "",
-  });
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [password2, setPassword2] = useState("");
+  const [phone, setPhone] = useState("");
+  const [gender, setGender] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
   const [errors, setErrors] = useState({
     username: "",
     email: "",
     password: "",
-    confirmPassword: "",
+    password2: "",
+    phone: "",
+    gender: "",
     firstName: "",
+    lastName: "",
     general: "",
   });
-  
+
   const navigate = useNavigate();
+  const location = useLocation();
+  const { saveTokens, setUser } = useAuth();
   const { theme } = useTheme();
+
+  useEffect(() => {
+    if (location.state?.error) {
+      setErrors((prev) => ({ ...prev, general: location.state.error }));
+    }
+  }, [location]);
 
   const validateForm = () => {
     const newErrors = {
       username: "",
       email: "",
       password: "",
-      confirmPassword: "",
+      password2: "",
+      phone: "",
+      gender: "",
       firstName: "",
+      lastName: "",
       general: "",
     };
     let isValid = true;
 
     // Username validation
-    if (!formData.username.trim()) {
+    if (!username.trim()) {
       newErrors.username = "Tên đăng nhập không được để trống.";
       isValid = false;
-    } else if (formData.username.length < 3) {
+    } else if (username.length < 3) {
       newErrors.username = "Tên đăng nhập phải có ít nhất 3 ký tự.";
       isValid = false;
     }
 
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!formData.email.trim()) {
+    if (!email.trim()) {
       newErrors.email = "Email không được để trống.";
       isValid = false;
-    } else if (!emailRegex.test(formData.email)) {
+    } else if (!emailRegex.test(email)) {
       newErrors.email = "Email không hợp lệ.";
       isValid = false;
     }
 
-    // Password validation
-    if (!formData.password) {
-      newErrors.password = "Mật khẩu không được để trống.";
+    // Phone validation - Vietnamese phone numbers
+    const phoneRegex = /^(\+84|84|0)[3-9][0-9]{8}$/;
+    if (!phone.trim()) {
+      newErrors.phone = "Số điện thoại không được để trống.";
       isValid = false;
-    } else if (formData.password.length < 6) {
-      newErrors.password = "Mật khẩu phải có ít nhất 6 ký tự.";
+    } else if (!phoneRegex.test(phone.replace(/\s/g, ""))) {
+      newErrors.phone = "Số điện thoại không hợp lệ (VD: 0912345678).";
       isValid = false;
     }
 
-    // Confirm password validation
-    if (!formData.confirmPassword) {
-      newErrors.confirmPassword = "Vui lòng xác nhận mật khẩu.";
-      isValid = false;
-    } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = "Mật khẩu xác nhận không khớp.";
+    // Gender validation
+    if (!gender) {
+      newErrors.gender = "Vui lòng chọn giới tính.";
       isValid = false;
     }
 
     // First name validation
-    if (!formData.firstName.trim()) {
+    if (!firstName.trim()) {
       newErrors.firstName = "Tên không được để trống.";
+      isValid = false;
+    }
+
+    // Last name validation
+    if (!lastName.trim()) {
+      newErrors.lastName = "Họ không được để trống.";
+      isValid = false;
+    }
+
+    // Password validation - stronger validation
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
+    if (!password) {
+      newErrors.password = "Mật khẩu không được để trống.";
+      isValid = false;
+    } else if (!passwordRegex.test(password)) {
+      newErrors.password =
+        "Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ và số.";
+      isValid = false;
+    }
+
+    // Confirm password validation
+    if (!password2) {
+      newErrors.password2 = "Xác nhận mật khẩu không được để trống.";
+      isValid = false;
+    } else if (password !== password2) {
+      newErrors.password2 = "Mật khẩu xác nhận không khớp.";
       isValid = false;
     }
 
@@ -90,22 +129,19 @@ const SignUp = () => {
     return isValid;
   };
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
   const handleSignUp = async (e) => {
     e.preventDefault();
+
+    // Reset errors
     setErrors({
       username: "",
       email: "",
       password: "",
-      confirmPassword: "",
+      password2: "",
+      phone: "",
+      gender: "",
       firstName: "",
+      lastName: "",
       general: "",
     });
 
@@ -116,62 +152,112 @@ const SignUp = () => {
     setIsSubmitting(true);
 
     try {
-      const registerData = {
-        username: formData.username,
-        email: formData.email,
-        password: formData.password,
-        first_name: formData.firstName,
-        last_name: formData.lastName,
+      const formData = {
+        username: username.trim(),
+        email: email.trim(),
+        password,
+        password2,
+        phone: phone.trim(),
+        gender,
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
       };
 
-      await register(registerData);
-      
-      // Redirect to login with success message
-      navigate("/login", {
-        state: {
-          message: "Đăng ký thành công! Vui lòng đăng nhập.",
-        },
-      });
+      const res = await registerUser(formData);
+
+      // Kiểm tra phản hồi từ server
+      if (res && res.data) {
+        const { access, refresh, user: userData } = res.data;
+
+        if (access && refresh) {
+          // Lưu token và set user như Login
+          saveTokens({ access, refresh });
+
+          // Giải mã token
+          const decodedToken = jwtDecode(access);
+
+          if (!decodedToken.user_id) {
+            throw new Error("Token JWT không hợp lệ: thiếu user_id");
+          }
+
+          // Lấy role từ userData hoặc decodedToken
+          const role = userData?.role || decodedToken.role || "user";
+
+          // Tạo đối tượng user
+          const user = {
+            id: decodedToken.user_id,
+            username: userData?.username || username,
+            first_name: userData?.first_name || firstName,
+            last_name: userData?.last_name || lastName,
+            role: role,
+            avatar: userData?.image || "https://via.placeholder.com/30",
+            email: userData?.email || email,
+          };
+
+          setUser(user);
+          localStorage.setItem("user", JSON.stringify(user));
+
+          // Điều hướng dựa trên vai trò
+          navigate(role === "admin" ? "/admin" : "/", { replace: true });
+        } else {
+          // Nếu không có token, chuyển đến trang login với thông báo thành công
+          navigate("/login", {
+            state: {
+              message: "Đăng ký thành công! Vui lòng đăng nhập.",
+            },
+          });
+        }
+      } else {
+        // Fallback: chuyển đến login nếu response không như mong đợi
+        navigate("/login", {
+          state: {
+            message: "Đăng ký thành công! Vui lòng đăng nhập.",
+          },
+        });
+      }
     } catch (err) {
+      console.error("Registration error:", err);
+
       const newErrors = {
         username: "",
         email: "",
         password: "",
-        confirmPassword: "",
+        password2: "",
+        phone: "",
+        gender: "",
         firstName: "",
+        lastName: "",
         general: "",
       };
 
       if (err.response?.data) {
-        const errorData = err.response.data;
-        
-        // Handle specific field errors
-        if (errorData.username) {
-          newErrors.username = Array.isArray(errorData.username) 
-            ? errorData.username[0] 
-            : errorData.username;
-        }
-        if (errorData.email) {
-          newErrors.email = Array.isArray(errorData.email) 
-            ? errorData.email[0] 
-            : errorData.email;
-        }
-        if (errorData.password) {
-          newErrors.password = Array.isArray(errorData.password) 
-            ? errorData.password[0] 
-            : errorData.password;
-        }
-        
-        // Handle general errors
-        if (errorData.detail) {
-          newErrors.general = errorData.detail;
-        } else if (errorData.non_field_errors) {
-          newErrors.general = Array.isArray(errorData.non_field_errors)
-            ? errorData.non_field_errors[0]
-            : errorData.non_field_errors;
+        // Handle specific field errors từ server
+        Object.entries(err.response.data).forEach(([key, value]) => {
+          const errorMessage = Array.isArray(value) ? value.join(" ") : value;
+
+          // Map các field name từ API về field name trong form
+          const fieldMap = {
+            first_name: "firstName",
+            last_name: "lastName",
+          };
+
+          const errorKey = fieldMap[key] || key;
+
+          if (errorKey in newErrors) {
+            newErrors[errorKey] = errorMessage;
+          } else {
+            // Nếu không map được field, hiển thị lỗi general
+            newErrors.general = errorMessage || "Đăng ký thất bại.";
+          }
+        });
+
+        // Nếu không có lỗi general và có lỗi khác
+        if (!newErrors.general && Object.keys(err.response.data).length > 0) {
+          newErrors.general = "Vui lòng kiểm tra các trường nhập liệu.";
         }
       } else {
-        newErrors.general = err.message || "Đăng ký thất bại. Vui lòng thử lại.";
+        newErrors.general =
+          err.message || "Đăng ký thất bại. Vui lòng thử lại sau.";
       }
 
       setErrors(newErrors);
@@ -181,28 +267,40 @@ const SignUp = () => {
   };
 
   const handleGoogleSignUp = () => {
-    if (window.googleLoginInProgress) return;
-    window.googleLoginInProgress = true;
+    if (window.googleSignUpInProgress || isGoogleSubmitting) return;
+
+    if (!GOOGLE_CLIENT_ID) {
+      setErrors((prev) => ({
+        ...prev,
+        general: "Cấu hình Google Client ID không hợp lệ.",
+      }));
+      return;
+    }
+
+    setIsGoogleSubmitting(true);
+    window.googleSignUpInProgress = true;
+
     const redirectUri = `${window.location.origin}/auth/callback`;
     const scope = "email profile";
     const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${redirectUri}&response_type=code&scope=${encodeURIComponent(
       scope
     )}&prompt=select_account`;
+
     window.location.href = url;
+
     setTimeout(() => {
-      window.googleLoginInProgress = false;
+      window.googleSignUpInProgress = false;
+      setIsGoogleSubmitting(false);
     }, 2000);
   };
 
   // Dynamic styles using theme context
   const themeStyles = useMemo(() => {
     return {
-      // Background styles using theme colors
       backgroundStyle: {
         background: `linear-gradient(to bottom, ${theme.colors.rgb.cardGradient.normal})`,
       },
-      
-      // Card styles with theme integration
+
       cardStyle: {
         background: `linear-gradient(135deg, ${theme.colors.rgb.cardGradient.hover})`,
         backdropFilter: "blur(20px)",
@@ -210,7 +308,6 @@ const SignUp = () => {
         boxShadow: `0 25px 45px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.05)`,
       },
 
-      // Input styles with theme colors
       inputStyle: {
         background: `rgba(255, 255, 255, 0.05)`,
         border: `1px solid rgba(255, 255, 255, 0.1)`,
@@ -219,11 +316,16 @@ const SignUp = () => {
       },
 
       inputFocusStyle: {
-        borderColor: `rgb(${theme.colors.rgb.buttonGradient.hover.split(',')[0].replace('rgb(', '').replace(')', '')})`,
-        boxShadow: `0 0 0 3px rgba(${theme.colors.rgb.buttonGradient.hover.split(',')[0].replace('rgb(', '').replace(')', '')}, 0.1)`,
+        borderColor: `rgb(${theme.colors.rgb.buttonGradient.hover
+          .split(",")[0]
+          .replace("rgb(", "")
+          .replace(")", "")})`,
+        boxShadow: `0 0 0 3px rgba(${theme.colors.rgb.buttonGradient.hover
+          .split(",")[0]
+          .replace("rgb(", "")
+          .replace(")", "")}, 0.1)`,
       },
 
-      // Button styles with theme gradients
       primaryButtonStyle: {
         background: `linear-gradient(135deg, ${theme.colors.rgb.buttonGradient.normal})`,
         boxShadow: `0 8px 25px rgba(0, 0, 0, 0.3)`,
@@ -235,7 +337,6 @@ const SignUp = () => {
         boxShadow: `0 12px 35px rgba(0, 0, 0, 0.4)`,
       },
 
-      // Google button with theme integration
       googleButtonStyle: {
         background: "rgba(255, 255, 255, 0.05)",
         border: "1px solid rgba(255, 255, 255, 0.1)",
@@ -244,10 +345,12 @@ const SignUp = () => {
 
       googleButtonHoverStyle: {
         background: "rgba(255, 255, 255, 0.1)",
-        borderColor: `rgb(${theme.colors.rgb.buttonGradient.normal.split(',')[0].replace('rgb(', '').replace(')', '')})`,
+        borderColor: `rgb(${theme.colors.rgb.buttonGradient.normal
+          .split(",")[0]
+          .replace("rgb(", "")
+          .replace(")", "")})`,
       },
 
-      // Error message styles
       errorStyle: {
         background: "rgba(239, 68, 68, 0.1)",
         border: "1px solid rgba(239, 68, 68, 0.3)",
@@ -255,15 +358,6 @@ const SignUp = () => {
         color: "rgb(252, 165, 165)",
       },
 
-      // Success message styles
-      successStyle: {
-        background: "rgba(34, 197, 94, 0.1)",
-        border: "1px solid rgba(34, 197, 94, 0.3)",
-        backdropFilter: "blur(10px)",
-        color: "rgb(134, 239, 172)",
-      },
-
-      // Text colors based on theme
       titleStyle: {
         background: `linear-gradient(135deg, ${theme.colors.rgb.buttonGradient.normal})`,
         WebkitBackgroundClip: "text",
@@ -274,7 +368,7 @@ const SignUp = () => {
   }, [theme]);
 
   return (
-    <div 
+    <div
       className="flex flex-1 flex-col w-full overflow-x-hidden items-center min-h-screen pt-10 relative"
       style={themeStyles.backgroundStyle}
     >
@@ -336,13 +430,23 @@ const SignUp = () => {
         <div className="space-y-3 mb-6">
           <button
             onClick={handleGoogleSignUp}
-            className="w-[330px] flex items-center justify-left gap-2 rounded-full py-2 px-8 font-medium transition-all duration-300 hover:scale-105 text-white"
+            disabled={isGoogleSubmitting}
+            className={`w-[330px] flex items-center justify-left gap-2 rounded-full py-2 px-8 font-medium transition-all duration-300 hover:scale-105 text-white ${
+              isGoogleSubmitting ? "opacity-50 cursor-not-allowed" : ""
+            }`}
             style={themeStyles.googleButtonStyle}
             onMouseEnter={(e) => {
-              Object.assign(e.target.style, themeStyles.googleButtonHoverStyle);
+              if (!isGoogleSubmitting) {
+                Object.assign(
+                  e.target.style,
+                  themeStyles.googleButtonHoverStyle
+                );
+              }
             }}
             onMouseLeave={(e) => {
-              Object.assign(e.target.style, themeStyles.googleButtonStyle);
+              if (!isGoogleSubmitting) {
+                Object.assign(e.target.style, themeStyles.googleButtonStyle);
+              }
             }}
           >
             <img
@@ -350,7 +454,7 @@ const SignUp = () => {
               alt="Google"
               className="mr-6 w-6 h-6"
             />
-            Đăng ký bằng Google
+            {isGoogleSubmitting ? "Đang xử lý..." : "Đăng ký bằng Google"}
           </button>
         </div>
 
@@ -363,66 +467,10 @@ const SignUp = () => {
           </div>
         </div>
 
-        <form className="space-y-4 w-full max-w-[330px]" onSubmit={handleSignUp}>
-          {/* First Name and Last Name Row */}
-          <div className="flex gap-3">
-            <div className="flex-1">
-              <label className="block text-white/90 font-medium mb-2">
-                Tên <span className="text-red-400">*</span>
-              </label>
-              <input
-                type="text"
-                name="firstName"
-                value={formData.firstName}
-                onChange={handleInputChange}
-                className={`w-full p-3 rounded-lg ${
-                  errors.firstName ? "border-red-400" : ""
-                } focus:outline-none transition-all duration-300 placeholder-white/50`}
-                style={themeStyles.inputStyle}
-                onFocus={(e) => {
-                  if (!errors.firstName) {
-                    Object.assign(e.target.style, {
-                      ...themeStyles.inputStyle,
-                      ...themeStyles.inputFocusStyle,
-                    });
-                  }
-                }}
-                onBlur={(e) => {
-                  Object.assign(e.target.style, themeStyles.inputStyle);
-                }}
-                placeholder="Tên"
-                required
-              />
-              {errors.firstName && (
-                <div className="text-red-400 text-sm mt-1">{errors.firstName}</div>
-              )}
-            </div>
-            
-            <div className="flex-1">
-              <label className="block text-white/90 font-medium mb-2">
-                Họ
-              </label>
-              <input
-                type="text"
-                name="lastName"
-                value={formData.lastName}
-                onChange={handleInputChange}
-                className="w-full p-3 rounded-lg focus:outline-none transition-all duration-300 placeholder-white/50"
-                style={themeStyles.inputStyle}
-                onFocus={(e) => {
-                  Object.assign(e.target.style, {
-                    ...themeStyles.inputStyle,
-                    ...themeStyles.inputFocusStyle,
-                  });
-                }}
-                onBlur={(e) => {
-                  Object.assign(e.target.style, themeStyles.inputStyle);
-                }}
-                placeholder="Họ (tùy chọn)"
-              />
-            </div>
-          </div>
-
+        <form
+          className="space-y-4 w-full max-w-[330px]"
+          onSubmit={handleSignUp}
+        >
           {/* Username */}
           <div>
             <label className="block text-white/90 font-medium mb-2">
@@ -430,9 +478,8 @@ const SignUp = () => {
             </label>
             <input
               type="text"
-              name="username"
-              value={formData.username}
-              onChange={handleInputChange}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               className={`w-full p-3 rounded-lg ${
                 errors.username ? "border-red-400" : ""
               } focus:outline-none transition-all duration-300 placeholder-white/50`}
@@ -463,9 +510,8 @@ const SignUp = () => {
             </label>
             <input
               type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleInputChange}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className={`w-full p-3 rounded-lg ${
                 errors.email ? "border-red-400" : ""
               } focus:outline-none transition-all duration-300 placeholder-white/50`}
@@ -489,6 +535,159 @@ const SignUp = () => {
             )}
           </div>
 
+          {/* Phone */}
+          <div>
+            <label className="block text-white/90 font-medium mb-2">
+              Số điện thoại <span className="text-red-400">*</span>
+            </label>
+            <input
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className={`w-full p-3 rounded-lg ${
+                errors.phone ? "border-red-400" : ""
+              } focus:outline-none transition-all duration-300 placeholder-white/50`}
+              style={themeStyles.inputStyle}
+              onFocus={(e) => {
+                if (!errors.phone) {
+                  Object.assign(e.target.style, {
+                    ...themeStyles.inputStyle,
+                    ...themeStyles.inputFocusStyle,
+                  });
+                }
+              }}
+              onBlur={(e) => {
+                Object.assign(e.target.style, themeStyles.inputStyle);
+              }}
+              placeholder="0912345678"
+              required
+            />
+            {errors.phone && (
+              <div className="text-red-400 text-sm mt-1">{errors.phone}</div>
+            )}
+          </div>
+
+          {/* Gender */}
+          <div>
+            <label className="block text-white/90 font-medium mb-2">
+              Giới tính <span className="text-red-400">*</span>
+            </label>
+            <select
+              value={gender}
+              onChange={(e) => setGender(e.target.value)}
+              className={`w-full p-3 rounded-lg ${
+                errors.gender ? "border-red-400" : ""
+              } focus:outline-none transition-all duration-300`}
+              style={{
+                ...themeStyles.inputStyle,
+                backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e")`,
+                backgroundRepeat: "no-repeat",
+                backgroundPosition: "right 12px center",
+                backgroundSize: "16px",
+                paddingRight: "40px",
+                appearance: "none",
+              }}
+              required
+            >
+              <option
+                value=""
+                style={{ background: "#242424", color: "white" }}
+              >
+                Chọn giới tính
+              </option>
+              <option
+                value="0"
+                style={{ background: "#242424", color: "white" }}
+              >
+                Nam
+              </option>
+              <option
+                value="1"
+                style={{ background: "#242424", color: "white" }}
+              >
+                Nữ
+              </option>
+              <option
+                value="2"
+                style={{ background: "#242424", color: "white" }}
+              >
+                Khác
+              </option>
+            </select>
+            {errors.gender && (
+              <div className="text-red-400 text-sm mt-1">{errors.gender}</div>
+            )}
+          </div>
+
+          {/* First Name and Last Name Row */}
+          <div className="flex gap-3">
+            <div className="flex-1">
+              <label className="block text-white/90 font-medium mb-2">
+                Tên <span className="text-red-400">*</span>
+              </label>
+              <input
+                type="text"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                className={`w-full p-3 rounded-lg ${
+                  errors.firstName ? "border-red-400" : ""
+                } focus:outline-none transition-all duration-300 placeholder-white/50`}
+                style={themeStyles.inputStyle}
+                onFocus={(e) => {
+                  if (!errors.firstName) {
+                    Object.assign(e.target.style, {
+                      ...themeStyles.inputStyle,
+                      ...themeStyles.inputFocusStyle,
+                    });
+                  }
+                }}
+                onBlur={(e) => {
+                  Object.assign(e.target.style, themeStyles.inputStyle);
+                }}
+                placeholder="Tên"
+                required
+              />
+              {errors.firstName && (
+                <div className="text-red-400 text-sm mt-1">
+                  {errors.firstName}
+                </div>
+              )}
+            </div>
+
+            <div className="flex-1">
+              <label className="block text-white/90 font-medium mb-2">
+                Họ <span className="text-red-400">*</span>
+              </label>
+              <input
+                type="text"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                className={`w-full p-3 rounded-lg ${
+                  errors.lastName ? "border-red-400" : ""
+                } focus:outline-none transition-all duration-300 placeholder-white/50`}
+                style={themeStyles.inputStyle}
+                onFocus={(e) => {
+                  if (!errors.lastName) {
+                    Object.assign(e.target.style, {
+                      ...themeStyles.inputStyle,
+                      ...themeStyles.inputFocusStyle,
+                    });
+                  }
+                }}
+                onBlur={(e) => {
+                  Object.assign(e.target.style, themeStyles.inputStyle);
+                }}
+                placeholder="Họ"
+                required
+              />
+              {errors.lastName && (
+                <div className="text-red-400 text-sm mt-1">
+                  {errors.lastName}
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Password */}
           <div>
             <label className="block text-white/90 font-medium mb-2">
@@ -496,9 +695,8 @@ const SignUp = () => {
             </label>
             <input
               type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleInputChange}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               className={`w-full p-3 rounded-lg ${
                 errors.password ? "border-red-400" : ""
               } focus:outline-none transition-all duration-300 placeholder-white/50`}
@@ -514,7 +712,7 @@ const SignUp = () => {
               onBlur={(e) => {
                 Object.assign(e.target.style, themeStyles.inputStyle);
               }}
-              placeholder="Mật khẩu (ít nhất 6 ký tự)"
+              placeholder="Ít nhất 8 ký tự, có chữ và số"
               required
             />
             {errors.password && (
@@ -529,15 +727,14 @@ const SignUp = () => {
             </label>
             <input
               type="password"
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleInputChange}
+              value={password2}
+              onChange={(e) => setPassword2(e.target.value)}
               className={`w-full p-3 rounded-lg ${
-                errors.confirmPassword ? "border-red-400" : ""
+                errors.password2 ? "border-red-400" : ""
               } focus:outline-none transition-all duration-300 placeholder-white/50`}
               style={themeStyles.inputStyle}
               onFocus={(e) => {
-                if (!errors.confirmPassword) {
+                if (!errors.password2) {
                   Object.assign(e.target.style, {
                     ...themeStyles.inputStyle,
                     ...themeStyles.inputFocusStyle,
@@ -550,8 +747,10 @@ const SignUp = () => {
               placeholder="Nhập lại mật khẩu"
               required
             />
-            {errors.confirmPassword && (
-              <div className="text-red-400 text-sm mt-1">{errors.confirmPassword}</div>
+            {errors.password2 && (
+              <div className="text-red-400 text-sm mt-1">
+                {errors.password2}
+              </div>
             )}
           </div>
 
@@ -564,7 +763,10 @@ const SignUp = () => {
             style={themeStyles.primaryButtonStyle}
             onMouseEnter={(e) => {
               if (!isSubmitting) {
-                Object.assign(e.target.style, themeStyles.primaryButtonHoverStyle);
+                Object.assign(
+                  e.target.style,
+                  themeStyles.primaryButtonHoverStyle
+                );
               }
             }}
             onMouseLeave={(e) => {
@@ -607,8 +809,12 @@ const SignUp = () => {
             <Link
               to="/login"
               className="text-white hover:underline font-medium transition-colors duration-300"
-              style={{ 
-                color: `rgb(${theme.colors.rgb.buttonGradient.normal.split(',')[1].replace('rgb(', '').replace(')', '').trim()})` 
+              style={{
+                color: `rgb(${theme.colors.rgb.buttonGradient.normal
+                  .split(",")[1]
+                  .replace("rgb(", "")
+                  .replace(")", "")
+                  .trim()})`,
               }}
             >
               Đăng nhập ngay
