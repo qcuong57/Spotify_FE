@@ -7,7 +7,7 @@ import {
   IconWorld,
   IconMail,
   IconCreditCard,
-  IconChevronLeft, // Thêm icon này
+  IconChevronLeft,
 } from "@tabler/icons-react";
 import { useTheme } from "../../../context/themeContext";
 import {
@@ -16,7 +16,13 @@ import {
 } from "../../../services/playlistService";
 import { usePlayList } from "../../../utils/playlistContext";
 
-const Library = ({ playlist, setCurrentView, index, theme, onLibraryClose }) => {
+const Library = ({
+  playlist,
+  setCurrentView,
+  index,
+  theme,
+  onLibraryClose,
+}) => {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -29,7 +35,6 @@ const Library = ({ playlist, setCurrentView, index, theme, onLibraryClose }) => 
   const handlePlaylistClick = () => {
     console.log("Clicking playlist:", playlist);
     setCurrentView(playlist);
-    // Đóng Libraries trên mobile sau khi chọn playlist
     if (window.innerWidth < 768) {
       onLibraryClose();
     }
@@ -106,7 +111,6 @@ const Libraries = ({ setCurrentView, onClose }) => {
   const [isClosing, setIsClosing] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
-  // Sử dụng context để quản lý playlists
   const {
     playlists,
     setPlaylists,
@@ -114,7 +118,6 @@ const Libraries = ({ setCurrentView, onClose }) => {
     setRefreshKeyPlayLists,
   } = usePlayList();
 
-  // State cho filtered playlists
   const [filteredPlaylists, setFilteredPlaylists] = useState([]);
 
   useEffect(() => {
@@ -124,7 +127,6 @@ const Libraries = ({ setCurrentView, onClose }) => {
     return () => clearTimeout(timer);
   }, []);
 
-  // Kiểm tra user đăng nhập
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     const accessToken = localStorage.getItem("access_token");
@@ -141,12 +143,11 @@ const Libraries = ({ setCurrentView, onClose }) => {
     }
   }, []);
 
-  // Lấy danh sách playlists khi user đăng nhập hoặc refreshKey thay đổi
   useEffect(() => {
     const fetchUserPlaylists = async () => {
       if (!user || !user.id) {
         console.log("Libraries - no user or user.id, skipping fetch");
-        setPlaylists([]); // Clear playlists khi không có user
+        setPlaylists([]);
         return;
       }
 
@@ -158,13 +159,11 @@ const Libraries = ({ setCurrentView, onClose }) => {
         const response = await getUserPlaylistByIdService(user.id);
         console.log("Libraries - fetch response:", response);
 
-        // SỬA LẠI: Check response.data.playlists thay vì response.data.results
         if (response && response.data && response.data.playlists) {
           const playlistsData = response.data.playlists;
           console.log("Libraries - setting playlists:", playlistsData);
           console.log("Libraries - playlist count:", playlistsData.length);
 
-          // Log chi tiết từng playlist
           playlistsData.forEach((playlist, index) => {
             console.log(`Playlist ${index + 1}:`, {
               id: playlist.id,
@@ -201,7 +200,6 @@ const Libraries = ({ setCurrentView, onClose }) => {
     fetchUserPlaylists();
   }, [user, refreshKeyPlayLists, setPlaylists]);
 
-  // Filter playlists theo search value
   useEffect(() => {
     if (!searchValue.trim()) {
       setFilteredPlaylists(playlists);
@@ -215,14 +213,12 @@ const Libraries = ({ setCurrentView, onClose }) => {
 
   const handleClose = () => {
     setIsClosing(true);
-    // Đóng MyLibrary bằng cách set về view main
     setCurrentView("main");
     setTimeout(() => {
       onClose();
     }, 300);
   };
 
-  // Hàm để đóng Libraries và quay lại MyLibrary
   const handleLibraryClose = () => {
     onClose();
   };
@@ -236,7 +232,6 @@ const Libraries = ({ setCurrentView, onClose }) => {
     try {
       setLoading(true);
 
-      // Prepare form data theo format cần thiết
       const playlistData = {
         title: `Danh sách phát của tôi #${playlists.length + 1}`,
         description: "Danh sách phát mới",
@@ -249,7 +244,6 @@ const Libraries = ({ setCurrentView, onClose }) => {
       console.log("Libraries - create playlist response:", response);
 
       if (response && response.data) {
-        // Tạo playlist object hoàn chỉnh
         const newPlaylist = {
           id: response.data.id,
           title: response.data.title,
@@ -264,22 +258,18 @@ const Libraries = ({ setCurrentView, onClose }) => {
 
         console.log("Libraries - new playlist object:", newPlaylist);
 
-        // Thêm playlist mới vào đầu danh sách
         setPlaylists((prevPlaylists) => {
           const updatedPlaylists = [newPlaylist, ...prevPlaylists];
           console.log("Libraries - updated playlists list:", updatedPlaylists);
           return updatedPlaylists;
         });
 
-        // Trigger refresh cho các component khác
         setRefreshKeyPlayLists(Date.now());
         console.log("Libraries - refresh key updated");
 
-        // Navigate to new playlist sau khi state đã update
         setTimeout(() => {
           console.log("Libraries - navigating to new playlist:", newPlaylist);
           setCurrentView(newPlaylist);
-          // Đóng Libraries trên mobile
           if (window.innerWidth < 768) {
             handleLibraryClose();
           }
@@ -318,7 +308,6 @@ const Libraries = ({ setCurrentView, onClose }) => {
     console.log("Libraries - search cleared");
   };
 
-  // Debug render state
   console.log("Libraries render - current state:", {
     user: user?.id,
     playlistsCount: playlists.length,
@@ -331,9 +320,9 @@ const Libraries = ({ setCurrentView, onClose }) => {
   return (
     <div
       className={`
-        /* Mobile: Full screen overlay */
-        fixed inset-0 z-50 bg-gradient-to-b ${theme.colors.backgroundOverlay} backdrop-blur-md
-        /* Tablet và Desktop: Sidebar bình thường */
+        fixed inset-0 z-[10000] bg-gradient-to-b ${
+          theme.colors.backgroundOverlay
+        } backdrop-blur-md
         md:relative md:inset-auto md:flex md:w-full md:max-w-[420px] md:z-auto
         flex flex-col text-white rounded-r-lg px-2 md:px-4 
         transition-all duration-300 ease-out shadow-2xl 
@@ -344,10 +333,9 @@ const Libraries = ({ setCurrentView, onClose }) => {
         }
       `}
     >
-      {/* Mobile Back Button */}
       <button
         onClick={handleClose}
-        className={`md:hidden absolute top-4 left-4 z-10 bg-${
+        className={`md:hidden absolute top-4 left-4 z-[10001] bg-${
           theme.colors.card
         } hover:bg-${
           theme.colors.cardHover
@@ -364,10 +352,9 @@ const Libraries = ({ setCurrentView, onClose }) => {
         />
       </button>
 
-      {/* Desktop Close Button */}
       <button
         onClick={handleClose}
-        className={`hidden md:block absolute top-3 right-3 z-10 bg-${
+        className={`hidden md:block absolute top-3 right-3 z-[10001] bg-${
           theme.colors.card
         } hover:bg-${
           theme.colors.cardHover
@@ -384,7 +371,6 @@ const Libraries = ({ setCurrentView, onClose }) => {
         />
       </button>
 
-      {/* Header */}
       <div
         className={`flex flex-row justify-between items-center pt-16 md:pt-4 pb-6 px-2 pr-10 transition-all duration-300 delay-100 ${
           isVisible && !isClosing
@@ -422,7 +408,6 @@ const Libraries = ({ setCurrentView, onClose }) => {
         </button>
       </div>
 
-      {/* Login Prompt */}
       {showLoginPrompt && (
         <div
           className={`bg-${theme.colors.card} p-4 md:p-6 rounded-lg mb-4 mx-2 transition-all duration-200 shadow-lg`}
@@ -442,7 +427,6 @@ const Libraries = ({ setCurrentView, onClose }) => {
         </div>
       )}
 
-      {/* Search Bar */}
       <div
         className={`mb-4 mx-2 transition-all duration-300 delay-200 ${
           isVisible && !isClosing
@@ -474,7 +458,6 @@ const Libraries = ({ setCurrentView, onClose }) => {
         </div>
       </div>
 
-      {/* Playlists List */}
       <div
         className={`flex-1 overflow-y-auto space-y-3 md:space-y-3 pr-1 mx-2 scrollbar-thin scrollbar-thumb-${
           theme.colors.primary
@@ -485,7 +468,6 @@ const Libraries = ({ setCurrentView, onClose }) => {
         }`}
       >
         {!user ? (
-          // Hiển thị khi chưa đăng nhập
           <div
             className={`bg-${theme.colors.card} p-6 md:p-6 rounded-lg transition-all duration-200 hover:bg-${theme.colors.cardHover} shadow-lg`}
           >
@@ -497,7 +479,6 @@ const Libraries = ({ setCurrentView, onClose }) => {
             </p>
           </div>
         ) : loading ? (
-          // Loading state
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
               <div
@@ -515,14 +496,11 @@ const Libraries = ({ setCurrentView, onClose }) => {
             ))}
           </div>
         ) : filteredPlaylists.length === 0 ? (
-          // Empty state
           <div
             className={`bg-${theme.colors.card} p-6 md:p-6 rounded-lg transition-all duration-200 hover:bg-${theme.colors.cardHover} shadow-lg`}
           >
             <h3 className="font-bold text-base md:text-base mb-2 text-white">
-              {searchValue
-                ? "Không tìm thấy playlist"
-                : "Chưa có playlist nào"}
+              {searchValue ? "Không tìm thấy playlist" : "Chưa có playlist nào"}
             </h3>
             <p className={`text-sm md:text-sm text-${theme.colors.text} mb-4`}>
               {searchValue
@@ -540,7 +518,6 @@ const Libraries = ({ setCurrentView, onClose }) => {
             )}
           </div>
         ) : (
-          // Hiển thị danh sách playlists
           <div className="space-y-3 md:space-y-3">
             {filteredPlaylists.map((playlist, index) => (
               <Library
@@ -556,7 +533,6 @@ const Libraries = ({ setCurrentView, onClose }) => {
         )}
       </div>
 
-      {/* Footer */}
       <div
         className={`border-t border-${
           theme.colors.border
@@ -567,18 +543,18 @@ const Libraries = ({ setCurrentView, onClose }) => {
         }`}
       >
         <div className="space-y-3 md:space-y-2">
-          {/* Gmail */}
           <div className="flex items-center gap-2">
             <IconMail
               stroke={2}
               className={`w-4 h-4 text-${theme.colors.text} flex-shrink-0`}
             />
-            <span className={`text-sm md:text-xs text-${theme.colors.text} truncate`}>
+            <span
+              className={`text-sm md:text-xs text-${theme.colors.text} truncate`}
+            >
               Gmail: quoccuong572003@gmail.com
             </span>
           </div>
 
-          {/* Account Number */}
           <div className="flex items-center gap-2">
             <IconCreditCard
               stroke={2}

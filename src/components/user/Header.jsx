@@ -240,7 +240,7 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
     };
   }, []);
 
-  // Updated Suggestions component with MAXIMUM z-index
+  // Suggestions component
   const SuggestionsList = ({
     suggestions,
     isLoadingSuggestions,
@@ -263,41 +263,14 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
       })),
     ];
 
-    if (isLoadingSuggestions) {
-      return (
-        <div
-          className="fixed top-full left-0 right-0 mt-1 rounded-lg shadow-2xl backdrop-blur-xl max-h-64 overflow-y-auto"
-          style={{
-            position: "fixed",
-            top: isMobile ? "120px" : "80px",
-            left: isMobile ? "16px" : "50%",
-            right: isMobile ? "16px" : "auto",
-            transform: isMobile ? "none" : "translateX(-50%)",
-            width: isMobile ? "calc(100% - 32px)" : "400px",
-            maxWidth: isMobile ? "none" : "90vw",
-            zIndex: 99999,
-            background: "rgba(0, 0, 0, 0.95)",
-            backdropFilter: "blur(20px)",
-            border: "1px solid rgba(255, 255, 255, 0.2)",
-            borderRadius: "12px",
-            boxShadow:
-              "0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.1)",
-          }}
-        >
-          <div className="p-3 text-center text-white/90">
-            <div className="animate-spin w-5 h-5 border-2 border-white/40 border-t-white rounded-full mx-auto"></div>
-            <span className="text-sm mt-2 block">Đang tìm kiếm...</span>
-          </div>
-        </div>
-      );
+    if (!isLoadingSuggestions && allSuggestions.length === 0) {
+      return null; // Không hiển thị nếu không có gợi ý và không đang tải
     }
-
-    if (allSuggestions.length === 0) return null;
 
     return (
       <div
         ref={isMobile ? mobileSuggestionsRef : suggestionsRef}
-        className="fixed rounded-lg shadow-2xl backdrop-blur-xl max-h-64 overflow-y-auto"
+        className="fixed rounded-lg shadow-2xl backdrop-blur-xl max-h-64 overflow-y-auto bg-black/95 border border-white/20"
         style={{
           position: "fixed",
           top: isMobile ? "120px" : "80px",
@@ -306,63 +279,46 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
           transform: isMobile ? "none" : "translateX(-50%)",
           width: isMobile ? "calc(100% - 32px)" : "400px",
           maxWidth: isMobile ? "none" : "90vw",
-          zIndex: 99999,
-          background: "rgba(0, 0, 0, 0.95)",
-          backdropFilter: "blur(20px)",
-          border: "1px solid rgba(255, 255, 255, 0.2)",
-          borderRadius: "12px",
-          boxShadow:
-            "0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.1)",
+          zIndex: 100000, // Tăng z-index để đảm bảo hiển thị trên cùng
         }}
       >
-        {allSuggestions.map((suggestion, index) => {
-          const IconComponent = suggestion.icon;
-          const isSelected = index === selectedIndex;
+        {isLoadingSuggestions ? (
+          <div className="p-3 text-center text-white/90">
+            <div className="animate-spin w-5 h-5 border-2 border-white/40 border-t-white rounded-full mx-auto"></div>
+            <span className="text-sm mt-2 block">Đang tìm kiếm...</span>
+          </div>
+        ) : (
+          allSuggestions.map((suggestion, index) => {
+            const IconComponent = suggestion.icon;
+            const isSelected = index === selectedIndex;
 
-          return (
-            <div
-              key={`${suggestion.type}-${suggestion.text}-${index}`}
-              className={`
-              flex items-center px-4 py-3 cursor-pointer transition-all duration-200
-              ${
-                isSelected
-                  ? `border-l-4 border-white text-white`
-                  : "text-white/90 hover:text-white border-l-4 border-transparent"
-              }
-              ${index === 0 ? "rounded-t-lg" : ""}
-              ${index === allSuggestions.length - 1 ? "rounded-b-lg" : ""}
-            `}
-              style={{
-                background: isSelected
-                  ? `linear-gradient(90deg, ${
-                      theme.colors.rgb?.buttonGradient?.hover ||
-                      "rgba(255, 255, 255, 0.15)"
-                    }, transparent)`
-                  : "transparent",
-              }}
-              onMouseEnter={(e) => {
-                if (!isSelected) {
-                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)";
+            return (
+              <div
+                key={`${suggestion.type}-${suggestion.text}-${index}`}
+                className={`
+                flex items-center px-4 py-3 cursor-pointer transition-all duration-200
+                ${
+                  isSelected
+                    ? "bg-white/20 border-l-4 border-white text-white"
+                    : "text-white/90 hover:text-white hover:bg-white/10 border-l-4 border-transparent"
                 }
-              }}
-              onMouseLeave={(e) => {
-                if (!isSelected) {
-                  e.currentTarget.style.background = "transparent";
-                }
-              }}
-              onClick={() => onSuggestionClick(suggestion.text)}
-            >
-              <IconComponent className="w-4 h-4 mr-3 opacity-80" />
-              <div className="flex-1">
-                <div className="text-sm font-medium">{suggestion.text}</div>
-                <div className="text-xs opacity-70">{suggestion.label}</div>
+                ${index === 0 ? "rounded-t-lg" : ""}
+                ${index === allSuggestions.length - 1 ? "rounded-b-lg" : ""}
+              `}
+                onClick={() => onSuggestionClick(suggestion.text)}
+              >
+                <IconComponent className="w-4 h-4 mr-3 opacity-80" />
+                <div className="flex-1">
+                  <div className="text-sm font-medium">{suggestion.text}</div>
+                  <div className="text-xs opacity-70">{suggestion.label}</div>
+                </div>
+                {isSelected && (
+                  <div className="w-2 h-2 bg-white rounded-full opacity-90"></div>
+                )}
               </div>
-              {isSelected && (
-                <div className="w-2 h-2 bg-white rounded-full opacity-90"></div>
-              )}
-            </div>
-          );
-        })}
+            );
+          })
+        )}
       </div>
     );
   };
@@ -378,7 +334,7 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
   const handleMobileMenuToggle = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    setShowMobileMenu(true);
+    setShowMobileMenu((prev) => !prev); // Chuyển đổi trạng thái mở/đóng
   };
 
   return (
@@ -448,23 +404,28 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
             </button>
           </div>
 
-          {/* Desktop Search - Updated with relative positioning */}
+          {/* Desktop Search */}
           <div className="hidden md:flex flex-1 flex-row items-center max-w-md mx-4 relative">
             <div
               className={`
                 flex flex-1 flex-row items-center rounded-full
                 bg-${theme.colors.card} border border-${theme.colors.border} 
                 shadow-lg shadow-${theme.colors.primary}-500/25
-                backdrop-blur-md
+                backdrop-blur-md px-4 py-2
                 transition-all duration-300 hover:scale-105
                 relative overflow-hidden
               `}
             >
+              <IconSearch
+                stroke={2}
+                className="w-5 h-5 cursor-pointer text-white hover:text-white/80 transition-colors"
+                onClick={() => handleSearchChange()}
+              />
               <input
                 ref={searchInputRef}
                 type="text"
-                placeholder="Tìm kiếm bài hát, nghệ sĩ..."
-                className="flex-1 px-4 py-2 bg-transparent border-none outline-none text-sm text-white placeholder-white/70 z-10"
+                placeholder="Tìm kiếm bài hát..."
+                className="flex-1 mx-2 bg-transparent border-none outline-none text-sm text-white placeholder-white/70"
                 value={searchText}
                 onChange={(e) => handleSearchInputChange(e.target.value)}
                 onKeyDown={handleKeyDown}
@@ -475,25 +436,9 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
                 }}
                 disabled={isSearching}
               />
-
-              <button
-                onClick={() => handleSearchChange()}
-                disabled={isSearching || !searchText.trim()}
-                className={`
-                  p-2 mr-2 hover:bg-white/10 rounded-full transition-colors z-10
-                  ${
-                    isSearching || !searchText.trim()
-                      ? "opacity-50 cursor-not-allowed"
-                      : "cursor-pointer"
-                  }
-                `}
-              >
-                {isSearching ? (
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                ) : (
-                  <IconSearch stroke={2} className="w-5 h-5 text-white" />
-                )}
-              </button>
+              {isSearching && (
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              )}
             </div>
           </div>
 
@@ -607,7 +552,7 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
         </button>
       </div>
 
-      {/* Desktop Suggestions - Render outside header */}
+      {/* Desktop Suggestions */}
       {showSuggestions && !showMobileSearch && (
         <SuggestionsList
           suggestions={suggestions}
@@ -619,7 +564,7 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
 
       {/* Mobile Search Modal */}
       {showMobileSearch && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 md:hidden">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100001] md:hidden">
           <div
             className={`bg-gradient-to-b ${theme.colors.backgroundOverlay} p-4 backdrop-blur-lg border-b border-white/20`}
           >
@@ -629,6 +574,7 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
                 onClick={() => {
                   setShowMobileSearch(false);
                   setShowSuggestions(false);
+                  setSearchText(""); // Xóa input khi đóng
                 }}
               >
                 <IconX stroke={2} className="w-5 h-5 text-white" />
@@ -637,15 +583,15 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
               <div className="flex-1 relative">
                 <div
                   className={`
-                    bg-${theme.colors.card} border border-${theme.colors.border}
-                    shadow-lg shadow-${theme.colors.primary}-500/25
-                    px-4 py-2 rounded-full flex items-center backdrop-blur-md
-                  `}
+              bg-${theme.colors.card} border border-${theme.colors.border}
+              shadow-lg shadow-${theme.colors.primary}-500/25
+              px-4 py-2 rounded-full flex items-center backdrop-blur-md
+            `}
                 >
                   <input
                     ref={mobileSearchInputRef}
                     type="text"
-                    placeholder="Tìm kiếm bài hát, nghệ sĩ..."
+                    placeholder="Tìm kiếm bài hát..."
                     className="flex-1 bg-transparent border-none outline-none text-sm text-white placeholder-white/70"
                     value={searchText}
                     onChange={(e) => handleSearchInputChange(e.target.value)}
@@ -662,13 +608,13 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
                     onClick={() => handleSearchChange()}
                     disabled={isSearching || !searchText.trim()}
                     className={`
-                      ml-2 p-1 hover:bg-white/10 rounded-full transition-colors
-                      ${
-                        isSearching || !searchText.trim()
-                          ? "opacity-50 cursor-not-allowed"
-                          : "cursor-pointer"
-                      }
-                    `}
+                ml-2 p-1 hover:bg-white/10 rounded-full transition-colors
+                ${
+                  isSearching || !searchText.trim()
+                    ? "opacity-50 cursor-not-allowed"
+                    : "cursor-pointer"
+                }
+              `}
                   >
                     {isSearching ? (
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -681,13 +627,16 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
             </div>
           </div>
 
-          {/* Mobile Suggestions - Render inside modal */}
+          {/* Mobile Suggestions */}
           {showSuggestions && (
             <SuggestionsList
               suggestions={suggestions}
               isLoadingSuggestions={isLoadingSuggestions}
               selectedIndex={selectedSuggestionIndex}
-              onSuggestionClick={handleSuggestionClick}
+              onSuggestionClick={(text) => {
+                handleSuggestionClick(text);
+                setShowMobileSearch(false); // Đóng modal khi chọn gợi ý
+              }}
               isMobile={true}
             />
           )}
@@ -696,9 +645,13 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
 
       {/* Mobile Menu */}
       {showMobileMenu && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 md:hidden">
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100000] md:hidden"
+          onClick={() => setShowMobileMenu(false)} // Đóng menu khi click ngoài
+        >
           <div
             className={`bg-gradient-to-b ${theme.colors.backgroundOverlay} h-full w-64 p-4 backdrop-blur-lg border-r border-white/20`}
+            onClick={(e) => e.stopPropagation()} // Ngăn đóng khi click trong menu
           >
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-bold text-white">Menu</h2>
@@ -710,7 +663,6 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
               </button>
             </div>
             <div className="flex flex-col space-y-4">
-              {/* Theme Button in Mobile Menu */}
               <button
                 onClick={() => {
                   setShowThemeSelector(true);

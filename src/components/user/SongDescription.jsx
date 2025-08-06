@@ -9,7 +9,6 @@ import {
   IconHeart,
   IconHeartFilled,
   IconMicrophone,
-  IconChevronUp,
 } from "@tabler/icons-react";
 import { Box, Text } from "@mantine/core";
 
@@ -33,7 +32,6 @@ const SongDescription = () => {
   const [isClosing, setIsClosing] = useState(false);
   const [showLyrics, setShowLyrics] = useState(false);
 
-  // Animation effect when component mounts or song changes
   useEffect(() => {
     setIsVisible(false);
     const timer = setTimeout(() => {
@@ -42,10 +40,8 @@ const SongDescription = () => {
     return () => clearTimeout(timer);
   }, [currentSong]);
 
-  // Check if device is iOS
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
-  // Handle video play/pause and tab visibility
   useEffect(() => {
     const videoElement = videoRef.current;
     if (!videoElement || !currentSong) return;
@@ -238,7 +234,6 @@ const SongDescription = () => {
     repeatMode,
   ]);
 
-  // Sync video with audio - but not when in fullscreen
   useEffect(() => {
     const videoElement = videoRef.current;
     if (!videoElement || videoError || isVideoFullscreen) return;
@@ -256,7 +251,6 @@ const SongDescription = () => {
     }
   }, [isPlaying, videoError, isVideoFullscreen]);
 
-  // Sync currentTime when seeking - but not when in fullscreen
   useEffect(() => {
     const videoElement = videoRef.current;
     if (
@@ -299,7 +293,6 @@ const SongDescription = () => {
     }
   };
 
-  // Check if song has lyrics and timestamps
   const hasLyrics = currentSong?.lyrics && currentSong.lyrics.trim().length > 0;
   const hasTimestamps =
     hasLyrics &&
@@ -310,22 +303,27 @@ const SongDescription = () => {
 
   return (
     <div
-      className={`fixed inset-0 z-50 bg-gradient-to-t ${theme.colors.backgroundOverlay} flex flex-col md:relative md:inset-auto md:max-w-[400px] md:shadow-lg md:rounded-lg transition-all duration-300 ease-out backdrop-blur-md ${
+      className={`fixed inset-0 z-[10000] bg-gradient-to-t ${
+        theme.colors.backgroundOverlay
+      } flex flex-col md:relative md:inset-auto md:max-w-[400px] md:shadow-lg md:rounded-lg transition-all duration-300 ease-out backdrop-blur-md ${
         isVisible && !isClosing
           ? "translate-y-0 opacity-100 md:translate-x-0"
           : "translate-y-full opacity-0 md:translate-y-0 md:translate-x-full"
       }`}
     >
       <div
-        className={`flex items-center justify-between p-4 md:hidden transition-all duration-300 delay-100 bg-gradient-to-r ${theme.colors.backgroundOverlay} backdrop-blur-md ${
+        className={`flex items-center justify-between p-4 md:hidden transition-all duration-300 delay-100 bg-gradient-to-r ${
+          theme.colors.backgroundOverlay
+        } backdrop-blur-md ${
           isVisible && !isClosing
             ? "translate-y-0 opacity-100"
             : "translate-y-4 opacity-0"
         }`}
+        style={{ zIndex: 10001 }} // Đảm bảo nút đóng trên mobile hiển thị trên header
       >
         <button
           onClick={handleClose}
-          className={`p-2 rounded-full hover:bg-${theme.colors.primary}-600/50 transition-colors`}
+          className={`p-2 rounded-full hover:bg-${theme.colors.primary}-600/50 transition-colors z-[10002]`}
         >
           <IconChevronDown size={24} className={`text-${theme.colors.text}`} />
         </button>
@@ -336,16 +334,23 @@ const SongDescription = () => {
       </div>
 
       <div
-        className={`hidden md:flex items-center justify-between p-3 border-b border-${theme.colors.border} transition-all duration-300 delay-100 bg-gradient-to-r ${theme.colors.backgroundOverlay} backdrop-blur-md ${
+        className={`hidden md:flex items-center justify-between p-3 border-b border-${
+          theme.colors.border
+        } transition-all duration-300 delay-100 bg-gradient-to-r ${
+          theme.colors.backgroundOverlay
+        } backdrop-blur-md ${
           isVisible && !isClosing
             ? "translate-y-0 opacity-100"
             : "translate-y-4 opacity-0"
         }`}
+        style={{ zIndex: 10001 }} // Đảm bảo nút đóng trên desktop hiển thị trên header
       >
-        <h2 className={`text-lg font-semibold text-${theme.colors.text}`}>Now Playing</h2>
+        <h2 className={`text-lg font-semibold text-${theme.colors.text}`}>
+          Now Playing
+        </h2>
         <button
           onClick={handleClose}
-          className={`p-2 rounded-full hover:bg-${theme.colors.primary}-600/50 transition-colors`}
+          className={`p-2 rounded-full hover:bg-${theme.colors.primary}-600/50 transition-colors z-[10002]`}
         >
           <IconX size={20} className={`text-${theme.colors.text}`} />
         </button>
@@ -360,7 +365,11 @@ const SongDescription = () => {
           }`}
         >
           <div
-            className={`relative bg-gradient-to-br from-${theme.colors.primary}-900/50 to-${theme.colors.secondary}-800/50 rounded-lg overflow-hidden shadow-xl ${
+            className={`relative bg-gradient-to-br from-${
+              theme.colors.primary
+            }-900/50 to-${
+              theme.colors.secondary
+            }-800/50 rounded-lg overflow-hidden shadow-xl ${
               showLyrics && hasLyrics ? "aspect-[16/9]" : "aspect-video"
             }`}
           >
@@ -389,7 +398,9 @@ const SongDescription = () => {
                 )}
               </>
             ) : (
-              <div className={`w-full h-full flex items-center justify-center bg-gradient-to-br from-${theme.colors.primary}-600 to-${theme.colors.secondary}-500`}>
+              <div
+                className={`w-full h-full flex items-center justify-center bg-gradient-to-br from-${theme.colors.primary}-600 to-${theme.colors.secondary}-500`}
+              >
                 <img
                   src={currentSong.image}
                   alt={currentSong.song_name}
@@ -432,7 +443,10 @@ const SongDescription = () => {
                 className={`p-2 rounded-full hover:bg-${theme.colors.primary}-600/50 transition-colors`}
               >
                 {isLiked ? (
-                  <IconHeartFilled size={18} className={`text-${theme.colors.secondary}-400`} />
+                  <IconHeartFilled
+                    size={18}
+                    className={`text-${theme.colors.secondary}-400`}
+                  />
                 ) : (
                   <IconHeart
                     size={18}
@@ -489,7 +503,7 @@ const SongDescription = () => {
                 >
                   <Text
                     style={{
-                      color: `rgba(209, 250, 229, 0.8)`, // Using theme text color with opacity
+                      color: `rgba(209, 250, 229, 0.8)`,
                       fontSize: "14px",
                       fontWeight: 400,
                       lineHeight: 1.5,
@@ -533,3 +547,4 @@ const SongDescription = () => {
 };
 
 export default SongDescription;
+  
