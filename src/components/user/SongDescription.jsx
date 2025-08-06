@@ -303,7 +303,7 @@ const SongDescription = () => {
 
   return (
     <div
-      className={`fixed inset-0 z-[10000] bg-gradient-to-t ${
+      className={`fixed inset-0 md:pb-0 pb-16 z-[10000] bg-gradient-to-t ${
         theme.colors.backgroundOverlay
       } flex flex-col md:relative md:inset-auto md:max-w-[400px] md:shadow-lg md:rounded-lg transition-all duration-300 ease-out backdrop-blur-md ${
         isVisible && !isClosing
@@ -547,4 +547,3 @@ const SongDescription = () => {
 };
 
 export default SongDescription;
-  

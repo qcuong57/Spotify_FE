@@ -433,7 +433,7 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
       <div
         className={`fixed bottom-0 left-0 right-0 bg-gradient-to-t ${
           theme.colors.backgroundOverlay
-        } px-2 sm:px-4 py-2 sm:py-3 z-50 pb-safe transition-transform duration-300 ease-in-out backdrop-blur-md ${
+        } px-2 sm:px-4 py-2 sm:py-3 z-[10001] pb-safe transition-transform duration-300 ease-in-out backdrop-blur-md ${
           isVisible ? "translate-y-0" : "translate-y-full"
         }`}
       >
