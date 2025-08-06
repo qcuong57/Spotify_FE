@@ -1,16 +1,18 @@
 import {
   IconHome,
   IconSearch,
-  IconArticle,
   IconLogout,
   IconMenu2,
   IconX,
   IconPalette,
+  IconMusic,
+  IconMicrophone,
 } from "@tabler/icons-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { searchSongs } from "../../services/SongsService";
+import { searchSongs, getSearchSuggestions } from "../../services/SongsService";
 import ProfilePopup from "./ProfilePopup";
+import React from "react";
 import { useTheme } from "../../context/themeContext.js";
 
 const Header = ({ setCurrentView, setListSongsDetail }) => {
@@ -21,6 +23,23 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showMobileSearch, setShowMobileSearch] = useState(false);
   const { theme, setShowThemeSelector } = useTheme();
+
+  // Search states
+  const [suggestions, setSuggestions] = useState({
+    songs: [],
+    singers: [],
+  });
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchTimeout, setSearchTimeout] = useState(null);
+
+  // Refs for suggestion handling
+  const searchInputRef = useRef(null);
+  const mobileSearchInputRef = useRef(null);
+  const suggestionsRef = useRef(null);
+  const mobileSuggestionsRef = useRef(null);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -37,20 +56,315 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
     navigate("/login");
   };
 
-  const handleSearchChange = async () => {
-    if (!searchText.trim()) return;
-    try {
-      const response = await searchSongs(searchText);
-      const data = {
-        songs: response.data.results,
-        title: "Tìm kiếm: " + searchText,
-      };
-      setListSongsDetail(data);
-      setCurrentView("listSongs");
-      setShowMobileSearch(false);
-    } catch (error) {
-      console.error("Error fetching songs:", error);
+  // Fetch suggestions with debounce
+  const fetchSuggestions = async (query) => {
+    if (!query.trim() || query.length < 2) {
+      setSuggestions({ songs: [], singers: [] });
+      setShowSuggestions(false);
+      return;
     }
+
+    setIsLoadingSuggestions(true);
+    try {
+      const response = await getSearchSuggestions(query, 5);
+      setSuggestions(response.data.suggestions);
+      setShowSuggestions(true);
+      setSelectedSuggestionIndex(-1);
+    } catch (error) {
+      console.error("Error fetching suggestions:", error);
+      setSuggestions({ songs: [], singers: [] });
+    } finally {
+      setIsLoadingSuggestions(false);
+    }
+  };
+
+  // Handle search input change with debounce
+  const handleSearchInputChange = (value) => {
+    setSearchText(value);
+    setSelectedSuggestionIndex(-1);
+
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
+
+    const newTimeout = setTimeout(() => {
+      fetchSuggestions(value);
+    }, 300);
+
+    setSearchTimeout(newTimeout);
+  };
+
+  // Search execution
+  const handleSearchChange = async (searchQuery = searchText) => {
+    const query = searchQuery.trim();
+    if (!query) return;
+
+    setIsSearching(true);
+
+    try {
+      // Show loading state
+      const loadingData = {
+        songs: [],
+        title: `Đang tìm kiếm: ${query}`,
+        subtitle: "Tìm kiếm bài hát và nghệ sĩ",
+        searchQuery: query,
+        isLoading: true,
+      };
+      setListSongsDetail(loadingData);
+      setCurrentView("listSongs");
+
+      // Close mobile components
+      setShowMobileSearch(false);
+      setShowSuggestions(false);
+
+      // Perform search
+      const response = await searchSongs(query, 1, 50);
+
+      // Prepare result data
+      let title = `Tìm kiếm: "${query}"`;
+      let subtitle = "";
+
+      if (response.data.results && response.data.results.length > 0) {
+        subtitle = `Tìm thấy ${response.data.results.length} kết quả`;
+      } else {
+        subtitle = "Không tìm thấy kết quả";
+      }
+
+      const searchData = {
+        songs: response.data.results || [],
+        title: title,
+        subtitle: subtitle,
+        searchQuery: query,
+        totalResults: response.data.count || 0,
+        isLoading: false,
+      };
+
+      setListSongsDetail(searchData);
+      setSuggestions({ songs: [], singers: [] });
+    } catch (error) {
+      console.error("Error searching songs:", error);
+
+      const errorData = {
+        songs: [],
+        title: `Lỗi tìm kiếm: "${query}"`,
+        subtitle: "Không thể thực hiện tìm kiếm. Vui lòng thử lại.",
+        searchQuery: query,
+        error: error.message,
+        isLoading: false,
+      };
+      setListSongsDetail(errorData);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // Handle suggestion click
+  const handleSuggestionClick = (suggestion) => {
+    setSearchText(suggestion);
+    setShowSuggestions(false);
+    setSelectedSuggestionIndex(-1);
+    handleSearchChange(suggestion);
+  };
+
+  // Handle keyboard navigation
+  const handleKeyDown = (e) => {
+    const allSuggestions = [
+      ...suggestions.songs.map((s) => ({ text: s, type: "song" })),
+      ...suggestions.singers.map((s) => ({ text: s, type: "singer" })),
+    ];
+
+    if (!showSuggestions || allSuggestions.length === 0) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        handleSearchChange();
+      }
+      return;
+    }
+
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        setSelectedSuggestionIndex((prev) => {
+          const newIndex = prev < allSuggestions.length - 1 ? prev + 1 : 0;
+          return newIndex;
+        });
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        setSelectedSuggestionIndex((prev) => {
+          const newIndex = prev > 0 ? prev - 1 : allSuggestions.length - 1;
+          return newIndex >= 0 ? newIndex : allSuggestions.length - 1;
+        });
+        break;
+      case "Enter":
+        e.preventDefault();
+        if (
+          selectedSuggestionIndex >= 0 &&
+          selectedSuggestionIndex < allSuggestions.length
+        ) {
+          const selected = allSuggestions[selectedSuggestionIndex];
+          handleSuggestionClick(selected.text);
+        } else {
+          handleSearchChange();
+        }
+        break;
+      case "Escape":
+        e.preventDefault();
+        setShowSuggestions(false);
+        setSelectedSuggestionIndex(-1);
+        break;
+    }
+  };
+
+  // Close suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        suggestionsRef.current &&
+        !suggestionsRef.current.contains(event.target) &&
+        searchInputRef.current &&
+        !searchInputRef.current.contains(event.target) &&
+        mobileSuggestionsRef.current &&
+        !mobileSuggestionsRef.current.contains(event.target) &&
+        mobileSearchInputRef.current &&
+        !mobileSearchInputRef.current.contains(event.target)
+      ) {
+        setShowSuggestions(false);
+        setSelectedSuggestionIndex(-1);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  // Updated Suggestions component with MAXIMUM z-index
+  const SuggestionsList = ({
+    suggestions,
+    isLoadingSuggestions,
+    selectedIndex,
+    onSuggestionClick,
+    isMobile = false,
+  }) => {
+    const allSuggestions = [
+      ...suggestions.songs.map((s) => ({
+        text: s,
+        type: "song",
+        icon: IconMusic,
+        label: "Bài hát",
+      })),
+      ...suggestions.singers.map((s) => ({
+        text: s,
+        type: "singer",
+        icon: IconMicrophone,
+        label: "Nghệ sĩ",
+      })),
+    ];
+
+    if (isLoadingSuggestions) {
+      return (
+        <div
+          className="fixed top-full left-0 right-0 mt-1 rounded-lg shadow-2xl backdrop-blur-xl max-h-64 overflow-y-auto"
+          style={{
+            position: "fixed",
+            top: isMobile ? "120px" : "80px",
+            left: isMobile ? "16px" : "50%",
+            right: isMobile ? "16px" : "auto",
+            transform: isMobile ? "none" : "translateX(-50%)",
+            width: isMobile ? "calc(100% - 32px)" : "400px",
+            maxWidth: isMobile ? "none" : "90vw",
+            zIndex: 99999,
+            background: "rgba(0, 0, 0, 0.95)",
+            backdropFilter: "blur(20px)",
+            border: "1px solid rgba(255, 255, 255, 0.2)",
+            borderRadius: "12px",
+            boxShadow:
+              "0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.1)",
+          }}
+        >
+          <div className="p-3 text-center text-white/90">
+            <div className="animate-spin w-5 h-5 border-2 border-white/40 border-t-white rounded-full mx-auto"></div>
+            <span className="text-sm mt-2 block">Đang tìm kiếm...</span>
+          </div>
+        </div>
+      );
+    }
+
+    if (allSuggestions.length === 0) return null;
+
+    return (
+      <div
+        ref={isMobile ? mobileSuggestionsRef : suggestionsRef}
+        className="fixed rounded-lg shadow-2xl backdrop-blur-xl max-h-64 overflow-y-auto"
+        style={{
+          position: "fixed",
+          top: isMobile ? "120px" : "80px",
+          left: isMobile ? "16px" : "50%",
+          right: isMobile ? "16px" : "auto",
+          transform: isMobile ? "none" : "translateX(-50%)",
+          width: isMobile ? "calc(100% - 32px)" : "400px",
+          maxWidth: isMobile ? "none" : "90vw",
+          zIndex: 99999,
+          background: "rgba(0, 0, 0, 0.95)",
+          backdropFilter: "blur(20px)",
+          border: "1px solid rgba(255, 255, 255, 0.2)",
+          borderRadius: "12px",
+          boxShadow:
+            "0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.1)",
+        }}
+      >
+        {allSuggestions.map((suggestion, index) => {
+          const IconComponent = suggestion.icon;
+          const isSelected = index === selectedIndex;
+
+          return (
+            <div
+              key={`${suggestion.type}-${suggestion.text}-${index}`}
+              className={`
+              flex items-center px-4 py-3 cursor-pointer transition-all duration-200
+              ${
+                isSelected
+                  ? `border-l-4 border-white text-white`
+                  : "text-white/90 hover:text-white border-l-4 border-transparent"
+              }
+              ${index === 0 ? "rounded-t-lg" : ""}
+              ${index === allSuggestions.length - 1 ? "rounded-b-lg" : ""}
+            `}
+              style={{
+                background: isSelected
+                  ? `linear-gradient(90deg, ${
+                      theme.colors.rgb?.buttonGradient?.hover ||
+                      "rgba(255, 255, 255, 0.15)"
+                    }, transparent)`
+                  : "transparent",
+              }}
+              onMouseEnter={(e) => {
+                if (!isSelected) {
+                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isSelected) {
+                  e.currentTarget.style.background = "transparent";
+                }
+              }}
+              onClick={() => onSuggestionClick(suggestion.text)}
+            >
+              <IconComponent className="w-4 h-4 mr-3 opacity-80" />
+              <div className="flex-1">
+                <div className="text-sm font-medium">{suggestion.text}</div>
+                <div className="text-xs opacity-70">{suggestion.label}</div>
+              </div>
+              {isSelected && (
+                <div className="w-2 h-2 bg-white rounded-full opacity-90"></div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
   };
 
   const toggleProfilePopup = () => {
@@ -64,13 +378,12 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
   const handleMobileMenuToggle = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log("Mobile menu clicked"); // Debug log
     setShowMobileMenu(true);
   };
 
   return (
     <>
-      {/* Enhanced header with dynamic theme styling */}
+      {/* Header */}
       <div
         className={`
           relative flex h-16 md:h-20 flex-row items-center text-white 
@@ -79,9 +392,10 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
           shadow-lg shadow-${theme.colors.primary}-500/20
           before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/5 before:to-transparent
         `}
+        style={{ zIndex: 1000 }}
       >
         <div className="flex flex-1 flex-row items-center relative z-10">
-          {/* Logo with enhanced glow */}
+          {/* Logo */}
           <div className="relative group">
             <img
               className="h-8 md:h-12 cursor-pointer mr-3 md:mr-4 transition-all duration-300 hover:scale-110 drop-shadow-lg"
@@ -92,7 +406,7 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Title with dynamic gradient */}
+            {/* Title */}
             <h4
               className={`
                 text-2xl font-extrabold bg-gradient-to-r ${theme.colors.gradient} 
@@ -103,7 +417,7 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
               UIAMusic
             </h4>
 
-            {/* Enhanced Home button with dynamic theme styling */}
+            {/* Home button */}
             <button
               className={`
                 bg-${theme.colors.primary}-600/60 hover:bg-${theme.colors.secondary}-600/80 
@@ -134,37 +448,56 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
             </button>
           </div>
 
-          {/* Desktop Search with dynamic theme */}
-          <div
-            className={`
-              hidden md:flex flex-1 flex-row items-center rounded-full max-w-md mx-4
-              bg-${theme.colors.card} border border-${theme.colors.border} 
-              shadow-lg shadow-${theme.colors.primary}-500/25
-              backdrop-blur-md px-4 py-2
-              transition-all duration-300 hover:scale-105
-              relative overflow-hidden
-            `}
-          >
-            <IconSearch
-              stroke={2}
-              className={`w-5 h-5 md:w-6 md:h-6 cursor-pointer text-white hover:text-${theme.colors.secondary}-300 transition-colors z-10`}
-              onClick={handleSearchChange}
-            />
-            <input
-              type="text"
-              placeholder="Tìm kiếm bài hát..."
-              className="flex-1 mx-2 bg-transparent border-none outline-none text-sm text-white placeholder-white/70 z-10"
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  handleSearchChange();
-                }
-              }}
-            />
+          {/* Desktop Search - Updated with relative positioning */}
+          <div className="hidden md:flex flex-1 flex-row items-center max-w-md mx-4 relative">
+            <div
+              className={`
+                flex flex-1 flex-row items-center rounded-full
+                bg-${theme.colors.card} border border-${theme.colors.border} 
+                shadow-lg shadow-${theme.colors.primary}-500/25
+                backdrop-blur-md
+                transition-all duration-300 hover:scale-105
+                relative overflow-hidden
+              `}
+            >
+              <input
+                ref={searchInputRef}
+                type="text"
+                placeholder="Tìm kiếm bài hát, nghệ sĩ..."
+                className="flex-1 px-4 py-2 bg-transparent border-none outline-none text-sm text-white placeholder-white/70 z-10"
+                value={searchText}
+                onChange={(e) => handleSearchInputChange(e.target.value)}
+                onKeyDown={handleKeyDown}
+                onFocus={() => {
+                  if (searchText.length >= 2) {
+                    setShowSuggestions(true);
+                  }
+                }}
+                disabled={isSearching}
+              />
+
+              <button
+                onClick={() => handleSearchChange()}
+                disabled={isSearching || !searchText.trim()}
+                className={`
+                  p-2 mr-2 hover:bg-white/10 rounded-full transition-colors z-10
+                  ${
+                    isSearching || !searchText.trim()
+                      ? "opacity-50 cursor-not-allowed"
+                      : "cursor-pointer"
+                  }
+                `}
+              >
+                {isSearching ? (
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  <IconSearch stroke={2} className="w-5 h-5 text-white" />
+                )}
+              </button>
+            </div>
           </div>
 
-          {/* Mobile Search Icon with dynamic theme */}
+          {/* Mobile Search Icon */}
           <button
             className={`
               md:hidden w-8 h-8 cursor-pointer ml-auto mr-3 rounded-full
@@ -180,9 +513,9 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
           </button>
         </div>
 
-        {/* Enhanced Desktop Menu */}
+        {/* Desktop Menu */}
         <div className="hidden md:flex flex-row items-center gap-4 relative z-10">
-          {/* Enhanced Theme Button with dynamic styling */}
+          {/* Theme Button */}
           <button
             onClick={() => setShowThemeSelector(true)}
             className={`
@@ -251,7 +584,7 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
           )}
         </div>
 
-        {/* Mobile Menu Button - FIXED VERSION */}
+        {/* Mobile Menu Button */}
         <button
           className={`
             md:hidden w-10 h-10 cursor-pointer rounded-full
@@ -274,7 +607,17 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
         </button>
       </div>
 
-      {/* Enhanced Mobile Search Modal with dynamic theme */}
+      {/* Desktop Suggestions - Render outside header */}
+      {showSuggestions && !showMobileSearch && (
+        <SuggestionsList
+          suggestions={suggestions}
+          isLoadingSuggestions={isLoadingSuggestions}
+          selectedIndex={selectedSuggestionIndex}
+          onSuggestionClick={handleSuggestionClick}
+        />
+      )}
+
+      {/* Mobile Search Modal */}
       {showMobileSearch && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 md:hidden">
           <div
@@ -283,38 +626,75 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
             <div className="flex items-center mb-4">
               <button
                 className="w-8 h-8 cursor-pointer rounded-full bg-white/20 flex items-center justify-center mr-3 hover:bg-white/30 transition-colors"
-                onClick={() => setShowMobileSearch(false)}
+                onClick={() => {
+                  setShowMobileSearch(false);
+                  setShowSuggestions(false);
+                }}
               >
                 <IconX stroke={2} className="w-5 h-5 text-white" />
               </button>
-              <div
-                className={`
-                  flex-1 bg-${theme.colors.card} border border-${theme.colors.border}
-                  shadow-lg shadow-${theme.colors.primary}-500/25
-                  px-4 py-2 rounded-full flex items-center backdrop-blur-md
-                `}
-              >
-                <IconSearch stroke={2} className="w-5 h-5 text-white mr-2" />
-                <input
-                  type="text"
-                  placeholder="Tìm kiếm bài hát..."
-                  className="flex-1 bg-transparent border-none outline-none text-sm text-white placeholder-white/70"
-                  value={searchText}
-                  onChange={(e) => setSearchText(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      handleSearchChange();
-                    }
-                  }}
-                  autoFocus
-                />
+
+              <div className="flex-1 relative">
+                <div
+                  className={`
+                    bg-${theme.colors.card} border border-${theme.colors.border}
+                    shadow-lg shadow-${theme.colors.primary}-500/25
+                    px-4 py-2 rounded-full flex items-center backdrop-blur-md
+                  `}
+                >
+                  <input
+                    ref={mobileSearchInputRef}
+                    type="text"
+                    placeholder="Tìm kiếm bài hát, nghệ sĩ..."
+                    className="flex-1 bg-transparent border-none outline-none text-sm text-white placeholder-white/70"
+                    value={searchText}
+                    onChange={(e) => handleSearchInputChange(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    onFocus={() => {
+                      if (searchText.length >= 2) {
+                        setShowSuggestions(true);
+                      }
+                    }}
+                    autoFocus
+                    disabled={isSearching}
+                  />
+                  <button
+                    onClick={() => handleSearchChange()}
+                    disabled={isSearching || !searchText.trim()}
+                    className={`
+                      ml-2 p-1 hover:bg-white/10 rounded-full transition-colors
+                      ${
+                        isSearching || !searchText.trim()
+                          ? "opacity-50 cursor-not-allowed"
+                          : "cursor-pointer"
+                      }
+                    `}
+                  >
+                    {isSearching ? (
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    ) : (
+                      <IconSearch stroke={2} className="w-4 h-4 text-white" />
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
+
+          {/* Mobile Suggestions - Render inside modal */}
+          {showSuggestions && (
+            <SuggestionsList
+              suggestions={suggestions}
+              isLoadingSuggestions={isLoadingSuggestions}
+              selectedIndex={selectedSuggestionIndex}
+              onSuggestionClick={handleSuggestionClick}
+              isMobile={true}
+            />
+          )}
         </div>
       )}
 
-      {/* Enhanced Mobile Menu with dynamic theme */}
+      {/* Mobile Menu */}
       {showMobileMenu && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 md:hidden">
           <div

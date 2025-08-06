@@ -1,7 +1,39 @@
 import axiosCustom from "../utils/axiosCustom";
 
+// Enhanced error handling function
+const handleApiError = (error, context = "API request") => {
+  console.error(`${context} error:`, error);
+
+  if (error.response) {
+    // Server responded with error status
+    const status = error.response.status;
+    const data = error.response.data;
+
+    switch (status) {
+      case 400:
+        throw new Error(data.error || "Invalid request parameters");
+      case 404:
+        throw new Error("Resource not found");
+      case 500:
+        throw new Error(data.error || "Server error occurred");
+      default:
+        throw new Error(`Server error: ${status}`);
+    }
+  } else if (error.request) {
+    // Request made but no response received
+    throw new Error("Network error: Unable to connect to server");
+  } else {
+    // Something else happened
+    throw new Error(error.message || "An unexpected error occurred");
+  }
+};
+
 export const getAllSongs = async (page = 1, size = 50) => {
-  return await axiosCustom.get(`/api/songs/?page=${page}&page_size=${size}`);
+  try {
+    return await axiosCustom.get(`/api/songs/?page=${page}&page_size=${size}`);
+  } catch (error) {
+    handleApiError(error, "Get all songs");
+  }
 };
 
 // New function to get all songs with pagination
@@ -13,21 +45,26 @@ export const getAllSongsWithPagination = async () => {
 
   try {
     while (hasMore) {
-      const response = await axiosCustom.get(
-        `/api/songs/?page=${currentPage}&page_size=${pageSize}`
-      );
+      try {
+        const response = await axiosCustom.get(
+          `/api/songs/?page=${currentPage}&page_size=${pageSize}`
+        );
 
-      if (response?.data?.results && response.data.results.length > 0) {
-        allSongs = [...allSongs, ...response.data.results];
+        if (response?.data?.results && response.data.results.length > 0) {
+          allSongs = [...allSongs, ...response.data.results];
 
-        // Check if there are more pages
-        // Assuming the API returns total count or next page info
-        const totalCount = response.data.count;
-        const totalPages = Math.ceil(totalCount / pageSize);
+          // Check if there are more pages
+          const totalCount = response.data.count;
+          const totalPages = Math.ceil(totalCount / pageSize);
 
-        hasMore = currentPage < totalPages;
-        currentPage++;
-      } else {
+          hasMore = currentPage < totalPages;
+          currentPage++;
+        } else {
+          hasMore = false;
+        }
+      } catch (pageError) {
+        console.error(`Error fetching page ${currentPage}:`, pageError);
+        // Continue with next page or break if too many errors
         hasMore = false;
       }
     }
@@ -39,102 +76,249 @@ export const getAllSongsWithPagination = async () => {
       },
     };
   } catch (error) {
-    console.error("Error fetching all songs:", error);
-    throw error;
+    handleApiError(error, "Get all songs with pagination");
   }
 };
 
-export const searchSongs = async (query, page = 1, size = 10) => {
-  return await axiosCustom.get(
-    `/api/songs/search/?q=${encodeURIComponent(
-      query
-    )}&page=${page}&page_size=${size}`
-  );
+// Đơn giản hóa search function - chỉ tìm bài hát và ca sĩ
+export const searchSongs = async (query, page = 1, size = 50) => {
+  try {
+    // Input validation
+    if (!query || typeof query !== "string") {
+      throw new Error("Search query is required and must be a string");
+    }
+
+    const trimmedQuery = query.trim();
+    if (trimmedQuery.length < 1) {
+      throw new Error("Search query cannot be empty");
+    }
+
+    // Build URL đơn giản - chỉ tìm bài hát và ca sĩ
+    const url = `/api/songs/search/?q=${encodeURIComponent(
+      trimmedQuery
+    )}&page=${page}&page_size=${size}`;
+
+    console.log("Making search request to:", url);
+
+    const response = await axiosCustom.get(url);
+    return response;
+  } catch (error) {
+    console.error("Search songs error:", error);
+
+    if (error.response) {
+      const status = error.response.status;
+      const data = error.response.data;
+
+      switch (status) {
+        case 400:
+          throw new Error("Tham số tìm kiếm không hợp lệ");
+        case 404:
+          throw new Error("Không tìm thấy kết quả");
+        case 500:
+          throw new Error("Lỗi server khi tìm kiếm");
+        default:
+          throw new Error(`Lỗi server: ${status}`);
+      }
+    } else if (error.request) {
+      throw new Error("Lỗi mạng: Không thể kết nối đến server");
+    } else {
+      throw new Error(error.message || "Đã xảy ra lỗi không mong muốn");
+    }
+  }
+};
+
+// Đơn giản hóa search suggestions - chỉ bài hát và ca sĩ
+export const getSearchSuggestions = async (query, limit = 5) => {
+  try {
+    if (!query || typeof query !== "string") {
+      return { data: { suggestions: { songs: [], singers: [] } } };
+    }
+
+    const trimmedQuery = query.trim();
+    if (trimmedQuery.length < 2) {
+      return { data: { suggestions: { songs: [], singers: [] } } };
+    }
+
+    const validLimit = Math.min(Math.max(parseInt(limit) || 5, 1), 10);
+
+    const response = await axiosCustom.get(
+      `/api/songs/search-suggestions/?q=${encodeURIComponent(
+        trimmedQuery
+      )}&limit=${validLimit}`
+    );
+
+    // Đảm bảo response có structure đúng
+    if (!response.data?.suggestions) {
+      return { data: { suggestions: { songs: [], singers: [] } } };
+    }
+
+    return response;
+  } catch (error) {
+    console.error("Search suggestions error:", error);
+    // Trả về empty suggestions thay vì throw error
+    return { data: { suggestions: { songs: [], singers: [] } } };
+  }
 };
 
 export const getSongById = async (id) => {
-  return await axiosCustom.get(`/api/songs/${id}/`);
+  try {
+    if (!id) {
+      throw new Error("Song ID is required");
+    }
+    return await axiosCustom.get(`/api/songs/${id}/`);
+  } catch (error) {
+    handleApiError(error, "Get song by ID");
+  }
 };
 
 export const createSong = async (songData) => {
-  const formData = new FormData();
-  formData.append("song_name", songData.song_name);
-  formData.append("singer_name", songData.singer_name);
-  formData.append("genre", songData.genre_id);
-  // Thêm lyrics vào formData
-  if (songData.lyrics) formData.append("lyrics", songData.lyrics);
-  if (songData.audio_file) formData.append("audio_file", songData.audio_file);
-  if (songData.image_file) formData.append("image_file", songData.image_file);
-  if (songData.video_file) formData.append("video_file", songData.video_file);
+  try {
+    if (!songData?.song_name?.trim()) {
+      throw new Error("Song name is required");
+    }
+    if (!songData?.singer_name?.trim()) {
+      throw new Error("Singer name is required");
+    }
+    if (!songData?.genre_id) {
+      throw new Error("Genre is required");
+    }
 
-  return await axiosCustom.post("/api/songs/", formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
+    const formData = new FormData();
+    formData.append("song_name", songData.song_name.trim());
+    formData.append("singer_name", songData.singer_name.trim());
+    formData.append("genre", songData.genre_id);
+
+    // Add lyrics to formData
+    if (songData.lyrics) formData.append("lyrics", songData.lyrics);
+    if (songData.audio_file) formData.append("audio_file", songData.audio_file);
+    if (songData.image_file) formData.append("image_file", songData.image_file);
+    if (songData.video_file) formData.append("video_file", songData.video_file);
+
+    return await axiosCustom.post("/api/songs/", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  } catch (error) {
+    handleApiError(error, "Create song");
+  }
 };
 
 export const updateSong = async (id, songData, currentUrls) => {
-  console.log(songData);
+  try {
+    if (!id) {
+      throw new Error("Song ID is required for update");
+    }
+    if (!songData?.song_name?.trim()) {
+      throw new Error("Song name is required");
+    }
+    if (!songData?.singer_name?.trim()) {
+      throw new Error("Singer name is required");
+    }
+    if (!songData?.genre_id) {
+      throw new Error("Genre is required");
+    }
 
-  const formData = new FormData();
-  formData.append("song_name", songData.song_name);
-  formData.append("singer_name", songData.singer_name);
-  formData.append("genre", songData.genre_id);
-  // Thêm lyrics vào formData
-  if (songData.lyrics !== undefined) formData.append("lyrics", songData.lyrics);
-  if (songData.audio_file) formData.append("audio_file", songData.audio_file);
-  else if (currentUrls.url_audio)
-    formData.append("url_audio", currentUrls.url_audio);
-  if (songData.image_file) formData.append("image_file", songData.image_file);
-  else if (currentUrls.image) formData.append("image", currentUrls.image);
-  if (songData.video_file) formData.append("video_file", songData.video_file);
-  else if (currentUrls.url_video)
-    formData.append("url_video", currentUrls.url_video);
+    console.log("Updating song with data:", songData);
 
-  // Log FormData content correctly
-  for (let [key, value] of formData.entries()) {
-    console.log(`${key}:`, value);
+    const formData = new FormData();
+    formData.append("song_name", songData.song_name.trim());
+    formData.append("singer_name", songData.singer_name.trim());
+    formData.append("genre", songData.genre_id);
+
+    // Add lyrics to formData
+    if (songData.lyrics !== undefined)
+      formData.append("lyrics", songData.lyrics);
+    if (songData.audio_file) formData.append("audio_file", songData.audio_file);
+    else if (currentUrls?.url_audio)
+      formData.append("url_audio", currentUrls.url_audio);
+    if (songData.image_file) formData.append("image_file", songData.image_file);
+    else if (currentUrls?.image) formData.append("image", currentUrls.image);
+    if (songData.video_file) formData.append("video_file", songData.video_file);
+    else if (currentUrls?.url_video)
+      formData.append("url_video", currentUrls.url_video);
+
+    // Log FormData content for debugging
+    for (let [key, value] of formData.entries()) {
+      console.log(`${key}:`, value);
+    }
+
+    return await axiosCustom.put(`/api/songs/${id}/`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  } catch (error) {
+    handleApiError(error, "Update song");
   }
-
-  return await axiosCustom.put(`/api/songs/${id}/`, formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
 };
 
 export const deleteSong = async (id) => {
-  return await axiosCustom.delete(`/api/songs/${id}/`);
+  try {
+    if (!id) {
+      throw new Error("Song ID is required for deletion");
+    }
+    return await axiosCustom.delete(`/api/songs/${id}/`);
+  } catch (error) {
+    handleApiError(error, "Delete song");
+  }
 };
 
-// Thêm function để lấy lyrics riêng (tùy chọn)
+// Get song lyrics with error handling
 export const getSongLyrics = async (id) => {
-  return await axiosCustom.get(`/api/songs/${id}/lyrics/`);
+  try {
+    if (!id) {
+      throw new Error("Song ID is required");
+    }
+    return await axiosCustom.get(`/api/songs/${id}/lyrics/`);
+  } catch (error) {
+    handleApiError(error, "Get song lyrics");
+  }
 };
 
-// Thêm function để cập nhật chỉ lyrics (tùy chọn)
+// Update song lyrics with error handling
 export const updateSongLyrics = async (id, lyrics) => {
-  return await axiosCustom.patch(`/api/songs/${id}/lyrics/`, { lyrics });
+  try {
+    if (!id) {
+      throw new Error("Song ID is required");
+    }
+    return await axiosCustom.patch(`/api/songs/${id}/lyrics/`, { lyrics });
+  } catch (error) {
+    handleApiError(error, "Update song lyrics");
+  }
 };
 
 // ==================== RANKING & STATS APIs ====================
 
-// Tăng lượt nghe khi phát nhạc
+// Increment play count when playing music
 export const incrementPlayCount = async (songId) => {
-  return await axiosCustom.post(`/api/songs/${songId}/play/`);
-};
-
-// Lấy top bài hát theo lượt nghe
-export const getTopSongs = async (limit = 10, genreId = null) => {
-  let url = `/api/songs/top-songs/?limit=${limit}`;
-  if (genreId) {
-    url += `&genre=${genreId}`;
+  try {
+    if (!songId) {
+      throw new Error("Song ID is required");
+    }
+    return await axiosCustom.post(`/api/songs/${songId}/play/`);
+  } catch (error) {
+    handleApiError(error, "Increment play count");
   }
-  return await axiosCustom.get(url);
 };
 
-// Lấy bài hát trending (mới và có lượt nghe cao) - Updated
+// Get top songs by play count
+export const getTopSongs = async (limit = 10, genreId = null) => {
+  try {
+    const validLimit = Math.min(Math.max(parseInt(limit) || 10, 1), 100);
+    let url = `/api/songs/top-songs/?limit=${validLimit}`;
+    if (genreId) {
+      url += `&genre=${genreId}`;
+    }
+    return await axiosCustom.get(url);
+  } catch (error) {
+    handleApiError(error, "Get top songs");
+  }
+};
+
+// Get trending songs (new with high play count)
 export const getTrendingSongs = async (limit = 20) => {
   try {
+    const validLimit = Math.min(Math.max(parseInt(limit) || 20, 1), 50);
+
     const response = await axiosCustom.get(
-      `/api/songs/trending/?limit=${limit}`
+      `/api/songs/trending/?limit=${validLimit}`
     );
 
     // Transform response to add rank if not present
@@ -155,24 +339,37 @@ export const getTrendingSongs = async (limit = 20) => {
 
     return response;
   } catch (error) {
-    console.error("Error fetching trending songs:", error);
-    throw error;
+    handleApiError(error, "Get trending songs");
   }
 };
 
-// Lấy xếp hạng theo từng thể loại
+// Get ranking by each genre
 export const getGenreRanking = async (limitPerGenre = 5) => {
-  return await axiosCustom.get(
-    `/api/songs/genre-ranking/?limit=${limitPerGenre}`
-  );
+  try {
+    const validLimit = Math.min(Math.max(parseInt(limitPerGenre) || 5, 1), 10);
+    return await axiosCustom.get(
+      `/api/songs/genre-ranking/?limit=${validLimit}`
+    );
+  } catch (error) {
+    handleApiError(error, "Get genre ranking");
+  }
 };
 
-// Lấy thống kê tổng quan
+// Get general statistics
 export const getStats = async () => {
-  return await axiosCustom.get(`/api/songs/stats/`);
+  try {
+    return await axiosCustom.get(`/api/songs/stats/`);
+  } catch (error) {
+    handleApiError(error, "Get statistics");
+  }
 };
 
-// Lấy bài hát mới nhất
+// Get latest songs
 export const getLatestSongs = async (limit = 10) => {
-  return await axiosCustom.get(`/api/songs/latest/?limit=${limit}`);
+  try {
+    const validLimit = Math.min(Math.max(parseInt(limit) || 10, 1), 100);
+    return await axiosCustom.get(`/api/songs/latest/?limit=${validLimit}`);
+  } catch (error) {
+    handleApiError(error, "Get latest songs");
+  }
 };
