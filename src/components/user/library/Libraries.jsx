@@ -7,6 +7,7 @@ import {
   IconWorld,
   IconMail,
   IconCreditCard,
+  IconChevronLeft, // Thêm icon này
 } from "@tabler/icons-react";
 import { useTheme } from "../../../context/themeContext";
 import {
@@ -15,7 +16,7 @@ import {
 } from "../../../services/playlistService";
 import { usePlayList } from "../../../utils/playlistContext";
 
-const Library = ({ playlist, setCurrentView, index, theme }) => {
+const Library = ({ playlist, setCurrentView, index, theme, onLibraryClose }) => {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -28,6 +29,10 @@ const Library = ({ playlist, setCurrentView, index, theme }) => {
   const handlePlaylistClick = () => {
     console.log("Clicking playlist:", playlist);
     setCurrentView(playlist);
+    // Đóng Libraries trên mobile sau khi chọn playlist
+    if (window.innerWidth < 768) {
+      onLibraryClose();
+    }
   };
 
   return (
@@ -217,6 +222,11 @@ const Libraries = ({ setCurrentView, onClose }) => {
     }, 300);
   };
 
+  // Hàm để đóng Libraries và quay lại MyLibrary
+  const handleLibraryClose = () => {
+    onClose();
+  };
+
   const handleCreatePlaylist = async () => {
     if (!user) {
       setShowLoginPrompt(true);
@@ -269,7 +279,10 @@ const Libraries = ({ setCurrentView, onClose }) => {
         setTimeout(() => {
           console.log("Libraries - navigating to new playlist:", newPlaylist);
           setCurrentView(newPlaylist);
-          handleClose();
+          // Đóng Libraries trên mobile
+          if (window.innerWidth < 768) {
+            handleLibraryClose();
+          }
         }, 100);
       } else {
         console.error("Libraries - Invalid response format:", response);
@@ -317,17 +330,44 @@ const Libraries = ({ setCurrentView, onClose }) => {
 
   return (
     <div
-      className={`flex w-full flex-col bg-gradient-to-b ${
-        theme.colors.backgroundOverlay
-      } backdrop-blur-md px-2 md:px-4 text-white rounded-r-lg relative md:w-[420px] transition-all duration-300 ease-out shadow-2xl ${
-        isVisible && !isClosing
-          ? "translate-x-0 opacity-100"
-          : "translate-x-[-100%] opacity-0"
-      }`}
+      className={`
+        /* Mobile: Full screen overlay */
+        fixed inset-0 z-50 bg-gradient-to-b ${theme.colors.backgroundOverlay} backdrop-blur-md
+        /* Tablet và Desktop: Sidebar bình thường */
+        md:relative md:inset-auto md:flex md:w-full md:max-w-[420px] md:z-auto
+        flex flex-col text-white rounded-r-lg px-2 md:px-4 
+        transition-all duration-300 ease-out shadow-2xl 
+        ${
+          isVisible && !isClosing
+            ? "translate-x-0 opacity-100"
+            : "translate-x-[-100%] opacity-0"
+        }
+      `}
     >
+      {/* Mobile Back Button */}
       <button
         onClick={handleClose}
-        className={`absolute top-3 right-3 z-10 bg-${
+        className={`md:hidden absolute top-4 left-4 z-10 bg-${
+          theme.colors.card
+        } hover:bg-${
+          theme.colors.cardHover
+        } rounded-full p-2 transition-all duration-300 group shadow-lg ${
+          isVisible && !isClosing
+            ? "scale-100 opacity-100"
+            : "scale-0 opacity-0"
+        }`}
+        title="Quay lại"
+      >
+        <IconChevronLeft
+          stroke={2}
+          className={`w-5 h-5 text-${theme.colors.text} group-hover:text-white transition-colors duration-200`}
+        />
+      </button>
+
+      {/* Desktop Close Button */}
+      <button
+        onClick={handleClose}
+        className={`hidden md:block absolute top-3 right-3 z-10 bg-${
           theme.colors.card
         } hover:bg-${
           theme.colors.cardHover
@@ -344,22 +384,23 @@ const Libraries = ({ setCurrentView, onClose }) => {
         />
       </button>
 
+      {/* Header */}
       <div
-        className={`flex flex-row justify-between items-center pt-4 pb-6 px-2 pr-10 transition-all duration-300 delay-100 ${
+        className={`flex flex-row justify-between items-center pt-16 md:pt-4 pb-6 px-2 pr-10 transition-all duration-300 delay-100 ${
           isVisible && !isClosing
             ? "translate-y-0 opacity-100"
             : "translate-y-[-20px] opacity-0"
         }`}
       >
         <span
-          className={`text-base md:text-lg font-bold text-white bg-gradient-to-r ${theme.colors.gradient} bg-clip-text text-transparent`}
+          className={`text-xl md:text-lg font-bold text-white bg-gradient-to-r ${theme.colors.gradient} bg-clip-text text-transparent`}
         >
           Thư viện
         </span>
         <button
           className={`bg-${
             theme.colors.card
-          } flex items-center justify-center h-9 md:h-10 px-3 md:px-4 rounded-full cursor-pointer hover:bg-${
+          } flex items-center justify-center h-10 md:h-10 px-4 md:px-4 rounded-full cursor-pointer hover:bg-${
             theme.colors.cardHover
           } transition-all duration-200 hover:scale-105 shadow-lg ${
             loading ? `bg-${theme.colors.primary}-600/20` : ""
@@ -369,12 +410,12 @@ const Libraries = ({ setCurrentView, onClose }) => {
         >
           <IconPlus
             stroke={2}
-            className={`w-4 h-4 md:w-5 md:h-5 mr-1 transition-transform duration-200 text-${
+            className={`w-5 h-5 md:w-5 md:h-5 mr-2 md:mr-1 transition-transform duration-200 text-${
               theme.colors.text
             } ${loading ? "animate-spin" : ""}`}
           />
           <span
-            className={`text-sm md:text-base font-bold text-${theme.colors.text} hidden xs:inline`}
+            className={`text-sm md:text-base font-bold text-${theme.colors.text}`}
           >
             {loading ? "Tạo..." : "Tạo"}
           </span>
@@ -384,16 +425,16 @@ const Libraries = ({ setCurrentView, onClose }) => {
       {/* Login Prompt */}
       {showLoginPrompt && (
         <div
-          className={`bg-${theme.colors.card} p-4 md:p-6 rounded-lg mb-4 transition-all duration-200 shadow-lg`}
+          className={`bg-${theme.colors.card} p-4 md:p-6 rounded-lg mb-4 mx-2 transition-all duration-200 shadow-lg`}
         >
-          <h3 className="font-bold text-sm md:text-base mb-2 text-white">
+          <h3 className="font-bold text-base md:text-base mb-2 text-white">
             Vui lòng đăng nhập
           </h3>
-          <p className={`text-xs md:text-sm text-${theme.colors.text} mb-4`}>
+          <p className={`text-sm md:text-sm text-${theme.colors.text} mb-4`}>
             Bạn cần đăng nhập để tạo danh sách phát mới.
           </p>
           <button
-            className={`text-xs md:text-sm font-bold bg-${theme.colors.button} hover:bg-${theme.colors.buttonHover} text-${theme.colors.primary}-900 rounded-full py-2 px-4 transition-all duration-200 hover:scale-105 shadow-md`}
+            className={`text-sm md:text-sm font-bold bg-${theme.colors.button} hover:bg-${theme.colors.buttonHover} text-${theme.colors.primary}-900 rounded-full py-2 px-4 transition-all duration-200 hover:scale-105 shadow-md`}
             onClick={() => setShowLoginPrompt(false)}
           >
             Đóng
@@ -403,14 +444,14 @@ const Libraries = ({ setCurrentView, onClose }) => {
 
       {/* Search Bar */}
       <div
-        className={`mb-4 transition-all duration-300 delay-200 ${
+        className={`mb-4 mx-2 transition-all duration-300 delay-200 ${
           isVisible && !isClosing
             ? "translate-y-0 opacity-100"
             : "translate-y-[-20px] opacity-0"
         }`}
       >
         <div
-          className={`flex flex-1 flex-row bg-${theme.colors.card} mb-3 px-4 py-2 items-center rounded-full hover:bg-${theme.colors.cardHover} transition-colors duration-200 shadow-md`}
+          className={`flex flex-1 flex-row bg-${theme.colors.card} mb-3 px-4 py-3 md:py-2 items-center rounded-full hover:bg-${theme.colors.cardHover} transition-colors duration-200 shadow-md`}
         >
           <IconSearch
             stroke={2}
@@ -421,12 +462,12 @@ const Libraries = ({ setCurrentView, onClose }) => {
             type="text"
             placeholder="Tìm kiếm playlist..."
             value={searchValue}
-            className={`flex-1 mx-2 bg-transparent border-none outline-none text-sm text-white placeholder-${theme.colors.text} transition-all duration-200 focus:placeholder-${theme.colors.textHover}`}
+            className={`flex-1 mx-2 bg-transparent border-none outline-none text-base md:text-sm text-white placeholder-${theme.colors.text} transition-all duration-200 focus:placeholder-${theme.colors.textHover}`}
           />
           {searchValue && (
             <IconX
               stroke={2}
-              className={`w-4 h-4 text-${theme.colors.text} cursor-pointer hover:text-white transition-colors duration-200`}
+              className={`w-5 h-5 md:w-4 md:h-4 text-${theme.colors.text} cursor-pointer hover:text-white transition-colors duration-200`}
               onClick={clearSearch}
             />
           )}
@@ -435,7 +476,7 @@ const Libraries = ({ setCurrentView, onClose }) => {
 
       {/* Playlists List */}
       <div
-        className={`flex-1 overflow-y-auto space-y-2 md:space-y-3 pr-1 scrollbar-thin scrollbar-thumb-${
+        className={`flex-1 overflow-y-auto space-y-3 md:space-y-3 pr-1 mx-2 scrollbar-thin scrollbar-thumb-${
           theme.colors.primary
         }-600 scrollbar-track-transparent transition-all duration-300 delay-300 ${
           isVisible && !isClosing
@@ -446,12 +487,12 @@ const Libraries = ({ setCurrentView, onClose }) => {
         {!user ? (
           // Hiển thị khi chưa đăng nhập
           <div
-            className={`bg-${theme.colors.card} p-4 md:p-6 rounded-lg transition-all duration-200 hover:bg-${theme.colors.cardHover} shadow-lg`}
+            className={`bg-${theme.colors.card} p-6 md:p-6 rounded-lg transition-all duration-200 hover:bg-${theme.colors.cardHover} shadow-lg`}
           >
-            <h3 className="font-bold text-sm md:text-base mb-2 text-white">
+            <h3 className="font-bold text-base md:text-base mb-2 text-white">
               Đăng nhập để xem thư viện
             </h3>
-            <p className={`text-xs md:text-sm text-${theme.colors.text} mb-4`}>
+            <p className={`text-sm md:text-sm text-${theme.colors.text} mb-4`}>
               Đăng nhập để tạo và quản lý danh sách phát của bạn
             </p>
           </div>
@@ -474,29 +515,23 @@ const Libraries = ({ setCurrentView, onClose }) => {
             ))}
           </div>
         ) : filteredPlaylists.length === 0 ? (
-          // Empty state với debug info
+          // Empty state
           <div
-            className={`bg-${theme.colors.card} p-4 md:p-6 rounded-lg transition-all duration-200 hover:bg-${theme.colors.cardHover} shadow-lg`}
+            className={`bg-${theme.colors.card} p-6 md:p-6 rounded-lg transition-all duration-200 hover:bg-${theme.colors.cardHover} shadow-lg`}
           >
-            <h3 className="font-bold text-sm md:text-base mb-2 text-white">
+            <h3 className="font-bold text-base md:text-base mb-2 text-white">
               {searchValue
                 ? "Không tìm thấy playlist"
-                : "Debug: Checking playlists..."}
+                : "Chưa có playlist nào"}
             </h3>
-            <p className={`text-xs md:text-sm text-${theme.colors.text} mb-4`}>
+            <p className={`text-sm md:text-sm text-${theme.colors.text} mb-4`}>
               {searchValue
                 ? `Không có playlist nào khớp với "${searchValue}"`
-                : `Total playlists: ${playlists.length}, Filtered: ${filteredPlaylists.length}, Loading: ${loading}`}
+                : "Hãy tạo playlist đầu tiên của bạn"}
             </p>
-            <div className="text-xs text-gray-300 mt-2 space-y-1">
-              <div>User ID: {user?.id || "Not logged in"}</div>
-              <div>Refresh Key: {refreshKeyPlayLists}</div>
-              <div>Search Value: "{searchValue}"</div>
-              <div>Has Playlists: {playlists.length > 0 ? "Yes" : "No"}</div>
-            </div>
             {!searchValue && (
               <button
-                className={`mt-4 text-xs md:text-sm font-bold bg-${theme.colors.button} hover:bg-${theme.colors.buttonHover} text-${theme.colors.primary}-900 rounded-full py-2 px-4 transition-all duration-200 hover:scale-105 shadow-md`}
+                className={`text-sm md:text-sm font-bold bg-${theme.colors.button} hover:bg-${theme.colors.buttonHover} text-${theme.colors.primary}-900 rounded-full py-2 px-4 transition-all duration-200 hover:scale-105 shadow-md`}
                 onClick={handleCreatePlaylist}
                 disabled={loading}
               >
@@ -506,7 +541,7 @@ const Libraries = ({ setCurrentView, onClose }) => {
           </div>
         ) : (
           // Hiển thị danh sách playlists
-          <div className="space-y-2 md:space-y-3">
+          <div className="space-y-3 md:space-y-3">
             {filteredPlaylists.map((playlist, index) => (
               <Library
                 key={`playlist-${playlist.id}-${index}`}
@@ -514,6 +549,7 @@ const Libraries = ({ setCurrentView, onClose }) => {
                 setCurrentView={setCurrentView}
                 index={index}
                 theme={theme}
+                onLibraryClose={handleLibraryClose}
               />
             ))}
           </div>
@@ -524,20 +560,20 @@ const Libraries = ({ setCurrentView, onClose }) => {
       <div
         className={`border-t border-${
           theme.colors.border
-        } mt-4 pt-4 pb-4 transition-all duration-300 delay-400 ${
+        } mt-4 pt-4 pb-6 md:pb-4 mx-2 transition-all duration-300 delay-400 ${
           isVisible && !isClosing
             ? "translate-y-0 opacity-100"
             : "translate-y-4 opacity-0"
         }`}
       >
-        <div className="space-y-2">
+        <div className="space-y-3 md:space-y-2">
           {/* Gmail */}
           <div className="flex items-center gap-2">
             <IconMail
               stroke={2}
               className={`w-4 h-4 text-${theme.colors.text} flex-shrink-0`}
             />
-            <span className={`text-xs text-${theme.colors.text} truncate`}>
+            <span className={`text-sm md:text-xs text-${theme.colors.text} truncate`}>
               Gmail: quoccuong572003@gmail.com
             </span>
           </div>
@@ -548,7 +584,7 @@ const Libraries = ({ setCurrentView, onClose }) => {
               stroke={2}
               className={`w-4 h-4 text-${theme.colors.text} flex-shrink-0`}
             />
-            <span className={`text-xs text-${theme.colors.text}`}>
+            <span className={`text-sm md:text-xs text-${theme.colors.text}`}>
               STK: 27805072003 (Hồ Quốc Cường VPBank)
             </span>
           </div>
