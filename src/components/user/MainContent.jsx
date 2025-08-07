@@ -8,7 +8,7 @@ import {
 import { getAllGenres } from "../../services/genresService";
 import { useTheme } from "../../context/themeContext";
 import Song from "./_Song";
-import TrendingSong from "./TrendingSong ";
+import TrendingSong from "./TrendingSong";
 
 // Memoized Section component with theme support
 const Section = memo(
