@@ -1,11 +1,6 @@
-import { 
-  useEffect, 
-  useState, 
-  useCallback, 
-  useMemo, 
-  useRef, 
-  memo 
-} from "react";
+// Optimized _Song.jsx - Theme-based with improved performance
+
+import { useEffect, useState, useCallback, useMemo, useRef, memo } from "react";
 import { useAudio } from "../../utils/audioContext";
 import { useTheme } from "../../context/themeContext";
 import {
@@ -16,71 +11,78 @@ import {
 import ContextMenu from "./library/_ContextMenu";
 import { incrementPlayCount } from "../../services/SongsService";
 
-// Performance-optimized PlayButton with minimal re-renders
-const PlayButton = memo(({ isCurrentSong, isPlaying, showPlayButton, onClick, theme }) => {
-  const buttonRef = useRef();
-  
-  // Memoize button content to prevent unnecessary renders
-  const buttonContent = useMemo(() => {
-    if (isCurrentSong && isPlaying) {
-      return <IconPlayerPauseFilled className="w-5 h-5 text-white drop-shadow-lg" />;
-    }
-    return <IconPlayerPlayFilled className="w-5 h-5 text-white ml-0.5 drop-shadow-lg" />;
-  }, [isCurrentSong, isPlaying]);
+// Theme-based PlayButton
+const PlayButton = memo(
+  ({ isCurrentSong, isPlaying, showPlayButton, onClick, theme }) => {
+    const buttonContent = useMemo(() => {
+      if (isCurrentSong && isPlaying) {
+        return <IconPlayerPauseFilled className="w-5 h-5 text-white" />;
+      }
+      return <IconPlayerPlayFilled className="w-5 h-5 text-white ml-0.5" />;
+    }, [isCurrentSong, isPlaying]);
 
-  // Optimized button styles using CSS variables
-  const buttonStyle = useMemo(() => ({
-    '--gradient-normal': theme.colors.rgb.buttonGradient.normal,
-    '--gradient-hover': theme.colors.rgb.buttonGradient.hover,
-    background: `linear-gradient(135deg, var(--gradient-normal))`,
-    transition: 'all 0.2s ease-out',
-  }), [theme]);
+    // Dynamic button styling based on theme
+    const buttonStyle = useMemo(() => {
+      const colors = theme.colors;
+      return {
+        background: `linear-gradient(135deg, ${colors.rgb.buttonGradient.normal})`,
+        opacity: showPlayButton ? 1 : 0,
+        transition: "all 0.2s ease",
+        transform: showPlayButton ? "scale(1)" : "scale(0.9)",
+      };
+    }, [theme, showPlayButton]);
 
-  // Use CSS hover instead of JS hover for better performance
-  const buttonClass = useMemo(() => `
-    w-11 h-11 rounded-full flex items-center justify-center
-    shadow-lg transition-all duration-200 transform backdrop-blur-sm
-    hover:scale-105 active:scale-95
-    hover:bg-gradient-to-r
-    ${showPlayButton 
-      ? "translate-y-0 opacity-100 pointer-events-auto" 
-      : "translate-y-3 opacity-0 pointer-events-none"
-    }
-  `, [showPlayButton]);
+    const hoverStyle = useMemo(
+      () => ({
+        background: `linear-gradient(135deg, ${theme.colors.rgb.buttonGradient.hover})`,
+        transform: "scale(1.05)",
+      }),
+      [theme]
+    );
 
-  return (
-    <button
-      ref={buttonRef}
-      className={buttonClass}
-      style={buttonStyle}
-      onClick={onClick}
-      tabIndex={showPlayButton ? 0 : -1}
-    >
-      {buttonContent}
-    </button>
-  );
-});
+    return (
+      <button
+        className="w-11 h-11 rounded-full flex items-center justify-center shadow-lg transition-all duration-200 hover:shadow-xl"
+        onClick={onClick}
+        style={{
+          ...buttonStyle,
+          pointerEvents: showPlayButton ? "auto" : "none",
+        }}
+        onMouseEnter={(e) => {
+          if (showPlayButton) {
+            Object.assign(e.target.style, hoverStyle);
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (showPlayButton) {
+            Object.assign(e.target.style, buttonStyle);
+          }
+        }}
+      >
+        {buttonContent}
+      </button>
+    );
+  }
+);
 
-// Optimized RankBadge with CSS custom properties
+// Theme-based RankBadge
 const RankBadge = memo(({ rank, theme }) => {
-  const badgeStyle = useMemo(() => {
-    let gradient;
-    if (rank === 1) gradient = theme.colors.rankGold;
-    else if (rank === 2) gradient = theme.colors.rankSilver;
-    else if (rank === 3) gradient = theme.colors.rankBronze;
-    else gradient = theme.colors.rankDefault;
-
-    return {
-      background: `linear-gradient(135deg, ${gradient})`,
-      willChange: 'transform',
-    };
-  }, [rank, theme]);
+  const getBadgeStyle = () => {
+    const colors = theme.colors;
+    if (rank === 1)
+      return { background: `linear-gradient(135deg, ${colors.rankGold})` };
+    if (rank === 2)
+      return { background: `linear-gradient(135deg, ${colors.rankSilver})` };
+    if (rank === 3)
+      return { background: `linear-gradient(135deg, ${colors.rankBronze})` };
+    return { background: `linear-gradient(135deg, ${colors.rankDefault})` };
+  };
 
   return (
     <div className="absolute top-3 left-3 z-20">
       <div
-        className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-lg border border-white/20 backdrop-blur-sm"
-        style={badgeStyle}
+        className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-lg"
+        style={getBadgeStyle()}
       >
         {rank}
       </div>
@@ -88,12 +90,15 @@ const RankBadge = memo(({ rank, theme }) => {
   );
 });
 
-// Highly optimized NowPlayingIndicator using CSS animations
+// Theme-based NowPlayingIndicator
 const NowPlayingIndicator = memo(({ theme }) => {
-  const barStyle = useMemo(() => ({
-    '--bar-color': theme.colors.rgb.buttonGradient.normal,
-    background: `linear-gradient(to top, var(--bar-color))`,
-  }), [theme]);
+  const barStyle = useMemo(
+    () => ({
+      "--bar-color": theme.colors.rgb.buttonGradient.normal,
+      background: `linear-gradient(to top, var(--bar-color))`,
+    }),
+    [theme]
+  );
 
   return (
     <div className="absolute top-3 right-3 z-20">
@@ -105,7 +110,7 @@ const NowPlayingIndicator = memo(({ theme }) => {
             style={{
               ...barStyle,
               animationDelay: `${index * 0.15}s`,
-              animationDuration: '1s',
+              animationDuration: "1s",
             }}
           />
         ))}
@@ -114,69 +119,60 @@ const NowPlayingIndicator = memo(({ theme }) => {
   );
 });
 
-// Performance-optimized SongInfo with minimal DOM updates
-const SongInfo = memo(({ song, isCurrentSong, formattedPlayCount, isHovered, theme }) => {
-  // Pre-calculate all class names to avoid runtime concatenation
-  const titleClass = useMemo(() => {
-    const baseClasses = ['text-base', 'font-bold', 'line-clamp-2', 'leading-tight', 'transition-all', 'duration-200'];
-    
-    if (isCurrentSong) {
-      baseClasses.push(`text-${theme.colors.songTextCurrent}`, 'drop-shadow-sm');
-    } else {
-      baseClasses.push(`text-${theme.colors.songText}`);
-    }
-    
-    if (isHovered) {
-      baseClasses.push(`text-${theme.colors.songTextHover}`, 'transform', 'translate-y-[-1px]', 'drop-shadow-md');
-    }
-    
-    return baseClasses.join(' ');
-  }, [isCurrentSong, isHovered, theme]);
+// Theme-based SongInfo
+const SongInfo = memo(({ song, isCurrentSong, formattedPlayCount, theme }) => {
+  const colors = theme.colors;
 
-  const artistClass = useMemo(() => {
-    const baseClasses = ['text-sm', 'line-clamp-1', 'transition-all', 'duration-200', 'font-medium'];
-    
-    if (isCurrentSong) {
-      baseClasses.push(`text-${theme.colors.songArtist}`);
-    } else {
-      baseClasses.push(`text-${theme.colors.songArtist}/90`);
-    }
-    
-    if (isHovered) {
-      baseClasses.push(`text-${theme.colors.songArtistHover}`, 'transform', 'translate-y-[-1px]');
-    }
-    
-    return baseClasses.join(' ');
-  }, [isCurrentSong, isHovered, theme]);
+  const titleClass = isCurrentSong
+    ? `text-base font-bold line-clamp-2 leading-tight`
+    : `text-base font-bold line-clamp-2 leading-tight text-white`;
 
-  const playCountClass = useMemo(() => {
-    const baseClasses = ['flex', 'items-center', 'space-x-1', 'text-xs', 'transition-all', 'duration-200', 'font-medium'];
-    
-    if (isCurrentSong) {
-      baseClasses.push(`text-${theme.colors.songPlayCount}`);
-    } else {
-      baseClasses.push(`text-${theme.colors.songPlayCount}/80`);
-    }
-    
-    if (isHovered) {
-      baseClasses.push(`text-${theme.colors.songPlayCountHover}`, 'transform', 'translate-y-[-1px]');
-    }
-    
-    return baseClasses.join(' ');
-  }, [isCurrentSong, isHovered, theme]);
+  const artistClass = isCurrentSong
+    ? `text-sm line-clamp-1 font-medium`
+    : `text-sm line-clamp-1 font-medium text-gray-300`;
+
+  const playCountClass = isCurrentSong
+    ? `flex items-center space-x-1 text-xs font-medium`
+    : `flex items-center space-x-1 text-xs font-medium text-gray-400`;
+
+  // Dynamic text colors based on theme
+  const textStyles = {
+    title: isCurrentSong
+      ? {
+          color: `rgb(${colors.rgb.buttonGradient.hover
+            .split(",")[0]
+            .replace("rgb(", "")})`,
+        }
+      : {},
+    artist: isCurrentSong
+      ? {
+          color: `rgb(${colors.rgb.buttonGradient.hover
+            .split(",")[1]
+            .replace(")", "")
+            .trim()})`,
+        }
+      : {},
+    playCount: isCurrentSong
+      ? {
+          color: `rgb(${colors.rgb.buttonGradient.hover
+            .split(",")[0]
+            .replace("rgb(", "")})`,
+        }
+      : {},
+  };
 
   return (
-    <div className="space-y-2 relative z-10">
-      <h3 className={titleClass}>
+    <div className="space-y-2">
+      <h3 className={titleClass} style={textStyles.title}>
         {song.song_name || "Unknown Title"}
       </h3>
-      
-      <p className={artistClass}>
+
+      <p className={artistClass} style={textStyles.artist}>
         {song.singer_name || "Unknown Artist"}
       </p>
-      
+
       {song.play_count !== undefined && song.play_count > 0 && (
-        <div className={playCountClass}>
+        <div className={playCountClass} style={textStyles.playCount}>
           <IconTrendingUp className="w-3 h-3 flex-shrink-0" />
           <span>{formattedPlayCount} lượt nghe</span>
         </div>
@@ -185,7 +181,7 @@ const SongInfo = memo(({ song, isCurrentSong, formattedPlayCount, isHovered, the
   );
 });
 
-// Main Song Component with extensive performance optimizations
+// Main Song Component - Fully theme-integrated
 const Song = ({
   song,
   contextMenu,
@@ -206,13 +202,10 @@ const Song = ({
     setNewPlaylist,
   } = useAudio();
 
-  // Use refs to minimize re-renders
   const [isHovered, setIsHovered] = useState(false);
   const [playCountIncremented, setPlayCountIncremented] = useState(false);
   const isLoadingRef = useRef(false);
-  const songCardRef = useRef();
 
-  // Memoize expensive calculations
   const isCurrentSong = useMemo(
     () => currentSong?.id === song.id,
     [currentSong?.id, song.id]
@@ -232,7 +225,62 @@ const Song = ({
     return count?.toString() || "0";
   }, [song.play_count]);
 
-  // Optimized audio play function
+  // Theme-based card styling
+  const cardStyle = useMemo(() => {
+    const colors = theme.colors;
+    const baseStyle = {
+      transition: "all 0.3s ease",
+      backdropFilter: "blur(10px)",
+      border: `1px solid rgba(${colors.rgb.cardGradient.normal
+        .split(",")[0]
+        .replace("rgba(", "")}, 0.2)`,
+    };
+
+    if (isCurrentSong) {
+      return {
+        ...baseStyle,
+        background: `linear-gradient(135deg, ${colors.rgb.cardGradient.hover})`,
+        boxShadow: `0 10px 25px -5px rgba(${colors.rgb.buttonGradient.normal
+          .split(",")[0]
+          .replace("rgb(", "")}, 0.3)`,
+        borderColor: `rgba(${colors.rgb.buttonGradient.normal
+          .split(",")[0]
+          .replace("rgb(", "")}, 0.5)`,
+      };
+    }
+
+    return {
+      ...baseStyle,
+      background: `linear-gradient(135deg, ${colors.rgb.cardGradient.normal})`,
+    };
+  }, [theme, isCurrentSong, isHovered]);
+
+  const hoverCardStyle = useMemo(() => {
+    if (isCurrentSong) return cardStyle;
+
+    return {
+      ...cardStyle,
+      background: `linear-gradient(135deg, ${theme.colors.rgb.cardGradient.hover})`,
+      boxShadow: `0 8px 20px -5px rgba(${theme.colors.rgb.buttonGradient.normal
+        .split(",")[0]
+        .replace("rgb(", "")}, 0.2)`,
+      borderColor: `rgba(${theme.colors.rgb.buttonGradient.normal
+        .split(",")[0]
+        .replace("rgb(", "")}, 0.3)`,
+      transform: "translateY(-2px)",
+    };
+  }, [cardStyle, theme, isCurrentSong]);
+
+  // Album art overlay based on theme
+  const albumOverlayStyle = useMemo(() => {
+    if (!isHovered && !isCurrentSong) return { background: "transparent" };
+
+    return {
+      background: `linear-gradient(135deg, ${theme.colors.rgb.albumOverlayGradient.hover})`,
+      borderRadius: "0.75rem",
+    };
+  }, [theme, isHovered, isCurrentSong]);
+
   const playAudio = useCallback(async () => {
     if (songList.length === 0 || isLoadingRef.current) return;
 
@@ -244,100 +292,65 @@ const Song = ({
     try {
       setNewPlaylist(songList, currentIndex);
 
-      // Increment play count asynchronously without blocking UI
       if (!playCountIncremented) {
         incrementPlayCount(song.id)
           .then(() => setPlayCountIncremented(true))
-          .catch((error) => console.error("Error incrementing play count:", error));
+          .catch((error) =>
+            console.error("Error incrementing play count:", error)
+          );
       }
     } finally {
-      // Use requestAnimationFrame for smooth state updates
-      requestAnimationFrame(() => {
+      setTimeout(() => {
         isLoadingRef.current = false;
-      });
+      }, 100);
     }
   }, [songList, song.id, playCountIncremented, setNewPlaylist]);
 
-  // Optimized play/pause toggle
-  const togglePlayPause = useCallback((e) => {
-    e?.stopPropagation();
-    if (isLoadingRef.current) return;
+  const togglePlayPause = useCallback(
+    (e) => {
+      e?.stopPropagation();
+      if (isLoadingRef.current) return;
 
-    if (isCurrentSong && isPlaying) {
-      setIsPlaying(false);
-    } else {
-      playAudio();
-    }
-  }, [isCurrentSong, isPlaying, setIsPlaying, playAudio]);
+      if (isCurrentSong && isPlaying) {
+        setIsPlaying(false);
+      } else {
+        playAudio();
+      }
+    },
+    [isCurrentSong, isPlaying, setIsPlaying, playAudio]
+  );
 
-  // Reset play count increment when song changes
   useEffect(() => {
     if (!isCurrentSong) {
       setPlayCountIncremented(false);
     }
   }, [isCurrentSong]);
 
-  // Optimized context menu handler
-  const handleContextMenu = useCallback((e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setContextMenu({
-      x: e.clientX,
-      y: e.clientY,
-      songId: song.id,
-    });
-  }, [song.id, setContextMenu]);
+  const handleContextMenu = useCallback(
+    (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setContextMenu({
+        x: e.clientX,
+        y: e.clientY,
+        songId: song.id,
+      });
+    },
+    [song.id, setContextMenu]
+  );
 
-  // Memoize show/hide logic
   const showPlayButton = useMemo(() => {
     return isHovered || isCurrentSong;
   }, [isHovered, isCurrentSong]);
 
-  // Pre-calculated styles using CSS custom properties for better performance
-  const cardStyle = useMemo(() => {
-    const opacity = isHovered || isCurrentSong ? "hover" : "normal";
-    return {
-      '--card-gradient': theme.colors.rgb.cardGradient[opacity],
-      '--shadow-color': isHovered 
-        ? theme.colors.songShadowHover 
-        : isCurrentSong 
-        ? theme.colors.songShadow 
-        : 'transparent',
-      background: `linear-gradient(135deg, var(--card-gradient))`,
-      boxShadow: `0 10px 25px -5px var(--shadow-color), 0 4px 6px -2px var(--shadow-color)`,
-      transform: isHovered ? 'scale(1.02)' : 'scale(1)',
-      transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-      willChange: isHovered ? 'transform' : 'auto',
-    };
-  }, [isHovered, isCurrentSong, theme]);
-
-  // Optimized album art styles
-  const albumArtStyle = useMemo(() => ({
-    '--overlay-gradient': isHovered || isCurrentSong 
-      ? theme.colors.rgb.albumOverlayGradient[isHovered ? 'hover' : 'normal']
-      : 'transparent',
-    transform: isHovered ? 'rotate(0.5deg) scale(1.05)' : isCurrentSong ? 'scale(1.02)' : 'scale(1)',
-    transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-  }), [isHovered, isCurrentSong, theme]);
-
-  // Optimized hover handlers using passive events
-  const handleMouseEnter = useCallback(() => {
-    setIsHovered(true);
-  }, []);
-
-  const handleMouseLeave = useCallback(() => {
-    setIsHovered(false);
-  }, []);
-
   return (
     <div
-      ref={songCardRef}
-      className="group relative p-4 rounded-2xl cursor-pointer backdrop-blur-sm overflow-hidden"
-      style={cardStyle}
+      className="relative p-4 rounded-2xl cursor-pointer overflow-hidden"
+      style={isHovered ? hoverCardStyle : cardStyle}
       onClick={playAudio}
       onContextMenu={handleContextMenu}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
       {/* Rank Badge */}
       {showRank && rank && <RankBadge rank={rank} theme={theme} />}
@@ -346,20 +359,20 @@ const Song = ({
       <div className="relative mb-4">
         <div className="relative aspect-square overflow-hidden rounded-xl shadow-lg">
           <img
-            className="w-full h-full object-cover"
-            style={albumArtStyle}
+            className="w-full h-full object-cover transition-transform duration-300"
             src={song.image}
             alt={song.song_name}
             loading="lazy"
             decoding="async"
+            style={{
+              transform: isHovered ? "scale(1.05)" : "scale(1)",
+            }}
           />
 
-          {/* Overlay with CSS custom property */}
+          {/* Theme-based overlay */}
           <div
-            className="absolute inset-0 transition-all duration-300 rounded-xl"
-            style={{
-              background: `linear-gradient(135deg, var(--overlay-gradient))`,
-            }}
+            className="absolute inset-0 transition-all duration-300"
+            style={albumOverlayStyle}
           />
 
           {/* Play Button */}
@@ -373,8 +386,12 @@ const Song = ({
             />
           </div>
 
-          {/* Now Playing Indicator */}
-          {isCurrentSong && isPlaying && <NowPlayingIndicator theme={theme} />}
+          {/* Now Playing Indicator - Shows when music is playing */}
+          {isCurrentSong && isPlaying && (
+            <div className="animate-fadeIn">
+              <NowPlayingIndicator theme={theme} />
+            </div>
+          )}
         </div>
       </div>
 
@@ -383,7 +400,6 @@ const Song = ({
         song={song}
         isCurrentSong={isCurrentSong}
         formattedPlayCount={formattedPlayCount}
-        isHovered={isHovered}
         theme={theme}
       />
 
