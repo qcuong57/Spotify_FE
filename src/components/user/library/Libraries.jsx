@@ -6,7 +6,7 @@ import {
   IconMusic,
   IconWorld,
   IconMail,
-  IconCreditCard,
+  IconBrandFacebook,
   IconChevronLeft,
 } from "@tabler/icons-react";
 import { useTheme } from "../../../context/themeContext";
@@ -556,13 +556,20 @@ const Libraries = ({ setCurrentView, onClose }) => {
           </div>
 
           <div className="flex items-center gap-2">
-            <IconCreditCard
-              stroke={2}
-              className={`w-4 h-4 text-${theme.colors.text} flex-shrink-0`}
-            />
-            <span className={`text-sm md:text-xs text-${theme.colors.text}`}>
-              STK: 27805072003 (Hồ Quốc Cường VPBank)
-            </span>
+            <a
+              href="https://www.facebook.com/gnoucdasick/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+            >
+              <IconBrandFacebook
+                stroke={2}
+                className={`w-4 h-4 text-${theme.colors.text} flex-shrink-0`}
+              />
+              <span className={`text-sm md:text-xs text-${theme.colors.text}`}>
+                FB: Quốc Cường
+              </span>
+            </a>
           </div>
         </div>
       </div>

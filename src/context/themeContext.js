@@ -349,89 +349,6 @@ export const themes = {
       "https://yzfbdwvbybecxhbitkmc.supabase.co/storage/v1/object/sign/image/Sunset_1754223838308.jpeg?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV82OTc4ZGU2My0wOWQzLTRhYmYtOWRjZC0wZjY0NTBlN2VlYmIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJpbWFnZS9TdW5zZXRfMTc1NDIyMzgzODMwOC5qcGVnIiwiaWF0IjoxNzU0MjIzOTY0LCJleHAiOjIwNjk1ODM5NjR9.vSAXjw3dhN3sbrlcfnBOV-MhGFM-VGuhvikNkTW5vHM",
     particles: ["🌅", "☀️", "🔥", "🍂", "🦋"],
   },
-
-  winter: {
-    id: "winter",
-    name: "Mùa đông cảm lạnh",
-    emoji: "❄️",
-    description: "Chủ đề mùa đông ấm áp và thư giãn",
-    colors: {
-      primary: "sky",
-      secondary: "blue",
-      accent: "cyan",
-      background: "from-sky-700 via-sky-600 to-blue-600",
-      backgroundOverlay: "from-sky-700/50 via-sky-600/50 to-blue-600/50",
-      card: "sky-800/30",
-      cardHover: "sky-700/50",
-      text: "sky-200",
-      textHover: "blue-200",
-      button: "sky-300/70",
-      buttonHover: "blue-300/70",
-      border: "sky-500/30",
-      gradient: "from-sky-300 to-blue-300",
-
-      // Song component colors
-      songCard: "sky-800/30",
-      songCardHover: "sky-700/40",
-      songBorder: "sky-500/50",
-      songBorderHover: "sky-300/60",
-      songText: "white",
-      songTextHover: "sky-100",
-      songTextCurrent: "cyan-300",
-      songArtist: "sky-200",
-      songArtistHover: "cyan-200",
-      songPlayCount: "sky-200",
-      songPlayCountHover: "cyan-200",
-      songButton: "gradient-to-r from-sky-500 to-blue-400",
-      songButtonHover: "gradient-to-r from-sky-400 to-blue-300",
-      songButtonText: "white",
-      songShadow: "sky-400/25",
-      songShadowHover: "sky-300/40",
-      songRing: "sky-300/30",
-      songOverlay: "from-sky-400/10 via-transparent to-sky-700/10",
-      songIndicator: "cyan-300",
-
-      // Dynamic card backgrounds
-      cardBg: "from-sky-800/60 via-sky-700/60 to-blue-700/60",
-      cardBgHover: "from-sky-800/80 via-sky-700/80 to-blue-700/80",
-      cardBgActive: "from-sky-800/80 via-sky-700/80 to-blue-700/80",
-
-      // Album art overlays
-      albumOverlay: "from-sky-400/10 via-transparent to-sky-700/10",
-      albumOverlayHover: "from-sky-300/10 via-cyan-200/5 to-sky-500/10",
-
-      // Rank badges
-      rankGold: "from-amber-400 to-yellow-500",
-      rankSilver: "from-gray-300 to-gray-400",
-      rankBronze: "from-amber-600 to-orange-500",
-      rankDefault: "from-sky-400 to-blue-400",
-
-      // RGB values for dynamic styling
-      rgb: {
-        cardGradient: {
-          normal:
-            "rgba(7, 89, 133, 0.6), rgba(3, 105, 161, 0.6), rgba(29, 78, 216, 0.6)",
-          hover:
-            "rgba(7, 89, 133, 0.8), rgba(3, 105, 161, 0.8), rgba(29, 78, 216, 0.8)",
-        },
-        buttonGradient: {
-          normal: "rgb(14, 165, 233), rgb(59, 130, 246)", // sky-500, blue-500
-          hover: "rgb(56, 189, 248), rgb(96, 165, 250)", // sky-400, blue-400
-        },
-        overlayGradient:
-          "rgba(56, 189, 248, 0.1), rgba(34, 211, 238, 0.05), rgba(14, 165, 233, 0.1)",
-        albumOverlayGradient: {
-          normal:
-            "rgba(56, 189, 248, 0.1), transparent, rgba(3, 105, 161, 0.15)",
-          hover:
-            "rgba(125, 211, 252, 0.1), rgba(34, 211, 238, 0.05), rgba(14, 165, 233, 0.1)",
-        },
-      },
-    },
-    backgroundImage:
-      "https://yzfbdwvbybecxhbitkmc.supabase.co/storage/v1/object/sign/image/winter.jpeg?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV82OTc4ZGU2My0wOWQzLTRhYmYtOWRjZC0wZjY0NTBlN2VlYmIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJpbWFnZS93aW50ZXIuanBlZyIsImlhdCI6MTc1NDM4ODg4OCwiZXhwIjoyMDY5NzQ4ODg4fQ.r4498DuWO9muYJjrmgjjQ6ZYZFbKdVDemgmXJFoqJeA",
-    particles: ["❄️", "🌨️", "⛄", "🏔️", "🧊", "☃️", "❄️", "🌨️"],
-  },
   kitten: {
     id: "kitten",
     name: "Mèo con siêu cute 🥰",
@@ -667,5 +584,318 @@ export const themes = {
     backgroundImage:
       "https://yzfbdwvbybecxhbitkmc.supabase.co/storage/v1/object/sign/image/phongcanh.jpg?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV82OTc4ZGU2My0wOWQzLTRhYmYtOWRjZC0wZjY0NTBlN2VlYmIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJpbWFnZS9waG9uZ2NhbmguanBnIiwiaWF0IjoxNzU0Mzk5MjU5LCJleHAiOjE3ODU5MzUyNTl9.3Wx7uceoO7bFTgLjmft6XO9oFB99snllaNiugiNyYCs",
     particles: ["🔺", "🟥", "🟩", "🌀", "💡"],
+  },
+  spring: {
+    id: "spring",
+    name: "Mùa xuân xanh mát 🌸",
+    emoji: "🌼",
+    description: "Chủ đề mùa xuân tươi mới và dịu dàng",
+    colors: {
+      primary: "green",
+      secondary: "lime",
+      accent: "pink",
+      background: "from-green-300 via-lime-300 to-green-400",
+      backgroundOverlay: "from-green-300/50 via-lime-300/50 to-green-400/50",
+      card: "green-300/30",
+      cardHover: "green-400/40",
+      text: "green-800",
+      textHover: "lime-700",
+      button: "lime-300/70",
+      buttonHover: "green-400/70",
+      border: "green-500/30",
+      gradient: "from-green-300 to-lime-300",
+
+      songCard: "green-300/30",
+      songCardHover: "green-400/40",
+      songBorder: "green-400/50",
+      songBorderHover: "lime-400/60",
+      songText: "white",
+      songTextHover: "green-200",
+      songTextCurrent: "lime-400",
+      songArtist: "green-500",
+      songArtistHover: "lime-500",
+      songPlayCount: "green-500",
+      songPlayCountHover: "lime-500",
+      songButton: "gradient-to-r from-lime-400 to-green-300",
+      songButtonHover: "gradient-to-r from-lime-300 to-green-400",
+      songButtonText: "white",
+      songShadow: "green-400/20",
+      songShadowHover: "green-400/40",
+      songRing: "lime-300/30",
+      songOverlay: "from-green-400/10 via-transparent to-lime-300/10",
+      songIndicator: "lime-300",
+
+      cardBg: "from-green-200/50 via-lime-200/50 to-green-300/50",
+      cardBgHover: "from-green-300/70 via-lime-300/70 to-green-400/70",
+      cardBgActive: "from-green-300/80 via-lime-300/80 to-green-400/80",
+
+      albumOverlay: "from-green-300/15 via-transparent to-lime-300/15",
+      albumOverlayHover: "from-green-200/10 via-pink-100/5 to-lime-300/10",
+
+      rankGold: "from-yellow-400 to-yellow-500",
+      rankSilver: "from-gray-300 to-gray-400",
+      rankBronze: "from-orange-400 to-orange-500",
+      rankDefault: "from-green-300 to-lime-400",
+
+      rgb: {
+        cardGradient: {
+          normal:
+            "rgba(134, 239, 172, 0.6), rgba(190, 242, 100, 0.6), rgba(132, 204, 22, 0.6)",
+          hover:
+            "rgba(134, 239, 172, 0.8), rgba(190, 242, 100, 0.8), rgba(132, 204, 22, 0.8)",
+        },
+        buttonGradient: {
+          normal: "rgb(190, 242, 100), rgb(74, 222, 128)", // lime-300, green-400
+          hover: "rgb(163, 230, 53), rgb(74, 222, 128)", // lime-400, green-400
+        },
+        overlayGradient:
+          "rgba(190, 242, 100, 0.1), rgba(74, 222, 128, 0.05), rgba(134, 239, 172, 0.1)",
+        albumOverlayGradient: {
+          normal:
+            "rgba(190, 242, 100, 0.15), transparent, rgba(134, 239, 172, 0.15)",
+          hover:
+            "rgba(163, 230, 53, 0.1), rgba(236, 72, 153, 0.05), rgba(74, 222, 128, 0.1)",
+        },
+      },
+    },
+    backgroundImage:
+      "https://yzfbdwvbybecxhbitkmc.supabase.co/storage/v1/object/sign/image/spring.jpeg?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV82OTc4ZGU2My0wOWQzLTRhYmYtOWRjZC0wZjY0NTBlN2VlYmIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJpbWFnZS9zcHJpbmcuanBlZyIsImlhdCI6MTc1NDUzMjA2OCwiZXhwIjoyMDY5ODkyMDY4fQ.Fo8uYlfUAGOwY194cn7Chm8EAmAWU89JFloHiulBev8", // Nếu có URL Supabase thì thay vào đây
+    particles: ["🌸", "🌼", "💮", "🦋", "🌱", "🌿", "🍀", "🐝"],
+  },
+  summer: {
+    id: "summer",
+    name: "Mùa hè rực rỡ ☀️",
+    emoji: "🌞",
+    description: "Chủ đề mùa hè tươi sáng với ánh nắng vàng",
+    colors: {
+      primary: "yellow",
+      secondary: "green",
+      accent: "lime",
+      background: "from-yellow-300 via-yellow-400 to-green-300",
+      backgroundOverlay: "from-yellow-300/50 via-yellow-400/50 to-green-300/50",
+      card: "yellow-300/30",
+      cardHover: "yellow-400/40",
+      text: "yellow-800",
+      textHover: "green-700",
+      button: "yellow-300/70",
+      buttonHover: "green-300/70",
+      border: "yellow-500/30",
+      gradient: "from-yellow-300 to-green-300",
+
+      songCard: "yellow-300/30",
+      songCardHover: "yellow-400/40",
+      songBorder: "yellow-400/50",
+      songBorderHover: "green-400/60",
+      songText: "white",
+      songTextHover: "yellow-100",
+      songTextCurrent: "lime-400",
+      songArtist: "yellow-300",
+      songArtistHover: "lime-400",
+      songPlayCount: "yellow-300",
+      songPlayCountHover: "lime-400",
+      songButton: "gradient-to-r from-yellow-400 to-green-300",
+      songButtonHover: "gradient-to-r from-yellow-300 to-lime-300",
+      songButtonText: "white",
+      songShadow: "yellow-400/20",
+      songShadowHover: "green-400/40",
+      songRing: "yellow-300/30",
+      songOverlay: "from-yellow-300/10 via-transparent to-green-300/10",
+      songIndicator: "lime-300",
+
+      cardBg: "from-yellow-200/50 via-yellow-300/50 to-green-200/50",
+      cardBgHover: "from-yellow-300/70 via-yellow-400/70 to-green-300/70",
+      cardBgActive: "from-yellow-300/80 via-yellow-400/80 to-green-300/80",
+
+      albumOverlay: "from-yellow-400/15 via-transparent to-green-300/15",
+      albumOverlayHover: "from-yellow-300/10 via-lime-300/5 to-green-400/10",
+
+      rankGold: "from-yellow-400 to-yellow-500",
+      rankSilver: "from-gray-300 to-gray-400",
+      rankBronze: "from-amber-600 to-orange-500",
+      rankDefault: "from-yellow-300 to-green-300",
+
+      rgb: {
+        cardGradient: {
+          normal:
+            "rgba(253, 224, 71, 0.6), rgba(250, 204, 21, 0.6), rgba(134, 239, 172, 0.6)",
+          hover:
+            "rgba(253, 224, 71, 0.8), rgba(250, 204, 21, 0.8), rgba(134, 239, 172, 0.8)",
+        },
+        buttonGradient: {
+          normal: "rgb(253, 224, 71), rgb(134, 239, 172)", // yellow-300, green-300
+          hover: "rgb(250, 204, 21), rgb(163, 230, 53)", // yellow-400, lime-400
+        },
+        overlayGradient:
+          "rgba(253, 224, 71, 0.1), rgba(163, 230, 53, 0.05), rgba(134, 239, 172, 0.1)",
+        albumOverlayGradient: {
+          normal:
+            "rgba(253, 224, 71, 0.15), transparent, rgba(134, 239, 172, 0.15)",
+          hover:
+            "rgba(253, 224, 71, 0.1), rgba(163, 230, 53, 0.05), rgba(134, 239, 172, 0.1)",
+        },
+      },
+    },
+    backgroundImage:
+      "https://yzfbdwvbybecxhbitkmc.supabase.co/storage/v1/object/sign/image/summer.jpeg?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV82OTc4ZGU2My0wOWQzLTRhYmYtOWRjZC0wZjY0NTBlN2VlYmIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJpbWFnZS9zdW1tZXIuanBlZyIsImlhdCI6MTc1NDUzMjA5NiwiZXhwIjoyMDY5ODkyMDk2fQ.JlZ9u6KOP_kiQ6lgJlvozNaKeb7TLfyFd_hA2S6pJ-g", // Thay bằng URL Supabase nếu dùng
+    particles: ["☀️", "🌻", "🍉", "🕶️", "🌴", "🦋", "🍦", "🍹"],
+  },
+  autumn: {
+    id: "autumn",
+    name: "Mùa thu vàng rụng lá 🍁",
+    emoji: "🍂",
+    description: "Chủ đề mùa thu ấm áp, vàng cam dịu nhẹ",
+    colors: {
+      primary: "amber",
+      secondary: "orange",
+      accent: "yellow",
+      background: "from-amber-900 via-orange-800 to-yellow-700",
+      backgroundOverlay: "from-amber-900/50 via-orange-800/50 to-yellow-700/50",
+      card: "amber-900/30",
+      cardHover: "amber-800/50",
+      text: "amber-200",
+      textHover: "orange-200",
+      button: "orange-300/70",
+      buttonHover: "yellow-400/70",
+      border: "amber-600/30",
+      gradient: "from-orange-400 to-yellow-400",
+
+      songCard: "amber-900/30",
+      songCardHover: "amber-800/50",
+      songBorder: "amber-700/30",
+      songBorderHover: "orange-400/20",
+      songText: "white",
+      songTextHover: "amber-100",
+      songTextCurrent: "yellow-300",
+      songArtist: "amber-300",
+      songArtistHover: "yellow-300",
+      songPlayCount: "amber-300",
+      songPlayCountHover: "yellow-300",
+      songButton: "gradient-to-r from-orange-600 to-yellow-500",
+      songButtonHover: "gradient-to-r from-orange-500 to-amber-400",
+      songButtonText: "white",
+      songShadow: "amber-500/25",
+      songShadowHover: "amber-500/40",
+      songRing: "amber-400/30",
+      songOverlay: "from-orange-500/15 via-transparent to-amber-900/15",
+      songIndicator: "orange-300",
+
+      cardBg: "from-orange-900/60 via-amber-800/60 to-yellow-700/60",
+      cardBgHover: "from-orange-900/80 via-amber-800/80 to-yellow-700/80",
+      cardBgActive: "from-orange-900/80 via-amber-800/80 to-yellow-700/80",
+
+      albumOverlay: "from-orange-500/15 via-transparent to-amber-900/15",
+      albumOverlayHover: "from-orange-400/10 via-yellow-300/5 to-amber-600/10",
+
+      rankGold: "from-yellow-400 to-yellow-500",
+      rankSilver: "from-gray-300 to-gray-400",
+      rankBronze: "from-amber-600 to-orange-500",
+      rankDefault: "from-orange-400 to-yellow-500",
+
+      rgb: {
+        cardGradient: {
+          normal:
+            "rgba(245, 158, 11, 0.6), rgba(234, 88, 12, 0.6), rgba(202, 138, 4, 0.6)",
+          hover:
+            "rgba(245, 158, 11, 0.8), rgba(234, 88, 12, 0.8), rgba(202, 138, 4, 0.8)",
+        },
+        buttonGradient: {
+          normal: "rgb(234, 88, 12), rgb(202, 138, 4)", // orange-600, yellow-600
+          hover: "rgb(249, 115, 22), rgb(253, 224, 71)", // orange-500, yellow-300
+        },
+        overlayGradient:
+          "rgba(251, 191, 36, 0.1), rgba(251, 146, 60, 0.05), rgba(245, 158, 11, 0.1)",
+        albumOverlayGradient: {
+          normal:
+            "rgba(251, 191, 36, 0.15), transparent, rgba(234, 88, 12, 0.15)",
+          hover:
+            "rgba(253, 224, 71, 0.1), rgba(251, 146, 60, 0.05), rgba(245, 158, 11, 0.1)",
+        },
+      },
+    },
+    backgroundImage:
+      "https://yzfbdwvbybecxhbitkmc.supabase.co/storage/v1/object/sign/image/autunm.jpeg?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV82OTc4ZGU2My0wOWQzLTRhYmYtOWRjZC0wZjY0NTBlN2VlYmIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJpbWFnZS9hdXR1bm0uanBlZyIsImlhdCI6MTc1NDUzMTkwMywiZXhwIjoyMDY5ODkxOTAzfQ.qsNb7wZEAh72xbuRlch-nrTQMgNLNm4vJRCeY97FWP0", // bạn có thể upload ảnh này lên Supabase và thay URL
+    particles: ["🍂", "🍁", "🌰", "🦊", "🌾", "🧡", "🍄", "🪵"],
+  },
+  winter: {
+    id: "winter",
+    name: "Mùa đông cảm lạnh",
+    emoji: "❄️",
+    description: "Chủ đề mùa đông ấm áp và thư giãn",
+    colors: {
+      primary: "sky",
+      secondary: "blue",
+      accent: "cyan",
+      background: "from-sky-700 via-sky-600 to-blue-600",
+      backgroundOverlay: "from-sky-700/50 via-sky-600/50 to-blue-600/50",
+      card: "sky-800/30",
+      cardHover: "sky-700/50",
+      text: "sky-200",
+      textHover: "blue-200",
+      button: "sky-300/70",
+      buttonHover: "blue-300/70",
+      border: "sky-500/30",
+      gradient: "from-sky-300 to-blue-300",
+
+      // Song component colors
+      songCard: "sky-800/30",
+      songCardHover: "sky-700/40",
+      songBorder: "sky-500/50",
+      songBorderHover: "sky-300/60",
+      songText: "white",
+      songTextHover: "sky-100",
+      songTextCurrent: "cyan-300",
+      songArtist: "sky-200",
+      songArtistHover: "cyan-200",
+      songPlayCount: "sky-200",
+      songPlayCountHover: "cyan-200",
+      songButton: "gradient-to-r from-sky-500 to-blue-400",
+      songButtonHover: "gradient-to-r from-sky-400 to-blue-300",
+      songButtonText: "white",
+      songShadow: "sky-400/25",
+      songShadowHover: "sky-300/40",
+      songRing: "sky-300/30",
+      songOverlay: "from-sky-400/10 via-transparent to-sky-700/10",
+      songIndicator: "cyan-300",
+
+      // Dynamic card backgrounds
+      cardBg: "from-sky-800/60 via-sky-700/60 to-blue-700/60",
+      cardBgHover: "from-sky-800/80 via-sky-700/80 to-blue-700/80",
+      cardBgActive: "from-sky-800/80 via-sky-700/80 to-blue-700/80",
+
+      // Album art overlays
+      albumOverlay: "from-sky-400/10 via-transparent to-sky-700/10",
+      albumOverlayHover: "from-sky-300/10 via-cyan-200/5 to-sky-500/10",
+
+      // Rank badges
+      rankGold: "from-amber-400 to-yellow-500",
+      rankSilver: "from-gray-300 to-gray-400",
+      rankBronze: "from-amber-600 to-orange-500",
+      rankDefault: "from-sky-400 to-blue-400",
+
+      // RGB values for dynamic styling
+      rgb: {
+        cardGradient: {
+          normal:
+            "rgba(7, 89, 133, 0.6), rgba(3, 105, 161, 0.6), rgba(29, 78, 216, 0.6)",
+          hover:
+            "rgba(7, 89, 133, 0.8), rgba(3, 105, 161, 0.8), rgba(29, 78, 216, 0.8)",
+        },
+        buttonGradient: {
+          normal: "rgb(14, 165, 233), rgb(59, 130, 246)", // sky-500, blue-500
+          hover: "rgb(56, 189, 248), rgb(96, 165, 250)", // sky-400, blue-400
+        },
+        overlayGradient:
+          "rgba(56, 189, 248, 0.1), rgba(34, 211, 238, 0.05), rgba(14, 165, 233, 0.1)",
+        albumOverlayGradient: {
+          normal:
+            "rgba(56, 189, 248, 0.1), transparent, rgba(3, 105, 161, 0.15)",
+          hover:
+            "rgba(125, 211, 252, 0.1), rgba(34, 211, 238, 0.05), rgba(14, 165, 233, 0.1)",
+        },
+      },
+    },
+    backgroundImage:
+      "https://yzfbdwvbybecxhbitkmc.supabase.co/storage/v1/object/sign/image/winter.jpeg?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV82OTc4ZGU2My0wOWQzLTRhYmYtOWRjZC0wZjY0NTBlN2VlYmIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJpbWFnZS93aW50ZXIuanBlZyIsImlhdCI6MTc1NDM4ODg4OCwiZXhwIjoyMDY5NzQ4ODg4fQ.r4498DuWO9muYJjrmgjjQ6ZYZFbKdVDemgmXJFoqJeA",
+    particles: ["❄️", "🌨️", "⛄", "🏔️", "🧊", "☃️", "❄️", "🌨️"],
   },
 };
