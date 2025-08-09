@@ -1,3 +1,4 @@
+// ListSongs.jsx
 import React, {
   useEffect,
   useState,
@@ -7,15 +8,156 @@ import React, {
   lazy,
   Suspense,
 } from "react";
+import { motion, AnimatePresence, useInView } from "framer-motion";
 import { useAudio } from "../../utils/audioContext.jsx";
 import { useTheme } from "../../context/themeContext.js";
 
-// Lazy load Song component for better performance
+// Lazy load Song component
 const Song = lazy(() => import("./_Song"));
 
-// Mobile detection hook
+// Optimized animation variants - focus on opacity and y-position
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.03,
+      delayChildren: 0.1,
+    }
+  }
+};
+
+const gridVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.02,
+      delayChildren: 0.05,
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { 
+    opacity: 0, 
+    y: 20
+  },
+  visible: (i) => ({
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.3,
+      delay: i * 0.02,
+      ease: [0.4, 0, 0.2, 1],
+    }
+  })
+};
+
+const headerVariants = {
+  hidden: { 
+    opacity: 0, 
+    y: -20
+  },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    transition: {
+      duration: 0.4,
+      ease: [0.4, 0, 0.2, 1],
+    }
+  }
+};
+
+const titleVariants = {
+  hidden: { opacity: 0, x: -30 },
+  visible: { 
+    opacity: 1, 
+    x: 0,
+    transition: {
+      duration: 0.3,
+      delay: 0.1,
+      ease: [0.4, 0, 0.2, 1],
+    }
+  }
+};
+
+const subtitleVariants = {
+  hidden: { opacity: 0, x: -20 },
+  visible: { 
+    opacity: 1, 
+    x: 0,
+    transition: {
+      duration: 0.25,
+      delay: 0.15,
+      ease: [0.4, 0, 0.2, 1],
+    }
+  }
+};
+
+const loadingVariants = {
+  hidden: { opacity: 0 },
+  visible: { 
+    opacity: 1,
+    transition: {
+      duration: 0.2,
+      ease: [0.4, 0, 0.2, 1],
+    }
+  },
+  exit: {
+    opacity: 0,
+    transition: {
+      duration: 0.15,
+    }
+  }
+};
+
+const spinnerVariants = {
+  animate: {
+    rotate: 360,
+    transition: {
+      duration: 0.8,
+      repeat: Infinity,
+      ease: "linear",
+    }
+  }
+};
+
+const emptyStateVariants = {
+  hidden: { 
+    opacity: 0, 
+    y: 30
+  },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    transition: {
+      duration: 0.4,
+      ease: [0.4, 0, 0.2, 1],
+    }
+  }
+};
+
+const emojiVariants = {
+  animate: {
+    rotate: [0, 5, -5, 0], // Keep rotation for emoji, as in MainContent.jsx
+    transition: {
+      duration: 1.5,
+      repeat: Infinity,
+      ease: "easeInOut",
+    }
+  }
+};
+
+// Mobile detection hook - unchanged
 const useIsMobile = () => {
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth <= 768 || 
+        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    }
+    return false;
+  });
   
   useEffect(() => {
     const checkMobile = () => {
@@ -24,38 +166,96 @@ const useIsMobile = () => {
       setIsMobile(mobile);
     };
     
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    let timeoutId;
+    const debouncedCheck = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(checkMobile, 100);
+    };
+    
+    window.addEventListener('resize', debouncedCheck, { passive: true });
+    return () => {
+      window.removeEventListener('resize', debouncedCheck);
+      clearTimeout(timeoutId);
+    };
   }, []);
   
   return isMobile;
 };
 
-// Optimized Skeleton component
+// Enhanced Skeleton component - remove scale from animations
 const SongSkeleton = React.memo(() => {
   const { theme } = useTheme();
+  const ref = useRef();
+  const isInView = useInView(ref, { once: true, margin: "-20px" });
+
+  const shimmerVariants = {
+    initial: { x: "-100%" },
+    animate: {
+      x: "100%",
+      transition: {
+        duration: 1.2,
+        repeat: Infinity,
+        ease: "easeInOut",
+      }
+    }
+  };
 
   return (
-    <div
-      className={`bg-gradient-to-br from-${theme.colors.card}/60 to-${theme.colors.cardHover}/60 p-4 rounded-2xl animate-pulse`}
+    <motion.div
+      ref={ref}
+      className={`bg-gradient-to-br from-${theme.colors.card}/60 to-${theme.colors.cardHover}/60 p-4 rounded-2xl overflow-hidden backdrop-blur-md`}
+      variants={itemVariants}
+      initial="hidden"
+      animate={isInView ? "visible" : "hidden"}
+      custom={Math.random() * 3}
     >
-      <div
-        className={`aspect-square bg-${theme.colors.secondary}-600 rounded-xl mb-4`}
-      />
+      <motion.div
+        className={`aspect-square bg-${theme.colors.secondary}-600 rounded-xl mb-4 relative overflow-hidden`}
+        initial={{ opacity: 0.6 }}
+        animate={{ opacity: [0.6, 1, 0.6] }}
+        transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+      >
+        <motion.div
+          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+          variants={shimmerVariants}
+          initial="initial"
+          animate="animate"
+        />
+      </motion.div>
+      
       <div className="space-y-2">
-        <div className={`h-4 bg-${theme.colors.secondary}-600 rounded`} />
-        <div className={`h-3 bg-${theme.colors.secondary}-600 rounded w-3/4`} />
+        <motion.div 
+          className={`h-4 bg-${theme.colors.secondary}-600 rounded`}
+          initial={{ opacity: 0.6, width: "100%" }}
+          animate={{ 
+            opacity: [0.6, 1, 0.6],
+            width: ["100%", "90%", "100%"]
+          }}
+          transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <motion.div 
+          className={`h-3 bg-${theme.colors.secondary}-600 rounded`}
+          initial={{ opacity: 0.6, width: "75%" }}
+          animate={{ 
+            opacity: [0.6, 1, 0.6],
+            width: ["75%", "60%", "75%"]
+          }}
+          transition={{ 
+            duration: 1.5, 
+            repeat: Infinity, 
+            ease: "easeInOut",
+            delay: 0.1
+          }}
+        />
       </div>
-    </div>
+    </motion.div>
   );
 });
 
-// Improved Progressive Loading Hook with mobile optimization
+// Highly optimized Progressive Loading Hook - unchanged
 const useProgressiveLoading = (totalItems, isMobile = false) => {
-  // Reduce initial count on mobile for better performance
-  const initialCount = isMobile ? 12 : 24;
-  const increment = isMobile ? 12 : 24;
+  const initialCount = isMobile ? 20 : 36;
+  const increment = isMobile ? 16 : 24;
   
   const [loadedCount, setLoadedCount] = useState(Math.min(initialCount, totalItems));
   const [isLoading, setIsLoading] = useState(false);
@@ -74,13 +274,11 @@ const useProgressiveLoading = (totalItems, isMobile = false) => {
           if (entry.isIntersecting && hasMore && !isLoading) {
             setIsLoading(true);
             
-            // Clear any existing timeout
             if (loadingTimeoutRef.current) {
               clearTimeout(loadingTimeoutRef.current);
             }
             
-            // Use longer delay on mobile to prevent scroll jank
-            const delay = isMobile ? 100 : 50;
+            const delay = isMobile ? 50 : 30;
             
             loadingTimeoutRef.current = setTimeout(() => {
               requestAnimationFrame(() => {
@@ -91,7 +289,7 @@ const useProgressiveLoading = (totalItems, isMobile = false) => {
           }
         },
         {
-          rootMargin: isMobile ? "200px" : "400px", // Smaller preload on mobile
+          rootMargin: isMobile ? "300px" : "500px",
           threshold: 0.1,
         }
       );
@@ -112,7 +310,6 @@ const useProgressiveLoading = (totalItems, isMobile = false) => {
     };
   }, []);
 
-  // Reset when total items change
   useEffect(() => {
     setLoadedCount(Math.min(initialCount, totalItems));
     setIsLoading(false);
@@ -121,7 +318,7 @@ const useProgressiveLoading = (totalItems, isMobile = false) => {
   return { loadedCount, loadMoreRef, setLoadedCount, isLoading, hasMore };
 };
 
-// Optimized Song Grid Component with mobile-specific improvements
+// Highly optimized Song Grid Component
 const SmoothSongGrid = React.memo(
   ({
     songs,
@@ -132,19 +329,21 @@ const SmoothSongGrid = React.memo(
     isMobile = false,
   }) => {
     const { theme } = useTheme();
-    
     const { loadedCount, loadMoreRef, isLoading, hasMore } = useProgressiveLoading(
       songs.length,
       isMobile
     );
 
     const gridClasses = useMemo(() => {
-      const baseClasses = "grid gap-3 gap-y-4"; // Reduced gaps on mobile
+      const baseClasses = "grid gap-3 gap-y-4";
       if (songDescriptionAvailable) {
         return `${baseClasses} grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4`;
       }
-      // Optimize grid for mobile
-      return `${baseClasses} ${isMobile ? 'grid-cols-2' : 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6'}`;
+      return `${baseClasses} ${
+        isMobile 
+          ? 'grid-cols-2' 
+          : 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7'
+      }`;
     }, [songDescriptionAvailable, isMobile]);
 
     const visibleSongs = useMemo(
@@ -152,78 +351,134 @@ const SmoothSongGrid = React.memo(
       [songs, loadedCount]
     );
 
+    const [renderBatch, setRenderBatch] = useState(isMobile ? 10 : 18);
+    
+    useEffect(() => {
+      if (visibleSongs.length > renderBatch) {
+        const timer = setTimeout(() => {
+          setRenderBatch(prev => Math.min(prev + (isMobile ? 10 : 18), visibleSongs.length));
+        }, 16);
+        return () => clearTimeout(timer);
+      }
+    }, [visibleSongs.length, renderBatch, isMobile]);
+
+    const renderedSongs = useMemo(
+      () => visibleSongs.slice(0, renderBatch),
+      [visibleSongs, renderBatch]
+    );
+
     if (songs.length === 0) {
       return (
-        <div className={`flex flex-col items-center justify-center h-64 text-${theme.colors.text}`}>
-          <div className="text-4xl mb-4 opacity-50">🎵</div>
-          <p className="text-lg mb-2">Không có bài hát nào</p>
-          <p className={`text-sm opacity-75 text-${theme.colors.text}/60`}>Thử duyệt các danh mục khác</p>
-        </div>
+        <motion.div 
+          className={`flex flex-col items-center justify-center h-64 text-${theme.colors.text}`}
+          variants={emptyStateVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          <motion.div 
+            className="text-4xl mb-4 opacity-50"
+            variants={emojiVariants}
+            animate="animate"
+          >
+            🎵
+          </motion.div>
+          <motion.p 
+            className="text-lg mb-2"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.3 }}
+          >
+            Không có bài hát nào
+          </motion.p>
+          <motion.p 
+            className={`text-sm opacity-75 text-${theme.colors.text}/60`}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: 0.3 }}
+          >
+            Thử duyệt các danh mục khác
+          </motion.p>
+        </motion.div>
       );
     }
 
     return (
-      <div className="space-y-4">
+      <motion.div 
+        className="space-y-4"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
         {/* Songs Grid */}
-        <div className={gridClasses}>
-          {visibleSongs.map((song, index) => (
-            <Suspense
-              key={`song-${song.id}-${index}`}
-              fallback={<SongSkeleton />}
-            >
+        <motion.div 
+          className={gridClasses}
+          variants={gridVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          {renderedSongs.map((song, index) => (
+            <Suspense key={`${song.id}-${index}`}>
               <Song
                 song={song}
+                list={songs}
                 contextMenu={contextMenu}
                 setContextMenu={setContextMenu}
                 handleCloseContextMenu={handleCloseContextMenu}
-                list={songs}
+
+                index={index}
               />
             </Suspense>
           ))}
-        </div>
-
-        {/* Loading More Indicator - Optimized for mobile */}
-        {hasMore && (
-          <div 
-            ref={loadMoreRef} 
-            className="flex justify-center items-center py-6 min-h-[60px]"
-          >
-            {isLoading ? (
-              <div className={`flex items-center space-x-2 text-${theme.colors.secondary}-400`}>
-                <div className="relative">
-                  <div className={`w-5 h-5 border-2 border-${theme.colors.secondary}-400 border-t-transparent rounded-full animate-spin`}></div>
-                </div>
-                <span className="text-sm font-medium">Đang tải...</span>
-                {!isMobile && (
-                  <span className={`text-xs text-${theme.colors.text}/60`}>
-                    ({loadedCount}/{songs.length})
-                  </span>
-                )}
-              </div>
-            ) : (
-              <div className={`text-${theme.colors.text}/40 text-sm text-center`}>
-                {isMobile ? 'Cuộn để xem thêm' : `Cuộn xuống để xem thêm (${songs.length - loadedCount} bài còn lại)`}
-              </div>
-            )}
-          </div>
-        )}
-
+          {hasMore && (
+            <div ref={loadMoreRef} className="h-10 w-full" />
+          )}
+        </motion.div>
+        
         {/* End of Content Spacer */}
-        {!hasMore && (
-          <div className="flex justify-center items-center py-6">
-            <div className={`text-${theme.colors.text}/60 text-sm flex items-center space-x-2`}>
-              <span>🎉</span>
-              <span>{isMobile ? `${songs.length} bài hát` : `Đã hiển thị tất cả ${songs.length} bài hát`}</span>
-              <span>🎉</span>
-            </div>
-          </div>
-        )}
-      </div>
+        <AnimatePresence>
+          {!hasMore && (
+            <motion.div 
+              className="flex justify-center items-center py-6"
+              variants={loadingVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+            >
+              <motion.div 
+                className={`text-${theme.colors.text}/60 text-sm flex items-center space-x-2`}
+                whileHover={{ x: 5 }} // Match MainContent.jsx hover style
+                transition={{ duration: 0.2 }}
+              >
+                <motion.span
+                  animate={{ rotate: [0, 10, -10, 0] }}
+                  transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                >
+                  🎉
+                </motion.span>
+                <span>
+                  {isMobile ? `${songs.length} bài hát` : `Đã hiển thị tất cả ${songs.length} bài hát`}
+                </span>
+                <motion.span
+                  animate={{ rotate: [0, -10, 10, 0] }}
+                  transition={{ 
+                    duration: 1.5, 
+                    repeat: Infinity, 
+                    ease: "easeInOut",
+                    delay: 0.3
+                  }}
+                >
+                  🎉
+                </motion.span>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
     );
   }
 );
 
-// Main ListSongs Component with mobile optimizations
+// Main ListSongs Component with performance optimizations
 const ListSongs = ({ listSongs }) => {
   const [contextMenu, setContextMenu] = useState(null);
   const { currentSong, songDescriptionAvailable } = useAudio();
@@ -231,11 +486,9 @@ const ListSongs = ({ listSongs }) => {
   const scrollContainerRef = useRef();
   const isMobile = useIsMobile();
 
-  // Use refs to prevent unnecessary re-renders
   const contextMenuRef = useRef(contextMenu);
   contextMenuRef.current = contextMenu;
 
-  // Optimized context menu handlers
   const handleCloseContextMenu = useCallback(() => {
     setContextMenu(null);
   }, []);
@@ -252,31 +505,22 @@ const ListSongs = ({ listSongs }) => {
     [handleCloseContextMenu]
   );
 
-  // Throttled scroll handler for better mobile performance
   const scrollTimeoutRef = useRef();
   const handleScroll = useCallback((e) => {
-    // Clear previous timeout
     if (scrollTimeoutRef.current) {
       clearTimeout(scrollTimeoutRef.current);
     }
 
-    // Throttle scroll events on mobile
+    const container = e.target;
+    if (container.scrollTop < 0) {
+      container.scrollTop = 0;
+    }
+
     if (isMobile) {
-      scrollTimeoutRef.current = setTimeout(() => {
-        const container = e.target;
-        if (container.scrollTop < 0) {
-          container.scrollTop = 0;
-        }
-      }, 16); // ~60fps
-    } else {
-      const container = e.target;
-      if (container.scrollTop < 0) {
-        container.scrollTop = 0;
-      }
+      scrollTimeoutRef.current = setTimeout(() => {}, 16);
     }
   }, [isMobile]);
 
-  // Optimized event listeners
   useEffect(() => {
     if (contextMenu) {
       const options = { passive: true, capture: false };
@@ -290,7 +534,6 @@ const ListSongs = ({ listSongs }) => {
     }
   }, [contextMenu, handleClickOutside]);
 
-  // Add scroll event listener with passive option for mobile
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (container) {
@@ -309,7 +552,6 @@ const ListSongs = ({ listSongs }) => {
     }
   }, [handleScroll]);
 
-  // Memoized validation
   const isValidData = useMemo(() => {
     return (
       listSongs &&
@@ -322,124 +564,226 @@ const ListSongs = ({ listSongs }) => {
   // Loading state
   if (listSongs?.isLoading) {
     return (
-      <div 
+      <motion.div 
         ref={scrollContainerRef}
         className="text-white flex-1 mr-2 sm:mr-0 rounded-lg overflow-y-auto"
         style={{
-          scrollBehavior: isMobile ? "auto" : "smooth", // Disable smooth scroll on mobile
+          scrollBehavior: isMobile ? "auto" : "smooth",
           overscrollBehavior: "contain",
-          WebkitOverflowScrolling: "touch", // iOS momentum scrolling
+          WebkitOverflowScrolling: "touch",
         }}
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
       >
-        <div
+        <motion.div
           className={`sticky top-0 z-10 bg-gradient-to-b ${theme.colors.backgroundOverlay} backdrop-blur-md border-b border-white/10`}
+          variants={headerVariants}
+          initial="hidden"
+          animate="visible"
         >
           <div className="p-4 pb-6">
-            <h3 className={`font-bold text-xl sm:text-2xl text-${theme.colors.text}`}>
+            <motion.h3 
+              className={`font-bold text-xl sm:text-2xl text-${theme.colors.text}`}
+              variants={titleVariants}
+            >
               {listSongs.title || "Đang tải..."}
-            </h3>
-            <div className="mt-3">
+            </motion.h3>
+            <motion.div 
+              className="mt-3"
+              variants={subtitleVariants}
+            >
               <div className={`h-1 bg-${theme.colors.card} rounded-full overflow-hidden`}>
-                <div className={`h-full bg-gradient-to-r from-${theme.colors.primary}-500 to-${theme.colors.secondary}-400 rounded-full animate-pulse w-1/3`}></div>
+                <motion.div 
+                  className={`h-full bg-gradient-to-r from-${theme.colors.primary}-500 to-${theme.colors.secondary}-400 rounded-full`}
+                  initial={{ width: "0%" }}
+                  animate={{ 
+                    width: ["0%", "70%", "100%", "30%"],
+                  }}
+                  transition={{
+                    duration: 1.5,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                />
               </div>
-            </div>
+            </motion.div>
           </div>
-        </div>
+        </motion.div>
 
-        <div className={`p-4 ${currentSong ? (isMobile ? 'pb-24' : 'pb-32 sm:pb-36 md:pb-40') : 'pb-8'}`}>
-          <div
+        <motion.div 
+          className={`p-4 ${currentSong ? (isMobile ? 'pb-24' : 'pb-32 sm:pb-36 md:pb-40') : 'pb-8'}`}
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          <motion.div
             className={`grid gap-3 gap-y-4 ${
               songDescriptionAvailable
                 ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
                 : isMobile ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6"
             }`}
+            variants={gridVariants}
           >
-            {Array.from({ length: isMobile ? 8 : 12 }).map((_, index) => (
+            {Array.from({ length: isMobile ? 6 : 9 }).map((_, index) => (
               <SongSkeleton key={`loading-skeleton-${index}`} />
             ))}
-          </div>
-        </div>
-      </div>
+          </motion.div>
+        </motion.div>
+      </motion.div>
     );
   }
 
   // Error state
   if (listSongs?.error) {
     return (
-      <div className="text-white flex-1 mr-2 sm:mr-0 rounded-lg p-4">
-        <div className="flex flex-col items-center justify-center h-64">
-          <div className="text-6xl mb-4 opacity-50">⚠️</div>
-          <p className="text-xl mb-2 font-medium text-red-400">
+      <motion.div 
+        className="text-white flex-1 mr-2 sm:mr-0 rounded-lg p-4"
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+      >
+        <motion.div 
+          className="flex flex-col items-center justify-center h-64"
+          variants={emptyStateVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          <motion.div 
+            className="text-6xl mb-4 opacity-50"
+            animate={{ 
+              rotate: [0, 3, -3, 0]
+            }}
+            transition={{ 
+              duration: 2, 
+              repeat: Infinity, 
+              ease: "easeInOut" 
+            }}
+          >
+            ⚠️
+          </motion.div>
+          <motion.p 
+            className="text-xl mb-2 font-medium text-red-400"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1, duration: 0.3 }}
+          >
             {listSongs.title || "Có lỗi xảy ra"}
-          </p>
-          <p className={`text-sm opacity-75 text-${theme.colors.text}/60 text-center max-w-md`}>
+          </motion.p>
+          <motion.p 
+            className={`text-sm opacity-75 text-${theme.colors.text}/60 text-center max-w-md`}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.3 }}
+          >
             {listSongs.error}
-          </p>
-        </div>
-      </div>
+          </motion.p>
+        </motion.div>
+      </motion.div>
     );
   }
 
   // Invalid data state
   if (!isValidData) {
     return (
-      <div className="text-white flex-1 mr-2 sm:mr-0 rounded-lg p-4">
-        <div className="flex flex-col items-center justify-center h-64">
-          <div className="text-4xl mb-4 opacity-50">🎵</div>
-          <p className={`text-lg mb-2 text-${theme.colors.text}`}>
+      <motion.div 
+        className="text-white flex-1 mr-2 sm:mr-0 rounded-lg p-4"
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        <motion.div 
+          className="flex flex-col items-center justify-center h-64"
+          variants={emptyStateVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          <motion.div 
+            className="text-4xl mb-4 opacity-50"
+            variants={emojiVariants}
+            animate="animate"
+          >
+            🎵
+          </motion.div>
+          <motion.p 
+            className={`text-lg mb-2 text-${theme.colors.text}`}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1, duration: 0.3 }}
+          >
             Không có bài hát nào
-          </p>
-          <p className={`text-sm opacity-75 text-${theme.colors.text}/60`}>
+          </motion.p>
+          <motion.p 
+            className={`text-sm opacity-75 text-${theme.colors.text}/60`}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.3 }}
+          >
             Thử duyệt các danh mục khác
-          </p>
-        </div>
-      </div>
+          </motion.p>
+        </motion.div>
+      </motion.div>
     );
   }
 
   const songs = listSongs.songs;
 
-  // Calculate dynamic padding based on music player state and device
   const getBottomPadding = () => {
     if (currentSong) {
-      // Reduced padding on mobile for better screen usage
       return isMobile ? "pb-24" : "pb-32 sm:pb-36 md:pb-40";
     }
     return "pb-8";
   };
 
   return (
-    <div 
+    <motion.div 
       ref={scrollContainerRef}
       className="text-white flex-1 mr-2 sm:mr-0 rounded-lg overflow-y-auto"
       style={{
-        scrollBehavior: isMobile ? "auto" : "smooth", // Disable smooth scroll on mobile for performance
+        scrollBehavior: isMobile ? "auto" : "smooth",
         overscrollBehavior: "contain",
-        transform: "translateZ(0)", // Hardware acceleration
+        transform: "translateZ(0)",
         willChange: "scroll-position",
-        WebkitOverflowScrolling: "touch", // iOS momentum scrolling
+        WebkitOverflowScrolling: "touch",
       }}
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
     >
-      {/* Sticky Header with mobile optimization */}
-      <div
+      {/* Sticky Header */}
+      <motion.div
         className={`sticky top-0 z-20 bg-gradient-to-b ${theme.colors.backgroundOverlay} backdrop-blur-md border-b border-white/10`}
         style={{
-          transform: "translateZ(0)", // Hardware acceleration for sticky element
-          backfaceVisibility: "hidden", // Prevent flicker on mobile
+          transform: "translateZ(0)",
+          backfaceVisibility: "hidden",
         }}
+        variants={headerVariants}
+        initial="hidden"
+        animate="visible"
       >
         <div className={isMobile ? "p-3 pb-4" : "p-4 pb-6"}>
-          <h3 className={`font-bold ${isMobile ? 'text-lg' : 'text-xl sm:text-2xl'} text-${theme.colors.text}`}>
+          <motion.h3 
+            className={`font-bold ${isMobile ? 'text-lg' : 'text-xl sm:text-2xl'} text-${theme.colors.text}`}
+            variants={titleVariants}
+          >
             {listSongs.title || "Songs"}
-          </h3>
-          <p className={`${isMobile ? 'text-xs' : 'text-sm'} opacity-75 text-${theme.colors.text}/60 mt-1`}>
+          </motion.h3>
+          <motion.p 
+            className={`${isMobile ? 'text-xs' : 'text-sm'} opacity-75 text-${theme.colors.text}/60 mt-1`}
+            variants={subtitleVariants}
+          >
             {songs.length} bài hát
-          </p>
+          </motion.p>
         </div>
-      </div>
+      </motion.div>
 
-      {/* Songs Content with mobile-optimized padding */}
-      <div className={`px-${isMobile ? '3' : '4'} pt-4 ${getBottomPadding()}`}>
+      {/* Songs Content */}
+      <motion.div 
+        className={`px-${isMobile ? '3' : '4'} pt-4 ${getBottomPadding()}`}
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
         <SmoothSongGrid
           songs={songs}
           contextMenu={contextMenu}
@@ -448,8 +792,8 @@ const ListSongs = ({ listSongs }) => {
           songDescriptionAvailable={songDescriptionAvailable}
           isMobile={isMobile}
         />
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 };
 

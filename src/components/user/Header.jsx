@@ -10,10 +10,259 @@ import {
 } from "@tabler/icons-react";
 import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import {
+  motion,
+  AnimatePresence,
+  useSpring,
+  useTransform,
+} from "framer-motion";
 import { searchSongs, getSearchSuggestions } from "../../services/SongsService";
 import ProfilePopup from "./ProfilePopup";
 import React from "react";
 import { useTheme } from "../../context/themeContext.js";
+
+// Enhanced animation variants with smooth spring physics
+const searchVariants = {
+  hidden: {
+    opacity: 0,
+    scale: 0.95,
+    y: -8,
+    filter: "blur(4px)",
+  },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    y: 0,
+    filter: "blur(0px)",
+    transition: {
+      type: "spring",
+      stiffness: 400,
+      damping: 30,
+      mass: 0.8,
+    },
+  },
+  exit: {
+    opacity: 0,
+    scale: 0.95,
+    y: -8,
+    filter: "blur(4px)",
+    transition: {
+      type: "spring",
+      stiffness: 500,
+      damping: 40,
+      mass: 0.6,
+    },
+  },
+};
+
+const suggestionContainerVariants = {
+  hidden: {
+    opacity: 0,
+    scale: 0.96,
+    y: -12,
+    backdropFilter: "blur(0px)",
+  },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    y: 0,
+    backdropFilter: "blur(20px)",
+    transition: {
+      type: "spring",
+      stiffness: 600,
+      damping: 35,
+      mass: 0.5,
+      staggerChildren: 0.02,
+      delayChildren: 0.05,
+    },
+  },
+  exit: {
+    opacity: 0,
+    scale: 0.96,
+    y: -12,
+    backdropFilter: "blur(0px)",
+    transition: {
+      type: "spring",
+      stiffness: 700,
+      damping: 45,
+      mass: 0.4,
+      staggerChildren: 0.01,
+      staggerDirection: -1,
+    },
+  },
+};
+
+const suggestionItemVariants = {
+  hidden: {
+    opacity: 0,
+    x: -20,
+    scale: 0.95,
+  },
+  visible: (index) => ({
+    opacity: 1,
+    x: 0,
+    scale: 1,
+    transition: {
+      type: "spring",
+      stiffness: 500,
+      damping: 30,
+      mass: 0.6,
+      delay: index * 0.015,
+    },
+  }),
+  exit: (index) => ({
+    opacity: 0,
+    x: -20,
+    scale: 0.95,
+    transition: {
+      type: "spring",
+      stiffness: 600,
+      damping: 40,
+      mass: 0.5,
+      delay: index * 0.01,
+    },
+  }),
+  hover: {
+    scale: 1.02,
+    x: 4,
+    backgroundColor: "rgba(255,255,255,0.15)",
+    transition: {
+      type: "spring",
+      stiffness: 800,
+      damping: 25,
+      mass: 0.3,
+    },
+  },
+  tap: {
+    scale: 0.98,
+    transition: {
+      type: "spring",
+      stiffness: 1000,
+      damping: 30,
+      mass: 0.2,
+    },
+  },
+};
+
+const loadingSpinnerVariants = {
+  animate: {
+    rotate: 360,
+    transition: {
+      duration: 0.8,
+      repeat: Infinity,
+      ease: "linear",
+    },
+  },
+};
+
+const searchInputVariants = {
+  focus: {
+    scale: 1.02,
+    transition: {
+      type: "spring",
+      stiffness: 400,
+      damping: 25,
+      mass: 0.8,
+    },
+  },
+  blur: {
+    scale: 1,
+    transition: {
+      type: "spring",
+      stiffness: 400,
+      damping: 30,
+      mass: 0.8,
+    },
+  },
+};
+
+const mobileSearchVariants = {
+  hidden: {
+    opacity: 0,
+    scale: 0.95,
+    backdropFilter: "blur(0px)",
+  },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    backdropFilter: "blur(16px)",
+    transition: {
+      type: "spring",
+      stiffness: 500,
+      damping: 30,
+      mass: 0.8,
+    },
+  },
+  exit: {
+    opacity: 0,
+    scale: 0.95,
+    backdropFilter: "blur(0px)",
+    transition: {
+      type: "spring",
+      stiffness: 600,
+      damping: 35,
+      mass: 0.6,
+    },
+  },
+};
+
+const mobileMenuVariants = {
+  hidden: {
+    opacity: 0,
+    x: -100,
+    backdropFilter: "blur(0px)",
+  },
+  visible: {
+    opacity: 1,
+    x: 0,
+    backdropFilter: "blur(16px)",
+    transition: {
+      type: "spring",
+      stiffness: 400,
+      damping: 25,
+      mass: 0.8,
+      staggerChildren: 0.05,
+      delayChildren: 0.1,
+    },
+  },
+  exit: {
+    opacity: 0,
+    x: -100,
+    backdropFilter: "blur(0px)",
+    transition: {
+      type: "spring",
+      stiffness: 500,
+      damping: 30,
+      mass: 0.6,
+      staggerChildren: 0.02,
+      staggerDirection: -1,
+    },
+  },
+};
+
+const menuItemVariants = {
+  hidden: { opacity: 0, x: -20 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: {
+      type: "spring",
+      stiffness: 600,
+      damping: 25,
+      mass: 0.5,
+    },
+  },
+  exit: {
+    opacity: 0,
+    x: -20,
+    transition: {
+      type: "spring",
+      stiffness: 700,
+      damping: 30,
+      mass: 0.4,
+    },
+  },
+};
 
 const Header = ({ setCurrentView, setListSongsDetail }) => {
   const navigate = useNavigate();
@@ -24,7 +273,7 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
   const [showMobileSearch, setShowMobileSearch] = useState(false);
   const { theme, setShowThemeSelector } = useTheme();
 
-  // Search states
+  // Enhanced search states with better UX
   const [suggestions, setSuggestions] = useState({
     songs: [],
     singers: [],
@@ -34,12 +283,18 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [searchTimeout, setSearchTimeout] = useState(null);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   // Refs for suggestion handling
   const searchInputRef = useRef(null);
   const mobileSearchInputRef = useRef(null);
   const suggestionsRef = useRef(null);
   const mobileSuggestionsRef = useRef(null);
+  const searchContainerRef = useRef(null);
+
+  // Spring animations for smooth interactions
+  const searchScale = useSpring(1);
+  const suggestionScale = useSpring(0.96);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -56,29 +311,33 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
     navigate("/login");
   };
 
-  // Fetch suggestions with debounce
+  // Enhanced fetch suggestions with better debouncing
   const fetchSuggestions = async (query) => {
     if (!query.trim() || query.length < 2) {
       setSuggestions({ songs: [], singers: [] });
       setShowSuggestions(false);
+      suggestionScale.set(0.96);
       return;
     }
 
     setIsLoadingSuggestions(true);
+    suggestionScale.set(1);
+
     try {
-      const response = await getSearchSuggestions(query, 5);
+      const response = await getSearchSuggestions(query, 8);
       setSuggestions(response.data.suggestions);
       setShowSuggestions(true);
       setSelectedSuggestionIndex(-1);
     } catch (error) {
       console.error("Error fetching suggestions:", error);
       setSuggestions({ songs: [], singers: [] });
+      setShowSuggestions(false);
     } finally {
       setIsLoadingSuggestions(false);
     }
   };
 
-  // Handle search input change with debounce
+  // Enhanced search input change with smoother debouncing
   const handleSearchInputChange = (value) => {
     setSearchText(value);
     setSelectedSuggestionIndex(-1);
@@ -87,22 +346,23 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
       clearTimeout(searchTimeout);
     }
 
+    // Faster debounce for better UX
     const newTimeout = setTimeout(() => {
       fetchSuggestions(value);
-    }, 300);
+    }, 200);
 
     setSearchTimeout(newTimeout);
   };
 
-  // Search execution
+  // Enhanced search execution
   const handleSearchChange = async (searchQuery = searchText) => {
     const query = searchQuery.trim();
     if (!query) return;
 
     setIsSearching(true);
+    searchScale.set(0.98);
 
     try {
-      // Show loading state
       const loadingData = {
         songs: [],
         title: `Đang tìm kiếm: ${query}`,
@@ -113,14 +373,12 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
       setListSongsDetail(loadingData);
       setCurrentView("listSongs");
 
-      // Close mobile components
       setShowMobileSearch(false);
       setShowSuggestions(false);
+      suggestionScale.set(0.96);
 
-      // Perform search
       const response = await searchSongs(query, 1, 50);
 
-      // Prepare result data
       let title = `Tìm kiếm: "${query}"`;
       let subtitle = "";
 
@@ -155,18 +413,20 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
       setListSongsDetail(errorData);
     } finally {
       setIsSearching(false);
+      searchScale.set(1);
     }
   };
 
-  // Handle suggestion click
+  // Enhanced suggestion click
   const handleSuggestionClick = (suggestion) => {
     setSearchText(suggestion);
     setShowSuggestions(false);
     setSelectedSuggestionIndex(-1);
+    suggestionScale.set(0.96);
     handleSearchChange(suggestion);
   };
 
-  // Handle keyboard navigation
+  // Enhanced keyboard navigation
   const handleKeyDown = (e) => {
     const allSuggestions = [
       ...suggestions.songs.map((s) => ({ text: s, type: "song" })),
@@ -212,11 +472,12 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
         e.preventDefault();
         setShowSuggestions(false);
         setSelectedSuggestionIndex(-1);
+        suggestionScale.set(0.96);
         break;
     }
   };
 
-  // Close suggestions when clicking outside
+  // Enhanced click outside handling
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -231,6 +492,8 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
       ) {
         setShowSuggestions(false);
         setSelectedSuggestionIndex(-1);
+        setIsSearchFocused(false);
+        suggestionScale.set(0.96);
       }
     };
 
@@ -240,7 +503,7 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
     };
   }, []);
 
-  // Suggestions component
+  // Enhanced Suggestions List Component
   const SuggestionsList = ({
     suggestions,
     isLoadingSuggestions,
@@ -264,62 +527,130 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
     ];
 
     if (!isLoadingSuggestions && allSuggestions.length === 0) {
-      return null; // Không hiển thị nếu không có gợi ý và không đang tải
+      return null;
     }
 
     return (
-      <div
+      <motion.div
         ref={isMobile ? mobileSuggestionsRef : suggestionsRef}
-        className="fixed rounded-lg shadow-2xl backdrop-blur-xl max-h-64 overflow-y-auto bg-black/95 border border-white/20"
+        className="absolute left-0 right-0 rounded-xl shadow-2xl max-h-80 overflow-hidden bg-black/95 border border-white/20"
         style={{
-          position: "fixed",
-          top: isMobile ? "120px" : "80px",
-          left: isMobile ? "16px" : "50%",
-          right: isMobile ? "16px" : "auto",
-          transform: isMobile ? "none" : "translateX(-50%)",
-          width: isMobile ? "calc(100% - 32px)" : "400px",
-          maxWidth: isMobile ? "none" : "90vw",
-          zIndex: 100000, // Tăng z-index để đảm bảo hiển thị trên cùng
+          position: "absolute",
+          top: "100%",
+          marginTop: "8px",
+          zIndex: 999,
+          width: isMobile ? "100%" : "420px",
+          maxWidth: "90vw",
         }}
+        variants={suggestionContainerVariants}
+        initial="hidden"
+        animate="visible"
+        exit="exit"
       >
-        {isLoadingSuggestions ? (
-          <div className="p-3 text-center text-white/90">
-            <div className="animate-spin w-5 h-5 border-2 border-white/40 border-t-white rounded-full mx-auto"></div>
-            <span className="text-sm mt-2 block">Đang tìm kiếm...</span>
-          </div>
-        ) : (
-          allSuggestions.map((suggestion, index) => {
-            const IconComponent = suggestion.icon;
-            const isSelected = index === selectedIndex;
+        <div className="overflow-y-auto max-h-80 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
+          {isLoadingSuggestions ? (
+            <motion.div
+              className="p-6 text-center text-white/90"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.1 }}
+            >
+              <motion.div
+                className="w-6 h-6 border-2 border-white/40 border-t-white rounded-full mx-auto mb-3"
+                variants={loadingSpinnerVariants}
+                animate="animate"
+              />
+              <span className="text-sm font-medium">Đang tìm kiếm...</span>
+            </motion.div>
+          ) : (
+            <div className="py-2">
+              {allSuggestions.map((suggestion, index) => {
+                const IconComponent = suggestion.icon;
+                const isSelected = index === selectedIndex;
 
-            return (
-              <div
-                key={`${suggestion.type}-${suggestion.text}-${index}`}
-                className={`
-                flex items-center px-4 py-3 cursor-pointer transition-all duration-200
-                ${
-                  isSelected
-                    ? "bg-white/20 border-l-4 border-white text-white"
-                    : "text-white/90 hover:text-white hover:bg-white/10 border-l-4 border-transparent"
-                }
-                ${index === 0 ? "rounded-t-lg" : ""}
-                ${index === allSuggestions.length - 1 ? "rounded-b-lg" : ""}
-              `}
-                onClick={() => onSuggestionClick(suggestion.text)}
-              >
-                <IconComponent className="w-4 h-4 mr-3 opacity-80" />
-                <div className="flex-1">
-                  <div className="text-sm font-medium">{suggestion.text}</div>
-                  <div className="text-xs opacity-70">{suggestion.label}</div>
-                </div>
-                {isSelected && (
-                  <div className="w-2 h-2 bg-white rounded-full opacity-90"></div>
-                )}
-              </div>
-            );
-          })
-        )}
-      </div>
+                return (
+                  <motion.div
+                    key={`${suggestion.type}-${suggestion.text}-${index}`}
+                    className={`
+                      flex items-center px-4 py-3 cursor-pointer
+                      ${
+                        isSelected
+                          ? "bg-white/15 border-l-4 border-white text-white"
+                          : "text-white/90 border-l-4 border-transparent"
+                      }
+                    `}
+                    variants={suggestionItemVariants}
+                    initial="hidden"
+                    animate="visible"
+                    exit="exit"
+                    whileHover="hover"
+                    whileTap="tap"
+                    custom={index}
+                    onClick={() => onSuggestionClick(suggestion.text)}
+                  >
+                    <motion.div
+                      className="mr-3"
+                      animate={{
+                        rotate: isSelected ? 360 : 0,
+                        scale: isSelected ? 1.1 : 1,
+                      }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 300,
+                        damping: 20,
+                      }}
+                    >
+                      <IconComponent className="w-5 h-5 opacity-80" />
+                    </motion.div>
+                    <div className="flex-1 min-w-0">
+                      <motion.div
+                        className="text-sm font-medium truncate"
+                        animate={{ x: isSelected ? 4 : 0 }}
+                        transition={{
+                          type: "spring",
+                          stiffness: 400,
+                          damping: 25,
+                        }}
+                      >
+                        {suggestion.text}
+                      </motion.div>
+                      <motion.div
+                        className="text-xs opacity-70"
+                        animate={{
+                          opacity: isSelected ? 1 : 0.7,
+                          x: isSelected ? 4 : 0,
+                        }}
+                        transition={{
+                          type: "spring",
+                          stiffness: 400,
+                          damping: 25,
+                        }}
+                      >
+                        {suggestion.label}
+                      </motion.div>
+                    </div>
+                    <AnimatePresence>
+                      {isSelected && (
+                        <motion.div
+                          className="w-2 h-2 bg-white rounded-full"
+                          initial={{ scale: 0, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          exit={{ scale: 0, opacity: 0 }}
+                          transition={{
+                            type: "spring",
+                            stiffness: 600,
+                            damping: 25,
+                          }}
+                        />
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </motion.div>
     );
   };
 
@@ -334,13 +665,13 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
   const handleMobileMenuToggle = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    setShowMobileMenu((prev) => !prev); // Chuyển đổi trạng thái mở/đóng
+    setShowMobileMenu((prev) => !prev);
   };
 
   return (
     <>
       {/* Header */}
-      <div
+      <motion.div
         className={`
           relative flex h-16 md:h-20 flex-row items-center text-white 
           bg-gradient-to-r ${theme.colors.background}
@@ -349,78 +680,129 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
           before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/5 before:to-transparent
         `}
         style={{ zIndex: 1000 }}
+        initial={{ y: -80, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{
+          type: "spring",
+          stiffness: 400,
+          damping: 25,
+          mass: 0.8,
+        }}
       >
         <div className="flex flex-1 flex-row items-center relative z-10">
           {/* Logo */}
-          <div className="relative group">
+          <motion.div
+            className="relative group"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            transition={{
+              type: "spring",
+              stiffness: 400,
+              damping: 15,
+            }}
+          >
             <img
-              className="h-8 md:h-12 cursor-pointer mr-3 md:mr-4 transition-all duration-300 hover:scale-110 drop-shadow-lg"
+              className="h-8 md:h-12 cursor-pointer mr-3 md:mr-4 drop-shadow-lg"
               src="https://yzfbdwvbybecxhbitkmc.supabase.co/storage/v1/object/sign/image/78ed005b-b0aa-427b-bc0d-6f1efb29e653.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV82OTc4ZGU2My0wOWQzLTRhYmYtOWRjZC0wZjY0NTBlN2VlYmIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJpbWFnZS83OGVkMDA1Yi1iMGFhLTQyN2ItYmMwZC02ZjFlZmIyOWU2NTMucG5nIiwiaWF0IjoxNzU0MTM1Mzk4LCJleHAiOjIwNjk0OTUzOTh9.MxsdoFIdkMKWNqhTMN5PTDT2k_K-ELn-q7OzxBEF9PM"
               onClick={() => setCurrentView("main")}
             />
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg"></div>
-          </div>
+          </motion.div>
 
           <div className="flex items-center gap-2">
             {/* Title */}
-            <h4
+            <motion.h4
               className={`
                 text-2xl font-extrabold bg-gradient-to-r ${theme.colors.gradient} 
                 text-transparent bg-clip-text drop-shadow-md
-                hover:drop-shadow-lg transition-all duration-300
               `}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{
+                type: "spring",
+                stiffness: 300,
+                damping: 20,
+                delay: 0.1,
+              }}
+              whileHover={{ scale: 1.02 }}
             >
               UIAMusic
-            </h4>
+            </motion.h4>
 
             {/* Home button */}
-            <button
+            <motion.button
               className={`
                 bg-${theme.colors.primary}-600/60 hover:bg-${theme.colors.secondary}-600/80 
                 border border-${theme.colors.primary}-400/30 shadow-lg shadow-${theme.colors.primary}-500/25
                 cursor-pointer w-8 h-8 md:w-10 md:h-10 p-2 rounded-full 
-                transition-all duration-300 ease-out
-                hover:scale-110 hover:rotate-12
                 backdrop-blur-sm
-                active:scale-95
               `}
               onClick={() => setCurrentView("main")}
+              whileHover={{
+                scale: 1.1,
+                rotate: 12,
+                boxShadow: `0 0 20px rgba(147, 51, 234, 0.4)`,
+              }}
+              whileTap={{ scale: 0.95 }}
+              transition={{
+                type: "spring",
+                stiffness: 400,
+                damping: 15,
+              }}
             >
               <IconHome stroke={2} className="w-full h-full text-white" />
-            </button>
+            </motion.button>
 
             {/* Theme Button for Mobile */}
-            <button
+            <motion.button
               className={`
                 bg-${theme.colors.primary}-600/60 hover:bg-${theme.colors.secondary}-600/80 
                 border border-${theme.colors.primary}-400/30
                 md:hidden w-8 h-8 cursor-pointer rounded-full 
-                flex items-center justify-center transition-all duration-300 hover:scale-110
-                active:scale-95
+                flex items-center justify-center
               `}
               onClick={() => setShowThemeSelector(true)}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+              transition={{
+                type: "spring",
+                stiffness: 400,
+                damping: 15,
+              }}
             >
               <IconPalette stroke={2} className="w-5 h-5 text-white" />
-            </button>
+            </motion.button>
           </div>
 
           {/* Desktop Search */}
           <div className="hidden md:flex flex-1 flex-row items-center max-w-md mx-4 relative">
-            <div
+            <motion.div
+              ref={searchContainerRef}
               className={`
                 flex flex-1 flex-row items-center rounded-full
                 bg-${theme.colors.card} border border-${theme.colors.border} 
                 shadow-lg shadow-${theme.colors.primary}-500/25
                 backdrop-blur-md px-4 py-2
-                transition-all duration-300 hover:scale-105
-                relative overflow-hidden
+                relative
               `}
+              variants={searchInputVariants}
+              animate={isSearchFocused ? "focus" : "blur"}
+              whileHover={{ scale: 1.02 }}
             >
-              <IconSearch
-                stroke={2}
-                className="w-5 h-5 cursor-pointer text-white hover:text-white/80 transition-colors"
-                onClick={() => handleSearchChange()}
-              />
+              <motion.div
+                whileHover={{ scale: 1.1, rotate: 90 }}
+                whileTap={{ scale: 0.9 }}
+                transition={{
+                  type: "spring",
+                  stiffness: 400,
+                  damping: 15,
+                }}
+              >
+                <IconSearch
+                  stroke={2}
+                  className="w-5 h-5 cursor-pointer text-white hover:text-white/80 transition-colors"
+                  onClick={() => handleSearchChange()}
+                />
+              </motion.div>
               <input
                 ref={searchInputRef}
                 type="text"
@@ -430,305 +812,569 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
                 onChange={(e) => handleSearchInputChange(e.target.value)}
                 onKeyDown={handleKeyDown}
                 onFocus={() => {
+                  setIsSearchFocused(true);
                   if (searchText.length >= 2) {
                     setShowSuggestions(true);
                   }
                 }}
+                onBlur={() => {
+                  setTimeout(() => setIsSearchFocused(false), 150);
+                }}
                 disabled={isSearching}
               />
-              {isSearching && (
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              <AnimatePresence>
+                {isSearching && (
+                  <motion.div
+                    className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
+                    variants={loadingSpinnerVariants}
+                    initial={{ opacity: 0, scale: 0 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0 }}
+                    transition={{
+                      type: "spring",
+                      stiffness: 400,
+                      damping: 20,
+                    }}
+                  />
+                )}
+              </AnimatePresence>
+            </motion.div>
+
+            {/* Desktop Suggestions - positioned outside search container to avoid overflow issues */}
+            <AnimatePresence>
+              {showSuggestions && !showMobileSearch && (
+                <SuggestionsList
+                  suggestions={suggestions}
+                  isLoadingSuggestions={isLoadingSuggestions}
+                  selectedIndex={selectedSuggestionIndex}
+                  onSuggestionClick={handleSuggestionClick}
+                />
               )}
-            </div>
+            </AnimatePresence>
           </div>
 
           {/* Mobile Search Icon */}
-          <button
+          <motion.button
             className={`
               md:hidden w-8 h-8 cursor-pointer ml-auto mr-3 rounded-full
               bg-${theme.colors.primary}-600/60 hover:bg-${theme.colors.secondary}-600/80
               border border-${theme.colors.primary}-400/30 shadow-lg shadow-${theme.colors.primary}-500/25
               flex items-center justify-center
-              transition-all duration-300 hover:scale-110
-              active:scale-95
             `}
             onClick={() => setShowMobileSearch(true)}
+            whileHover={{
+              scale: 1.1,
+              boxShadow: `0 0 15px rgba(147, 51, 234, 0.4)`,
+            }}
+            whileTap={{ scale: 0.95 }}
+            transition={{
+              type: "spring",
+              stiffness: 400,
+              damping: 15,
+            }}
           >
             <IconSearch stroke={2} className="w-5 h-5 text-white" />
-          </button>
+          </motion.button>
         </div>
 
         {/* Desktop Menu */}
-        <div className="hidden md:flex flex-row items-center gap-4 relative z-10">
+        <motion.div
+          className="hidden md:flex flex-row items-center gap-4 relative z-10"
+          initial={{ opacity: 0, x: 50 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{
+            type: "spring",
+            stiffness: 300,
+            damping: 20,
+            delay: 0.2,
+          }}
+        >
           {/* Theme Button */}
-          <button
+          <motion.button
             onClick={() => setShowThemeSelector(true)}
             className={`
               flex items-center gap-2 px-3 py-2 rounded-full
               bg-${theme.colors.primary}-600/60 hover:bg-${theme.colors.secondary}-600/80
               border border-${theme.colors.primary}-400/30
               text-white backdrop-blur-sm
-              transition-all duration-300 ease-out
-              hover:scale-105 hover:shadow-xl
               relative overflow-hidden group
-              active:scale-95
             `}
             title="Thay đổi chủ đề"
+            whileHover={{
+              scale: 1.05,
+              boxShadow: `0 0 20px rgba(147, 51, 234, 0.4)`,
+            }}
+            whileTap={{ scale: 0.95 }}
+            transition={{
+              type: "spring",
+              stiffness: 400,
+              damping: 15,
+            }}
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-500"></div>
-            <IconPalette className="w-5 h-5 z-10" />
+            <motion.div
+              animate={{ rotate: [0, 180, 360] }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                ease: "linear",
+              }}
+            >
+              <IconPalette className="w-5 h-5 z-10" />
+            </motion.div>
             <span className="text-sm font-medium hidden lg:block z-10">
               Chủ đề
             </span>
-          </button>
+          </motion.button>
 
           {user ? (
             <>
-              <div className="relative group">
+              <motion.div
+                className="relative group"
+                whileHover={{ scale: 1.1 }}
+                transition={{
+                  type: "spring",
+                  stiffness: 400,
+                  damping: 15,
+                }}
+              >
                 <img
                   src={user.avatar || "https://via.placeholder.com/32"}
                   alt="User avatar"
-                  className="w-8 h-8 rounded-full border-2 border-white/30 hover:border-white/60 transition-all duration-300 hover:scale-110"
+                  className="w-8 h-8 rounded-full border-2 border-white/30 hover:border-white/60 transition-all duration-300"
                 />
-                <div className="absolute inset-0 rounded-full bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              </div>
-              <span
-                className="text-sm font-bold text-white cursor-pointer hover:text-white/80 transition-colors"
+              </motion.div>
+              <motion.span
+                className="text-sm font-bold text-white cursor-pointer"
                 onClick={toggleProfilePopup}
+                whileHover={{
+                  scale: 1.05,
+                  color: "rgba(255,255,255,0.8)",
+                }}
+                whileTap={{ scale: 0.95 }}
+                transition={{
+                  type: "spring",
+                  stiffness: 400,
+                  damping: 15,
+                }}
               >
                 {user.first_name || "User"}
-              </span>
-              <button
+              </motion.span>
+              <motion.button
                 onClick={handleLogout}
-                className="flex items-center text-sm font-bold text-white cursor-pointer hover:text-white/80 transition-all duration-300 hover:scale-105"
+                className="flex items-center text-sm font-bold text-white cursor-pointer"
+                whileHover={{
+                  scale: 1.05,
+                  color: "rgba(255,255,255,0.8)",
+                }}
+                whileTap={{ scale: 0.95 }}
+                transition={{
+                  type: "spring",
+                  stiffness: 400,
+                  damping: 15,
+                }}
               >
                 <IconLogout stroke={2} className="w-5 h-5 mr-1" />
                 Đăng xuất
-              </button>
+              </motion.button>
             </>
           ) : (
             <>
               <Link to="/signup">
-                <span className="text-sm font-bold text-white cursor-pointer hover:text-white/80 transition-colors">
+                <motion.span
+                  className="text-sm font-bold text-white cursor-pointer"
+                  whileHover={{
+                    scale: 1.05,
+                    color: "rgba(255,255,255,0.8)",
+                  }}
+                  whileTap={{ scale: 0.95 }}
+                >
                   Đăng ký
-                </span>
+                </motion.span>
               </Link>
               <Link to="/login">
-                <span
+                <motion.span
                   className={`
                     py-2 px-4 rounded-full text-sm cursor-pointer 
                     bg-white/20 hover:bg-white/30 text-white
                     backdrop-blur-sm border border-white/30
-                    transition-all duration-300 hover:scale-105 hover:shadow-lg
                   `}
+                  whileHover={{
+                    scale: 1.05,
+                    backgroundColor: "rgba(255,255,255,0.3)",
+                    boxShadow: "0 0 15px rgba(255,255,255,0.2)",
+                  }}
+                  whileTap={{ scale: 0.95 }}
+                  transition={{
+                    type: "spring",
+                    stiffness: 400,
+                    damping: 15,
+                  }}
                 >
                   Đăng nhập
-                </span>
+                </motion.span>
               </Link>
             </>
           )}
-        </div>
+        </motion.div>
 
         {/* Mobile Menu Button */}
-        <button
+        <motion.button
           className={`
             md:hidden w-10 h-10 cursor-pointer rounded-full
             bg-${theme.colors.primary}-600/60 hover:bg-${theme.colors.secondary}-600/80
             border border-${theme.colors.primary}-400/30 shadow-lg shadow-${theme.colors.primary}-500/25
             flex items-center justify-center
-            transition-all duration-300 hover:scale-110
-            active:scale-95 active:bg-${theme.colors.secondary}-700/80
             relative z-20
             touch-manipulation
           `}
           onClick={handleMobileMenuToggle}
           aria-label="Open mobile menu"
           type="button"
+          whileHover={{
+            scale: 1.1,
+            boxShadow: `0 0 20px rgba(147, 51, 234, 0.4)`,
+          }}
+          whileTap={{ scale: 0.95 }}
+          transition={{
+            type: "spring",
+            stiffness: 400,
+            damping: 15,
+          }}
         >
-          <IconMenu2
-            stroke={2}
-            className="w-6 h-6 text-white pointer-events-none"
-          />
-        </button>
-      </div>
-
-      {/* Desktop Suggestions */}
-      {showSuggestions && !showMobileSearch && (
-        <SuggestionsList
-          suggestions={suggestions}
-          isLoadingSuggestions={isLoadingSuggestions}
-          selectedIndex={selectedSuggestionIndex}
-          onSuggestionClick={handleSuggestionClick}
-        />
-      )}
+          <motion.div
+            animate={{ rotate: showMobileMenu ? 180 : 0 }}
+            transition={{
+              type: "spring",
+              stiffness: 400,
+              damping: 20,
+            }}
+          >
+            <IconMenu2
+              stroke={2}
+              className="w-6 h-6 text-white pointer-events-none"
+            />
+          </motion.div>
+        </motion.button>
+      </motion.div>
 
       {/* Mobile Search Modal */}
-      {showMobileSearch && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100001] md:hidden">
-          <div
-            className={`bg-gradient-to-b ${theme.colors.backgroundOverlay} p-4 backdrop-blur-lg border-b border-white/20`}
+      <AnimatePresence>
+        {showMobileSearch && (
+          <motion.div
+            className="fixed inset-0 bg-black/60 z-[100001] md:hidden"
+            variants={mobileSearchVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
           >
-            <div className="flex items-center mb-4">
-              <button
-                className="w-8 h-8 cursor-pointer rounded-full bg-white/20 flex items-center justify-center mr-3 hover:bg-white/30 transition-colors"
-                onClick={() => {
-                  setShowMobileSearch(false);
-                  setShowSuggestions(false);
-                  setSearchText(""); // Xóa input khi đóng
-                }}
-              >
-                <IconX stroke={2} className="w-5 h-5 text-white" />
-              </button>
-
-              <div className="flex-1 relative">
-                <div
-                  className={`
-              bg-${theme.colors.card} border border-${theme.colors.border}
-              shadow-lg shadow-${theme.colors.primary}-500/25
-              px-4 py-2 rounded-full flex items-center backdrop-blur-md
-            `}
+            <motion.div
+              className={`bg-gradient-to-b ${theme.colors.backgroundOverlay} p-4 backdrop-blur-lg border-b border-white/20 relative`}
+              initial={{ y: -100 }}
+              animate={{ y: 0 }}
+              exit={{ y: -100 }}
+              transition={{
+                type: "spring",
+                stiffness: 400,
+                damping: 25,
+              }}
+            >
+              <div className="flex items-center mb-4">
+                <motion.button
+                  className="w-8 h-8 cursor-pointer rounded-full bg-white/20 flex items-center justify-center mr-3"
+                  onClick={() => {
+                    setShowMobileSearch(false);
+                    setShowSuggestions(false);
+                    setSearchText("");
+                  }}
+                  whileHover={{
+                    scale: 1.1,
+                    backgroundColor: "rgba(255,255,255,0.3)",
+                  }}
+                  whileTap={{ scale: 0.9 }}
+                  transition={{
+                    type: "spring",
+                    stiffness: 400,
+                    damping: 15,
+                  }}
                 >
-                  <input
-                    ref={mobileSearchInputRef}
-                    type="text"
-                    placeholder="Tìm kiếm bài hát..."
-                    className="flex-1 bg-transparent border-none outline-none text-sm text-white placeholder-white/70"
-                    value={searchText}
-                    onChange={(e) => handleSearchInputChange(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    onFocus={() => {
-                      if (searchText.length >= 2) {
-                        setShowSuggestions(true);
-                      }
-                    }}
-                    autoFocus
-                    disabled={isSearching}
-                  />
-                  <button
-                    onClick={() => handleSearchChange()}
-                    disabled={isSearching || !searchText.trim()}
+                  <IconX stroke={2} className="w-5 h-5 text-white" />
+                </motion.button>
+
+                <div className="flex-1 relative">
+                  <motion.div
                     className={`
-                ml-2 p-1 hover:bg-white/10 rounded-full transition-colors
-                ${
-                  isSearching || !searchText.trim()
-                    ? "opacity-50 cursor-not-allowed"
-                    : "cursor-pointer"
-                }
-              `}
+                      bg-${theme.colors.card} border border-${theme.colors.border}
+                      shadow-lg shadow-${theme.colors.primary}-500/25
+                      px-4 py-2 rounded-full flex items-center backdrop-blur-md
+                      relative
+                    `}
+                    initial={{ scale: 0.9, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{
+                      type: "spring",
+                      stiffness: 400,
+                      damping: 20,
+                      delay: 0.1,
+                    }}
                   >
-                    {isSearching ? (
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    ) : (
-                      <IconSearch stroke={2} className="w-4 h-4 text-white" />
-                    )}
-                  </button>
+                    <input
+                      ref={mobileSearchInputRef}
+                      type="text"
+                      placeholder="Tìm kiếm bài hát..."
+                      className="flex-1 bg-transparent border-none outline-none text-sm text-white placeholder-white/70"
+                      value={searchText}
+                      onChange={(e) => handleSearchInputChange(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      onFocus={() => {
+                        if (searchText.length >= 2) {
+                          setShowSuggestions(true);
+                        }
+                      }}
+                      autoFocus
+                      disabled={isSearching}
+                    />
+                    <motion.button
+                      onClick={() => handleSearchChange()}
+                      disabled={isSearching || !searchText.trim()}
+                      className={`
+                        ml-2 p-1 rounded-full transition-colors
+                        ${
+                          isSearching || !searchText.trim()
+                            ? "opacity-50 cursor-not-allowed"
+                            : "cursor-pointer hover:bg-white/10"
+                        }
+                      `}
+                      whileHover={
+                        !isSearching && searchText.trim() ? { scale: 1.1 } : {}
+                      }
+                      whileTap={
+                        !isSearching && searchText.trim() ? { scale: 0.9 } : {}
+                      }
+                    >
+                      <AnimatePresence mode="wait">
+                        {isSearching ? (
+                          <motion.div
+                            className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
+                            variants={loadingSpinnerVariants}
+                            animate="animate"
+                            initial={{ opacity: 0, scale: 0 }}
+                            exit={{ opacity: 0, scale: 0 }}
+                          />
+                        ) : (
+                          <motion.div
+                            key="search"
+                            initial={{ opacity: 0, rotate: -90 }}
+                            animate={{ opacity: 1, rotate: 0 }}
+                            exit={{ opacity: 0, rotate: 90 }}
+                            transition={{
+                              type: "spring",
+                              stiffness: 400,
+                              damping: 20,
+                            }}
+                          >
+                            <IconSearch
+                              stroke={2}
+                              className="w-4 h-4 text-white"
+                            />
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </motion.button>
+
+                    {/* Mobile Suggestions - positioned relative to mobile search container */}
+                    <AnimatePresence>
+                      {showSuggestions && (
+                        <SuggestionsList
+                          suggestions={suggestions}
+                          isLoadingSuggestions={isLoadingSuggestions}
+                          selectedIndex={selectedSuggestionIndex}
+                          onSuggestionClick={(text) => {
+                            handleSuggestionClick(text);
+                            setShowMobileSearch(false);
+                          }}
+                          isMobile={true}
+                        />
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
                 </div>
               </div>
-            </div>
-          </div>
-
-          {/* Mobile Suggestions */}
-          {showSuggestions && (
-            <SuggestionsList
-              suggestions={suggestions}
-              isLoadingSuggestions={isLoadingSuggestions}
-              selectedIndex={selectedSuggestionIndex}
-              onSuggestionClick={(text) => {
-                handleSuggestionClick(text);
-                setShowMobileSearch(false); // Đóng modal khi chọn gợi ý
-              }}
-              isMobile={true}
-            />
-          )}
-        </div>
-      )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Mobile Menu */}
-      {showMobileMenu && (
-        <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100000] md:hidden"
-          onClick={() => setShowMobileMenu(false)} // Đóng menu khi click ngoài
-        >
-          <div
-            className={`bg-gradient-to-b ${theme.colors.backgroundOverlay} h-full w-64 p-4 backdrop-blur-lg border-r border-white/20`}
-            onClick={(e) => e.stopPropagation()} // Ngăn đóng khi click trong menu
+      <AnimatePresence>
+        {showMobileMenu && (
+          <motion.div
+            className="fixed inset-0 bg-black/60 z-[100000] md:hidden"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{
+              type: "spring",
+              stiffness: 400,
+              damping: 30,
+            }}
+            onClick={() => setShowMobileMenu(false)}
           >
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-bold text-white">Menu</h2>
-              <button
-                className="w-8 h-8 cursor-pointer rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition-colors"
-                onClick={() => setShowMobileMenu(false)}
+            <motion.div
+              className={`bg-gradient-to-b ${theme.colors.backgroundOverlay} h-full w-64 p-4 backdrop-blur-lg border-r border-white/20`}
+              variants={mobileMenuVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <motion.div
+                className="flex items-center justify-between mb-6"
+                variants={menuItemVariants}
               >
-                <IconX stroke={2} className="w-5 h-5 text-white" />
-              </button>
-            </div>
-            <div className="flex flex-col space-y-4">
-              <button
-                onClick={() => {
-                  setShowThemeSelector(true);
-                  setShowMobileMenu(false);
-                }}
-                className="flex items-center p-3 text-sm font-bold text-white cursor-pointer hover:bg-white/20 rounded-lg transition-all duration-300 backdrop-blur-sm border border-white/20"
-              >
-                <IconPalette stroke={2} className="w-5 h-5 mr-3" />
-                Thay đổi chủ đề
-              </button>
+                <h2 className="text-lg font-bold text-white">Menu</h2>
+                <motion.button
+                  className="w-8 h-8 cursor-pointer rounded-full bg-white/20 flex items-center justify-center"
+                  onClick={() => setShowMobileMenu(false)}
+                  whileHover={{
+                    scale: 1.1,
+                    backgroundColor: "rgba(255,255,255,0.3)",
+                  }}
+                  whileTap={{ scale: 0.9 }}
+                  transition={{
+                    type: "spring",
+                    stiffness: 400,
+                    damping: 15,
+                  }}
+                >
+                  <IconX stroke={2} className="w-5 h-5 text-white" />
+                </motion.button>
+              </motion.div>
 
-              {user ? (
-                <>
-                  <div className="flex items-center p-3 bg-white/10 rounded-lg backdrop-blur-sm border border-white/20">
-                    <img
-                      src={user.avatar || "https://via.placeholder.com/32"}
-                      alt="User avatar"
-                      className="w-8 h-8 rounded-full mr-3 border border-white/30"
-                    />
-                    <span
-                      className="text-sm font-bold text-white cursor-pointer hover:text-white/80"
+              <div className="flex flex-col space-y-4">
+                <motion.button
+                  onClick={() => {
+                    setShowThemeSelector(true);
+                    setShowMobileMenu(false);
+                  }}
+                  className="flex items-center p-3 text-sm font-bold text-white cursor-pointer rounded-lg backdrop-blur-sm border border-white/20"
+                  variants={menuItemVariants}
+                  whileHover={{
+                    backgroundColor: "rgba(255,255,255,0.2)",
+                    scale: 1.02,
+                  }}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{
+                    type: "spring",
+                    stiffness: 400,
+                    damping: 15,
+                  }}
+                >
+                  <IconPalette stroke={2} className="w-5 h-5 mr-3" />
+                  Thay đổi chủ đề
+                </motion.button>
+
+                {user ? (
+                  <>
+                    <motion.div
+                      className="flex items-center p-3 bg-white/10 rounded-lg backdrop-blur-sm border border-white/20"
+                      variants={menuItemVariants}
+                    >
+                      <img
+                        src={user.avatar || "https://via.placeholder.com/32"}
+                        alt="User avatar"
+                        className="w-8 h-8 rounded-full mr-3 border border-white/30"
+                      />
+                      <motion.span
+                        className="text-sm font-bold text-white cursor-pointer"
+                        onClick={() => {
+                          toggleProfilePopup();
+                          setShowMobileMenu(false);
+                        }}
+                        whileHover={{ opacity: 0.8 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        {user.first_name || "User"}
+                      </motion.span>
+                    </motion.div>
+                    <motion.button
                       onClick={() => {
-                        toggleProfilePopup();
+                        handleLogout();
                         setShowMobileMenu(false);
                       }}
+                      className="flex items-center p-3 text-sm font-bold text-white cursor-pointer rounded-lg backdrop-blur-sm border border-white/20"
+                      variants={menuItemVariants}
+                      whileHover={{
+                        backgroundColor: "rgba(255,255,255,0.2)",
+                        scale: 1.02,
+                      }}
+                      whileTap={{ scale: 0.98 }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 400,
+                        damping: 15,
+                      }}
                     >
-                      {user.first_name || "User"}
-                    </span>
-                  </div>
-                  <button
-                    onClick={() => {
-                      handleLogout();
-                      setShowMobileMenu(false);
-                    }}
-                    className="flex items-center p-3 text-sm font-bold text-white cursor-pointer hover:bg-white/20 rounded-lg transition-all duration-300 backdrop-blur-sm border border-white/20"
-                  >
-                    <IconLogout stroke={2} className="w-5 h-5 mr-3" />
-                    Đăng xuất
-                  </button>
-                </>
-              ) : (
-                <>
-                  <Link to="/signup" onClick={() => setShowMobileMenu(false)}>
-                    <span className="block p-3 text-sm font-bold text-white cursor-pointer hover:bg-white/20 rounded-lg transition-all duration-300 backdrop-blur-sm border border-white/20">
-                      Đăng ký
-                    </span>
-                  </Link>
-                  <Link to="/login" onClick={() => setShowMobileMenu(false)}>
-                    <span className="block p-3 text-sm font-bold bg-white/20 text-white rounded-lg cursor-pointer hover:bg-white/30 transition-all duration-300 text-center backdrop-blur-sm border border-white/30">
-                      Đăng nhập
-                    </span>
-                  </Link>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+                      <IconLogout stroke={2} className="w-5 h-5 mr-3" />
+                      Đăng xuất
+                    </motion.button>
+                  </>
+                ) : (
+                  <>
+                    <Link to="/signup" onClick={() => setShowMobileMenu(false)}>
+                      <motion.span
+                        className="block p-3 text-sm font-bold text-white cursor-pointer rounded-lg backdrop-blur-sm border border-white/20"
+                        variants={menuItemVariants}
+                        whileHover={{
+                          backgroundColor: "rgba(255,255,255,0.2)",
+                          scale: 1.02,
+                        }}
+                        whileTap={{ scale: 0.98 }}
+                        transition={{
+                          type: "spring",
+                          stiffness: 400,
+                          damping: 15,
+                        }}
+                      >
+                        Đăng ký
+                      </motion.span>
+                    </Link>
+                    <Link to="/login" onClick={() => setShowMobileMenu(false)}>
+                      <motion.span
+                        className="block p-3 text-sm font-bold bg-white/20 text-white rounded-lg cursor-pointer text-center backdrop-blur-sm border border-white/30"
+                        variants={menuItemVariants}
+                        whileHover={{
+                          backgroundColor: "rgba(255,255,255,0.3)",
+                          scale: 1.02,
+                          boxShadow: "0 0 15px rgba(255,255,255,0.2)",
+                        }}
+                        whileTap={{ scale: 0.98 }}
+                        transition={{
+                          type: "spring",
+                          stiffness: 400,
+                          damping: 15,
+                        }}
+                      >
+                        Đăng nhập
+                      </motion.span>
+                    </Link>
+                  </>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {/* {showProfilePopup && (
-        <ProfilePopup
-          user={user}
-          onClose={toggleProfilePopup}
-          onUpdate={handleProfileUpdate}
-        />
-      )} */}
+      {/* Profile Popup */}
+      <AnimatePresence>
+        {showProfilePopup && (
+          <ProfilePopup
+            user={user}
+            onClose={() => setShowProfilePopup(false)}
+            onUpdate={handleProfileUpdate}
+          />
+        )}
+      </AnimatePresence>
     </>
   );
 };
