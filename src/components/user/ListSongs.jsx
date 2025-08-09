@@ -13,6 +13,25 @@ import { useTheme } from "../../context/themeContext.js";
 // Lazy load Song component for better performance
 const Song = lazy(() => import("./_Song"));
 
+// Mobile detection hook
+const useIsMobile = () => {
+  const [isMobile, setIsMobile] = useState(false);
+  
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth <= 768 || 
+        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      setIsMobile(mobile);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+  
+  return isMobile;
+};
+
 // Optimized Skeleton component
 const SongSkeleton = React.memo(() => {
   const { theme } = useTheme();
@@ -32,11 +51,16 @@ const SongSkeleton = React.memo(() => {
   );
 });
 
-// Improved Progressive Loading Hook
-const useProgressiveLoading = (totalItems, initialCount = 24, increment = 24) => {
+// Improved Progressive Loading Hook with mobile optimization
+const useProgressiveLoading = (totalItems, isMobile = false) => {
+  // Reduce initial count on mobile for better performance
+  const initialCount = isMobile ? 12 : 24;
+  const increment = isMobile ? 12 : 24;
+  
   const [loadedCount, setLoadedCount] = useState(Math.min(initialCount, totalItems));
   const [isLoading, setIsLoading] = useState(false);
   const observerRef = useRef();
+  const loadingTimeoutRef = useRef();
   const hasMore = loadedCount < totalItems;
 
   const loadMoreRef = useCallback(
@@ -49,30 +73,41 @@ const useProgressiveLoading = (totalItems, initialCount = 24, increment = 24) =>
         ([entry]) => {
           if (entry.isIntersecting && hasMore && !isLoading) {
             setIsLoading(true);
-            // Use requestAnimationFrame for smoother loading
-            requestAnimationFrame(() => {
-              setTimeout(() => {
+            
+            // Clear any existing timeout
+            if (loadingTimeoutRef.current) {
+              clearTimeout(loadingTimeoutRef.current);
+            }
+            
+            // Use longer delay on mobile to prevent scroll jank
+            const delay = isMobile ? 100 : 50;
+            
+            loadingTimeoutRef.current = setTimeout(() => {
+              requestAnimationFrame(() => {
                 setLoadedCount((prev) => Math.min(prev + increment, totalItems));
                 setIsLoading(false);
-              }, 50); // Small delay for better UX
-            });
+              });
+            }, delay);
           }
         },
         {
-          rootMargin: "400px", // Load earlier
+          rootMargin: isMobile ? "200px" : "400px", // Smaller preload on mobile
           threshold: 0.1,
         }
       );
 
       if (node) observerRef.current.observe(node);
     },
-    [hasMore, isLoading, increment, totalItems]
+    [hasMore, isLoading, increment, totalItems, isMobile]
   );
 
   useEffect(() => {
     return () => {
       if (observerRef.current) {
         observerRef.current.disconnect();
+      }
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
       }
     };
   }, []);
@@ -86,7 +121,7 @@ const useProgressiveLoading = (totalItems, initialCount = 24, increment = 24) =>
   return { loadedCount, loadMoreRef, setLoadedCount, isLoading, hasMore };
 };
 
-// Smooth Scrolling Grid Component - No Virtualization for Better UX
+// Optimized Song Grid Component with mobile-specific improvements
 const SmoothSongGrid = React.memo(
   ({
     songs,
@@ -94,23 +129,23 @@ const SmoothSongGrid = React.memo(
     setContextMenu,
     handleCloseContextMenu,
     songDescriptionAvailable = false,
+    isMobile = false,
   }) => {
     const { theme } = useTheme();
     
-    // Use progressive loading instead of virtualization for smoother experience
     const { loadedCount, loadMoreRef, isLoading, hasMore } = useProgressiveLoading(
       songs.length,
-      24, // Start with 24 songs
-      24  // Load 24 more at a time
+      isMobile
     );
 
     const gridClasses = useMemo(() => {
-      const baseClasses = "grid gap-4 gap-y-6";
+      const baseClasses = "grid gap-3 gap-y-4"; // Reduced gaps on mobile
       if (songDescriptionAvailable) {
         return `${baseClasses} grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4`;
       }
-      return `${baseClasses} grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6`;
-    }, [songDescriptionAvailable]);
+      // Optimize grid for mobile
+      return `${baseClasses} ${isMobile ? 'grid-cols-2' : 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6'}`;
+    }, [songDescriptionAvailable, isMobile]);
 
     const visibleSongs = useMemo(
       () => songs.slice(0, loadedCount),
@@ -128,7 +163,7 @@ const SmoothSongGrid = React.memo(
     }
 
     return (
-      <div className="space-y-6">
+      <div className="space-y-4">
         {/* Songs Grid */}
         <div className={gridClasses}>
           {visibleSongs.map((song, index) => (
@@ -147,26 +182,27 @@ const SmoothSongGrid = React.memo(
           ))}
         </div>
 
-        {/* Loading More Indicator */}
+        {/* Loading More Indicator - Optimized for mobile */}
         {hasMore && (
           <div 
             ref={loadMoreRef} 
-            className="flex justify-center items-center py-8 min-h-[80px]"
+            className="flex justify-center items-center py-6 min-h-[60px]"
           >
             {isLoading ? (
-              <div className={`flex items-center space-x-3 text-${theme.colors.secondary}-400`}>
+              <div className={`flex items-center space-x-2 text-${theme.colors.secondary}-400`}>
                 <div className="relative">
-                  <div className={`w-6 h-6 border-2 border-${theme.colors.secondary}-400 border-t-transparent rounded-full animate-spin`}></div>
-                  <div className={`absolute inset-1 border border-${theme.colors.secondary}-400/30 rounded-full`}></div>
+                  <div className={`w-5 h-5 border-2 border-${theme.colors.secondary}-400 border-t-transparent rounded-full animate-spin`}></div>
                 </div>
-                <span className="text-sm font-medium">Đang tải thêm bài hát...</span>
-                <span className={`text-xs text-${theme.colors.text}/60`}>
-                  ({loadedCount}/{songs.length})
-                </span>
+                <span className="text-sm font-medium">Đang tải...</span>
+                {!isMobile && (
+                  <span className={`text-xs text-${theme.colors.text}/60`}>
+                    ({loadedCount}/{songs.length})
+                  </span>
+                )}
               </div>
             ) : (
-              <div className={`text-${theme.colors.text}/40 text-sm`}>
-                Cuộn xuống để xem thêm ({songs.length - loadedCount} bài còn lại)
+              <div className={`text-${theme.colors.text}/40 text-sm text-center`}>
+                {isMobile ? 'Cuộn để xem thêm' : `Cuộn xuống để xem thêm (${songs.length - loadedCount} bài còn lại)`}
               </div>
             )}
           </div>
@@ -174,10 +210,10 @@ const SmoothSongGrid = React.memo(
 
         {/* End of Content Spacer */}
         {!hasMore && (
-          <div className="flex justify-center items-center py-8">
+          <div className="flex justify-center items-center py-6">
             <div className={`text-${theme.colors.text}/60 text-sm flex items-center space-x-2`}>
               <span>🎉</span>
-              <span>Đã hiển thị tất cả {songs.length} bài hát</span>
+              <span>{isMobile ? `${songs.length} bài hát` : `Đã hiển thị tất cả ${songs.length} bài hát`}</span>
               <span>🎉</span>
             </div>
           </div>
@@ -187,12 +223,13 @@ const SmoothSongGrid = React.memo(
   }
 );
 
-// Main ListSongs Component
+// Main ListSongs Component with mobile optimizations
 const ListSongs = ({ listSongs }) => {
   const [contextMenu, setContextMenu] = useState(null);
   const { currentSong, songDescriptionAvailable } = useAudio();
   const { theme } = useTheme();
   const scrollContainerRef = useRef();
+  const isMobile = useIsMobile();
 
   // Use refs to prevent unnecessary re-renders
   const contextMenuRef = useRef(contextMenu);
@@ -215,16 +252,31 @@ const ListSongs = ({ listSongs }) => {
     [handleCloseContextMenu]
   );
 
-  // Optimized scroll handler with throttling
+  // Throttled scroll handler for better mobile performance
+  const scrollTimeoutRef = useRef();
   const handleScroll = useCallback((e) => {
-    // Add smooth scrolling behavior
-    const container = e.target;
-    if (container.scrollTop < 0) {
-      container.scrollTop = 0;
+    // Clear previous timeout
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
     }
-  }, []);
 
-  // Optimized event listeners with passive events
+    // Throttle scroll events on mobile
+    if (isMobile) {
+      scrollTimeoutRef.current = setTimeout(() => {
+        const container = e.target;
+        if (container.scrollTop < 0) {
+          container.scrollTop = 0;
+        }
+      }, 16); // ~60fps
+    } else {
+      const container = e.target;
+      if (container.scrollTop < 0) {
+        container.scrollTop = 0;
+      }
+    }
+  }, [isMobile]);
+
+  // Optimized event listeners
   useEffect(() => {
     if (contextMenu) {
       const options = { passive: true, capture: false };
@@ -238,13 +290,21 @@ const ListSongs = ({ listSongs }) => {
     }
   }, [contextMenu, handleClickOutside]);
 
-  // Add scroll event listener
+  // Add scroll event listener with passive option for mobile
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (container) {
-      container.addEventListener("scroll", handleScroll, { passive: true });
+      const scrollOptions = { 
+        passive: true,
+        capture: false
+      };
+      
+      container.addEventListener("scroll", handleScroll, scrollOptions);
       return () => {
-        container.removeEventListener("scroll", handleScroll);
+        container.removeEventListener("scroll", handleScroll, scrollOptions);
+        if (scrollTimeoutRef.current) {
+          clearTimeout(scrollTimeoutRef.current);
+        }
       };
     }
   }, [handleScroll]);
@@ -266,8 +326,9 @@ const ListSongs = ({ listSongs }) => {
         ref={scrollContainerRef}
         className="text-white flex-1 mr-2 sm:mr-0 rounded-lg overflow-y-auto"
         style={{
-          scrollBehavior: "smooth",
-          overscrollBehavior: "contain"
+          scrollBehavior: isMobile ? "auto" : "smooth", // Disable smooth scroll on mobile
+          overscrollBehavior: "contain",
+          WebkitOverflowScrolling: "touch", // iOS momentum scrolling
         }}
       >
         <div
@@ -285,15 +346,15 @@ const ListSongs = ({ listSongs }) => {
           </div>
         </div>
 
-        <div className={`p-4 ${currentSong ? 'pb-32 sm:pb-36 md:pb-40' : 'pb-8'}`}>
+        <div className={`p-4 ${currentSong ? (isMobile ? 'pb-24' : 'pb-32 sm:pb-36 md:pb-40') : 'pb-8'}`}>
           <div
-            className={`grid gap-4 gap-y-6 ${
+            className={`grid gap-3 gap-y-4 ${
               songDescriptionAvailable
                 ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
-                : "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6"
+                : isMobile ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6"
             }`}
           >
-            {Array.from({ length: 12 }).map((_, index) => (
+            {Array.from({ length: isMobile ? 8 : 12 }).map((_, index) => (
               <SongSkeleton key={`loading-skeleton-${index}`} />
             ))}
           </div>
@@ -338,13 +399,13 @@ const ListSongs = ({ listSongs }) => {
 
   const songs = listSongs.songs;
 
-  // Calculate dynamic padding based on music player state
+  // Calculate dynamic padding based on music player state and device
   const getBottomPadding = () => {
     if (currentSong) {
-      // When music is playing, add more padding for the music player
-      return "pb-32 sm:pb-36 md:pb-40"; // Larger padding for music player
+      // Reduced padding on mobile for better screen usage
+      return isMobile ? "pb-24" : "pb-32 sm:pb-36 md:pb-40";
     }
-    return "pb-8"; // Normal padding when no music playing
+    return "pb-8";
   };
 
   return (
@@ -352,37 +413,40 @@ const ListSongs = ({ listSongs }) => {
       ref={scrollContainerRef}
       className="text-white flex-1 mr-2 sm:mr-0 rounded-lg overflow-y-auto"
       style={{
-        scrollBehavior: "smooth",
+        scrollBehavior: isMobile ? "auto" : "smooth", // Disable smooth scroll on mobile for performance
         overscrollBehavior: "contain",
         transform: "translateZ(0)", // Hardware acceleration
-        willChange: "scroll-position"
+        willChange: "scroll-position",
+        WebkitOverflowScrolling: "touch", // iOS momentum scrolling
       }}
     >
-      {/* Sticky Header */}
+      {/* Sticky Header with mobile optimization */}
       <div
         className={`sticky top-0 z-20 bg-gradient-to-b ${theme.colors.backgroundOverlay} backdrop-blur-md border-b border-white/10`}
         style={{
           transform: "translateZ(0)", // Hardware acceleration for sticky element
+          backfaceVisibility: "hidden", // Prevent flicker on mobile
         }}
       >
-        <div className="p-4 pb-6">
-          <h3 className={`font-bold text-xl sm:text-2xl text-${theme.colors.text}`}>
+        <div className={isMobile ? "p-3 pb-4" : "p-4 pb-6"}>
+          <h3 className={`font-bold ${isMobile ? 'text-lg' : 'text-xl sm:text-2xl'} text-${theme.colors.text}`}>
             {listSongs.title || "Songs"}
           </h3>
-          <p className={`text-sm opacity-75 text-${theme.colors.text}/60 mt-1`}>
+          <p className={`${isMobile ? 'text-xs' : 'text-sm'} opacity-75 text-${theme.colors.text}/60 mt-1`}>
             {songs.length} bài hát
           </p>
         </div>
       </div>
 
-      {/* Songs Content with dynamic bottom padding based on music player */}
-      <div className={`px-4 pt-4 ${getBottomPadding()}`}>
+      {/* Songs Content with mobile-optimized padding */}
+      <div className={`px-${isMobile ? '3' : '4'} pt-4 ${getBottomPadding()}`}>
         <SmoothSongGrid
           songs={songs}
           contextMenu={contextMenu}
           setContextMenu={setContextMenu}
           handleCloseContextMenu={handleCloseContextMenu}
           songDescriptionAvailable={songDescriptionAvailable}
+          isMobile={isMobile}
         />
       </div>
     </div>
