@@ -898,4 +898,81 @@ export const themes = {
       "https://yzfbdwvbybecxhbitkmc.supabase.co/storage/v1/object/sign/image/winter.jpeg?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV82OTc4ZGU2My0wOWQzLTRhYmYtOWRjZC0wZjY0NTBlN2VlYmIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJpbWFnZS93aW50ZXIuanBlZyIsImlhdCI6MTc1NDM4ODg4OCwiZXhwIjoyMDY5NzQ4ODg4fQ.r4498DuWO9muYJjrmgjjQ6ZYZFbKdVDemgmXJFoqJeA",
     particles: ["❄️", "🌨️", "⛄", "🏔️", "🧊", "☃️", "❄️", "🌨️"],
   },
+  puppywinter: {
+    id: "puppywinter",
+    name: "Cún con mùa đông 🐶❄️",
+    emoji: "🐶",
+    description: "Chủ đề mùa đông với cún con đáng yêu",
+    colors: {
+      primary: "amber-400",
+      secondary: "sky-300",
+      accent: "teal-200",
+      background: "from-amber-300/80 via-sky-200/80 to-teal-200/80",
+      backgroundOverlay: "from-amber-300/30 via-sky-200/30 to-teal-200/30",
+      card: "amber-300/20",
+      cardHover: "sky-300/30",
+      text: "amber-600",
+      textHover: "sky-500",
+      button: "amber-400/50",
+      buttonHover: "sky-300/50",
+      border: "teal-300/20",
+      gradient: "from-amber-400/70 to-sky-300/70",
+
+      songCard: "amber-300/20",
+      songCardHover: "sky-300/30",
+      songBorder: "amber-400/40",
+      songBorderHover: "teal-200/50",
+      songText: "white",
+      songTextHover: "amber-200",
+      songTextCurrent: "teal-200",
+      songArtist: "amber-500",
+      songArtistHover: "sky-300",
+      songPlayCount: "amber-400",
+      songPlayCountHover: "teal-200",
+      songButton: "gradient-to-r from-amber-400/60 to-sky-300/60",
+      songButtonHover: "gradient-to-r from-amber-300/60 to-teal-200/60",
+      songButtonText: "white",
+      songShadow: "amber-400/15",
+      songShadowHover: "teal-200/25",
+      songRing: "amber-300/20",
+      songOverlay: "from-sky-300/10 via-transparent to-amber-200/10",
+      songIndicator: "teal-200",
+
+      cardBg: "from-amber-200/40 via-sky-200/40 to-teal-200/40",
+      cardBgHover: "from-amber-300/60 via-sky-300/60 to-teal-300/60",
+      cardBgActive: "from-amber-300/70 via-sky-300/70 to-teal-300/70",
+
+      albumOverlay: "from-sky-300/10 via-transparent to-amber-200/10",
+      albumOverlayHover: "from-amber-300/10 via-teal-200/5 to-sky-200/10",
+
+      rankGold: "from-yellow-400 to-yellow-500",
+      rankSilver: "from-gray-300 to-gray-400",
+      rankBronze: "from-amber-600 to-orange-500",
+      rankDefault: "from-amber-400 to-sky-300",
+
+      rgb: {
+        cardGradient: {
+          normal:
+            "rgba(251, 191, 36, 0.5), rgba(125, 211, 252, 0.5), rgba(153, 246, 228, 0.5)",
+          hover:
+            "rgba(251, 191, 36, 0.7), rgba(125, 211, 252, 0.7), rgba(153, 246, 228, 0.7)",
+        },
+        buttonGradient: {
+          normal: "rgb(251, 191, 36), rgb(125, 211, 252)",
+          hover: "rgb(245, 158, 11), rgb(56, 189, 248)",
+        },
+        overlayGradient:
+          "rgba(251, 191, 36, 0.1), rgba(153, 246, 228, 0.05), rgba(125, 211, 252, 0.1)",
+        albumOverlayGradient: {
+          normal:
+            "rgba(251, 191, 36, 0.1), transparent, rgba(125, 211, 252, 0.1)",
+          hover:
+            "rgba(245, 158, 11, 0.1), rgba(153, 246, 228, 0.05), rgba(56, 189, 248, 0.1)",
+        },
+      },
+    },
+    backgroundImage:
+      "https://yzfbdwvbybecxhbitkmc.supabase.co/storage/v1/object/sign/image/dog-Picsart-AiImageEnhancer.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV82OTc4ZGU2My0wOWQzLTRhYmYtOWRjZC0wZjY0NTBlN2VlYmIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJpbWFnZS9kb2ctUGljc2FydC1BaUltYWdlRW5oYW5jZXIucG5nIiwiaWF0IjoxNzU0NTQyOTYyLCJleHAiOjIwNjk5MDI5NjJ9.jFOTuIH9FDwNh-B5KPAaQIjsrJdo4EKb_S_cEyzuks8",
+    particles: ["🐾", "❄️", "☃️", "🧣", "🐶", "🌨️", "🧤"],
+  },
 };
