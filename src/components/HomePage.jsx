@@ -99,7 +99,7 @@ const Banner = ({ onClose, theme }) => {
 
               {/* Description */}
               <p className="text-white text-sm sm:text-base opacity-90 leading-relaxed max-w-xs mx-auto">
-                Website sẽ tạm dừng hoạt động trong một thời gian ngắn để nâng cấp và bảo trì. Chúng tôi sẽ trở lại sớm nhất có thể với những tính năng mới và cải tiến.
+                Nếu website đang trong trạng thái tải nhạc vui lòng đợi từ 1-2 phút.
               </p>
               <p className="text-white text-sm sm:text-base opacity-90 leading-relaxed max-w-xs mx-auto">
                 UIA Cường. Xin cám ơn!
