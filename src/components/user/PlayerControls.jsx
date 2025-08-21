@@ -105,14 +105,12 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
       }
 
       try {
-        console.log("Checking liked status for song:", currentSong.id);
         const response = await getLikedSongsService();
         if (response?.data?.results) {
           const likedSongs = response.data.results;
           const isCurrentSongLiked = likedSongs.some(
             (song) => song.id === currentSong.id
           );
-          console.log("Song liked status:", isCurrentSongLiked);
           setIsLiked(isCurrentSongLiked);
         } else {
           setIsLiked(false);
@@ -158,28 +156,18 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
 
     try {
       setLoadingLike(true);
-      console.log(
-        "Toggling like for song:",
-        currentSong.id,
-        "Current state:",
-        isLiked
-      );
 
       if (isLiked) {
         // Bỏ like - remove from liked songs
-        console.log("Removing from liked songs...");
         await removeFromLikedSongsService(currentSong.id);
         setIsLiked(false);
-        console.log("Song removed from liked songs successfully");
       } else {
         // Thêm like - add to liked songs
-        console.log("Adding to liked songs...");
         const formData = new FormData();
         formData.append("song_id", currentSong.id.toString());
 
         await addToLikedSongsService(formData);
         setIsLiked(true);
-        console.log("Song added to liked songs successfully");
       }
     } catch (error) {
       console.error("Error toggling like:", error);
@@ -226,7 +214,6 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
 
       setShowPlaylistModal(false);
       alert("Đã thêm bài hát vào playlist!");
-      console.log("Song added to playlist:", playlistId);
     } catch (error) {
       console.error("Error adding song to playlist:", error);
       if (error.response?.status === 400) {

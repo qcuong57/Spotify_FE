@@ -33,7 +33,6 @@ const Library = ({
   }, [index]);
 
   const handlePlaylistClick = () => {
-    console.log("Clicking playlist:", playlist);
     setCurrentView(playlist);
     if (window.innerWidth < 768) {
       onLibraryClose();
@@ -131,38 +130,27 @@ const Libraries = ({ setCurrentView, onClose }) => {
     const storedUser = localStorage.getItem("user");
     const accessToken = localStorage.getItem("access_token");
 
-    console.log("Libraries - checking user login:", {
-      storedUser: !!storedUser,
-      accessToken: !!accessToken,
-    });
-
     if (storedUser && accessToken) {
       const userData = JSON.parse(storedUser);
       setUser(userData);
-      console.log("Libraries - user set:", userData);
     }
   }, []);
 
   useEffect(() => {
     const fetchUserPlaylists = async () => {
       if (!user || !user.id) {
-        console.log("Libraries - no user or user.id, skipping fetch");
         setPlaylists([]);
         return;
       }
 
       try {
         setLoading(true);
-        console.log("Libraries - fetching playlists for user:", user.id);
-        console.log("Libraries - refreshKeyPlayLists:", refreshKeyPlayLists);
 
         const response = await getUserPlaylistByIdService(user.id);
-        console.log("Libraries - fetch response:", response);
 
         if (response && response.data && response.data.playlists) {
           const playlistsData = response.data.playlists;
-          console.log("Libraries - setting playlists:", playlistsData);
-          console.log("Libraries - playlist count:", playlistsData.length);
+
 
           playlistsData.forEach((playlist, index) => {
             console.log(`Playlist ${index + 1}:`, {
@@ -175,9 +163,6 @@ const Libraries = ({ setCurrentView, onClose }) => {
 
           setPlaylists(playlistsData);
         } else {
-          console.log(
-            "Libraries - no playlists in response, setting empty array"
-          );
           console.log("Libraries - response structure:", {
             hasData: !!response?.data,
             dataKeys: response?.data ? Object.keys(response.data) : [],
@@ -238,10 +223,9 @@ const Libraries = ({ setCurrentView, onClose }) => {
         image: null,
       };
 
-      console.log("Libraries - creating playlist with data:", playlistData);
 
+      
       const response = await createPlaylistService(playlistData);
-      console.log("Libraries - create playlist response:", response);
 
       if (response && response.data) {
         const newPlaylist = {
@@ -256,19 +240,15 @@ const Libraries = ({ setCurrentView, onClose }) => {
           updated_at: response.data.updated_at || new Date().toISOString(),
         };
 
-        console.log("Libraries - new playlist object:", newPlaylist);
 
         setPlaylists((prevPlaylists) => {
           const updatedPlaylists = [newPlaylist, ...prevPlaylists];
-          console.log("Libraries - updated playlists list:", updatedPlaylists);
           return updatedPlaylists;
         });
 
         setRefreshKeyPlayLists(Date.now());
-        console.log("Libraries - refresh key updated");
 
         setTimeout(() => {
-          console.log("Libraries - navigating to new playlist:", newPlaylist);
           setCurrentView(newPlaylist);
           if (window.innerWidth < 768) {
             handleLibraryClose();
@@ -300,22 +280,11 @@ const Libraries = ({ setCurrentView, onClose }) => {
   const handleSearchChange = (e) => {
     const value = e.target.value;
     setSearchValue(value);
-    console.log("Libraries - search value changed:", value);
   };
 
   const clearSearch = () => {
     setSearchValue("");
-    console.log("Libraries - search cleared");
   };
-
-  console.log("Libraries render - current state:", {
-    user: user?.id,
-    playlistsCount: playlists.length,
-    filteredPlaylistsCount: filteredPlaylists.length,
-    loading,
-    searchValue,
-    refreshKeyPlayLists,
-  });
 
   return (
     <div

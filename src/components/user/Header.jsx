@@ -1087,7 +1087,7 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
       </AnimatePresence>
 
       {/* Profile Popup */}
-      <AnimatePresence>
+      {/* <AnimatePresence>
         {showProfilePopup && (
           <ProfilePopup
             user={user}
@@ -1095,7 +1095,7 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
             onUpdate={handleProfileUpdate}
           />
         )}
-      </AnimatePresence>
+      </AnimatePresence> */}
     </>
   );
 };
