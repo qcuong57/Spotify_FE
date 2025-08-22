@@ -243,9 +243,9 @@ const Song = ({
         boxShadow: `0 10px 25px -5px rgba(${colors.rgb.buttonGradient.normal
           .split(",")[0]
           .replace("rgb(", "")}, 0.3)`,
-        borderColor: `rgba(${colors.rgb.buttonGradient.normal
-          .split(",")[0]
-          .replace("rgb(", "")}, 0.5)`,
+        // borderColor: `rgba(${colors.rgb.buttonGradient.normal
+        //   .split(",")[0]
+        //   .replace("rgb(", "")}, 0.5)`,
       };
     }
 
@@ -264,9 +264,9 @@ const Song = ({
       boxShadow: `0 8px 20px -5px rgba(${theme.colors.rgb.buttonGradient.normal
         .split(",")[0]
         .replace("rgb(", "")}, 0.2)`,
-      borderColor: `rgba(${theme.colors.rgb.buttonGradient.normal
-        .split(",")[0]
-        .replace("rgb(", "")}, 0.3)`,
+      // borderColor: `rgba(${theme.colors.rgb.buttonGradient.normal
+      //   .split(",")[0]
+      //   .replace("rgb(", "")}, 0.3)`,
       transform: "translateY(-2px)",
     };
   }, [cardStyle, theme, isCurrentSong]);

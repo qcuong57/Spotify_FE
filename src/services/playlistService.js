@@ -5,8 +5,6 @@ export const createPlaylistService = async (formData) => {
 };
 
 export const updatePlaylistService = async (id, formData) => {  
-  console.log(formData);
-  
   return await axiosCustom.put(`/playlists/${id}/update/`, formData);
 };
 
