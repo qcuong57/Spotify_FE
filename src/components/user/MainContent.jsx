@@ -8,12 +8,12 @@ import {
 } from "../../services/SongsService";
 import { getAllGenres } from "../../services/genresService";
 import { useTheme } from "../../context/themeContext";
-import GenreFilter from "../../components/user/Main/GenreFilter";
-import SongGrid from "../../components/user/Main/SongGrid";
-import TrendingSection from "../../components/user/Main/TrendingSection";
-import LoadingState from "../../components/user/Main/LoadingState";
-import ErrorState from "../../components/user/Main/ErrorState";
-import Section from "../../components/user/Main/Section";
+import GenreFilter from "../../components/user/main/GenreFilter";
+import SongGrid from "../../components/user/main/SongGrid";
+import TrendingSection from "../../components/user/main/TrendingSection";
+import LoadingState from "../../components/user/main/LoadingState";
+import ErrorState from "../../components/user/main/ErrorState";
+import Section from "../../components/user/main/Section";
 
 const pageVariants = {
   initial: { opacity: 0, y: 20 },
