@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Box, Text } from "@mantine/core";
 import { IconX, IconHeart, IconHeartFilled, IconMicrophone } from "@tabler/icons-react";
-import SyncedLyricsDisplay from "./SyncedLyricsDisplay";
+import ExpandedSyncedLyrics from "./ExpandedSyncedLyrics";
 
 const ExpandedSongView = ({
   currentSong,
@@ -101,12 +101,14 @@ const ExpandedSongView = ({
                 }}
               />
               
-              {/* Main Album Art Container */}
+              {/* Main Album Art Container - FIXED SIZE */}
               <div 
                 className="relative mx-auto aspect-square rounded-3xl overflow-hidden shadow-2xl border border-white/10 transition-all duration-300 group-hover:shadow-3xl group-hover:scale-105"
                 style={{
-                  width: showLyrics && hasLyrics ? "100%" : "60%",
-                  maxWidth: showLyrics && hasLyrics ? "450px" : "480px",
+                  width: "400px",
+                  height: "400px",
+                  minWidth: "400px",
+                  minHeight: "400px",
                 }}
               >
                 <img
@@ -115,6 +117,8 @@ const ExpandedSongView = ({
                   className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
                   style={{
                     filter: "brightness(1.1) contrast(1.1) saturate(1.2)",
+                    width: "400px",
+                    height: "400px",
                   }}
                   onError={(e) => {
                     e.target.src = "/placeholder-album.jpg";
@@ -165,12 +169,10 @@ const ExpandedSongView = ({
                 
                 {/* Lyrics Container */}
                 <div className="flex-1 min-h-0 relative overflow-hidden">
-                  <div 
-                    className="h-full w-full bg-black/25 rounded-2xl border border-white/15 backdrop-blur-sm shadow-inner transition-all duration-300 hover:bg-black/30 hover:border-white/25 overflow-hidden"
-                  >
+                  <div className="h-full w-full rounded-2xl overflow-hidden">
                     {hasTimestamps ? (
                       <div className="h-full w-full p-1 overflow-hidden">
-                        <SyncedLyricsDisplay
+                        <ExpandedSyncedLyrics
                           lyricsText={currentSong.lyrics}
                           audioElement={audio}
                           isPlaying={isPlaying}
@@ -188,6 +190,7 @@ const ExpandedSongView = ({
                             padding: "32px",
                             borderRadius: "16px",
                             maxHeight: "100%",
+                            background: "transparent",
                           }}
                           className="custom-scrollbar"
                         >
@@ -220,11 +223,6 @@ const ExpandedSongView = ({
                       </div>
                     )}
                   </div>
-                  
-                  {/* Scroll Indicator */}
-                  <div className="absolute right-2 top-4 bottom-4 w-1 bg-white/10 rounded-full">
-                    <div className="w-full h-8 bg-white/30 rounded-full animate-pulse"></div>
-                  </div>
                 </div>
               </div>
             </div>
@@ -234,28 +232,12 @@ const ExpandedSongView = ({
 
       <style jsx>{`
         .custom-scrollbar {
-          scrollbar-width: thin;
-          scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+          scrollbar-width: none;
+          -ms-overflow-style: none;
         }
         
         .custom-scrollbar::-webkit-scrollbar {
-          width: 8px;
-        }
-        
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: rgba(255, 255, 255, 0.3);
-          border-radius: 4px;
-          border: 2px solid transparent;
-          background-clip: content-box;
-        }
-        
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: rgba(255, 255, 255, 0.5);
-          background-clip: content-box;
+          display: none;
         }
 
         /* Smooth animations */
