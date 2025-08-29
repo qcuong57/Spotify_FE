@@ -1,6 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Box, Text } from "@mantine/core";
-import { IconX, IconHeart, IconHeartFilled, IconMicrophone } from "@tabler/icons-react";
+import {
+  IconX,
+  IconHeart,
+  IconHeartFilled,
+  IconMicrophone,
+} from "@tabler/icons-react";
 import ExpandedSyncedLyrics from "./ExpandedSyncedLyrics";
 
 const ExpandedSongView = ({
@@ -39,20 +44,24 @@ const ExpandedSongView = ({
   return (
     <div
       className={`fixed inset-0 z-[20000] transition-all duration-300 ease-out ${
-        isVisible && !isClosing
-          ? "opacity-100 scale-100"
-          : "opacity-0 scale-95"
+        isVisible && !isClosing ? "opacity-100 scale-100" : "opacity-0 scale-95"
       }`}
       style={{
-        background: `linear-gradient(135deg, ${theme.colors.primary}-900/95, ${theme.colors.secondary}-800/95)`,
+        background: `linear-gradient(135deg, ${theme.colors.primary}-900, ${theme.colors.secondary}-800)`,
         backdropFilter: "blur(20px)",
       }}
     >
       {/* Animated Background Particles */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute w-96 h-96 bg-white/5 rounded-full -top-48 -left-48 animate-pulse"></div>
-        <div className="absolute w-64 h-64 bg-white/3 rounded-full top-1/4 -right-32 animate-bounce" style={{ animationDuration: '3s' }}></div>
-        <div className="absolute w-80 h-80 bg-white/4 rounded-full -bottom-40 left-1/4 animate-pulse" style={{ animationDelay: '1s' }}></div>
+        <div
+          className="absolute w-64 h-64 bg-white/3 rounded-full top-1/4 -right-32 animate-bounce"
+          style={{ animationDuration: "3s" }}
+        ></div>
+        <div
+          className="absolute w-80 h-80 bg-white/4 rounded-full -bottom-40 left-1/4 animate-pulse"
+          style={{ animationDelay: "1s" }}
+        ></div>
       </div>
 
       {/* Header - Only Close Button */}
@@ -84,25 +93,28 @@ const ExpandedSongView = ({
 
       {/* Main Content */}
       <div className="flex items-start justify-center h-full p-8 pt-24 pb-20 overflow-hidden">
-        <div className={`flex items-start w-full h-full max-w-7xl mx-auto transition-all duration-500 ${
-          showLyrics && hasLyrics ? 'gap-8' : 'justify-center items-center'
-        }`}>
-          
+        <div
+          className={`flex items-start w-full h-full max-w-7xl mx-auto transition-all duration-500 ${
+            showLyrics && hasLyrics ? "gap-8" : "justify-center items-center"
+          }`}
+        >
           {/* Album Art Section */}
-          <div className={`flex-shrink-0 transition-all duration-500 ${
-            showLyrics && hasLyrics ? 'w-5/12' : 'w-full flex justify-center'
-          }`}>
+          <div
+            className={`flex-shrink-0 transition-all duration-500 ${
+              showLyrics && hasLyrics ? "w-5/12" : "w-full flex justify-center"
+            }`}
+          >
             <div className="relative group">
               {/* Glowing Background Effect */}
-              <div 
+              <div
                 className="absolute inset-0 rounded-3xl opacity-30 blur-3xl scale-110 transition-all duration-300 group-hover:opacity-50 group-hover:scale-115"
                 style={{
                   background: `linear-gradient(45deg, ${theme.colors.primary}-500, ${theme.colors.secondary}-500)`,
                 }}
               />
-              
+
               {/* Main Album Art Container - FIXED SIZE */}
-              <div 
+              <div
                 className="relative mx-auto aspect-square rounded-3xl overflow-hidden shadow-2xl border border-white/10 transition-all duration-300 group-hover:shadow-3xl group-hover:scale-105"
                 style={{
                   width: "400px",
@@ -124,14 +136,22 @@ const ExpandedSongView = ({
                     e.target.src = "/placeholder-album.jpg";
                   }}
                 />
-                
+
                 {/* Gradient Overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
-                
+
                 {/* Floating Music Note Animation */}
-                <div className="absolute top-4 right-4 text-white/30 animate-bounce" style={{ animationDelay: '0.5s' }}>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+                <div
+                  className="absolute top-4 right-4 text-white/30 animate-bounce"
+                  style={{ animationDelay: "0.5s" }}
+                >
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
+                    <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
                   </svg>
                 </div>
               </div>
@@ -166,7 +186,6 @@ const ExpandedSongView = ({
           {showLyrics && hasLyrics && (
             <div className="flex-1 h-full min-w-0 flex flex-col">
               <div className="h-full flex flex-col max-h-[calc(100vh-200px)]">
-                
                 {/* Lyrics Container */}
                 <div className="flex-1 min-h-0 relative overflow-hidden">
                   <div className="h-full w-full rounded-2xl overflow-hidden">
@@ -206,18 +225,20 @@ const ExpandedSongView = ({
                               overflowWrap: "break-word",
                             }}
                           >
-                            {currentSong.lyrics.split("\n").map((line, index) => (
-                              <div
-                                key={`lyric-line-${index}`}
-                                className="transition-all duration-200 hover:text-white/95"
-                                style={{ 
-                                  marginBottom: line.trim() ? "16px" : "8px",
-                                  maxWidth: "100%",
-                                }}
-                              >
-                                {line.trim() || <br />}
-                              </div>
-                            ))}
+                            {currentSong.lyrics
+                              .split("\n")
+                              .map((line, index) => (
+                                <div
+                                  key={`lyric-line-${index}`}
+                                  className="transition-all duration-200 hover:text-white/95"
+                                  style={{
+                                    marginBottom: line.trim() ? "16px" : "8px",
+                                    maxWidth: "100%",
+                                  }}
+                                >
+                                  {line.trim() || <br />}
+                                </div>
+                              ))}
                           </Text>
                         </Box>
                       </div>
@@ -235,20 +256,30 @@ const ExpandedSongView = ({
           scrollbar-width: none;
           -ms-overflow-style: none;
         }
-        
+
         .custom-scrollbar::-webkit-scrollbar {
           display: none;
         }
 
         /* Smooth animations */
         @keyframes float {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-10px); }
+          0%,
+          100% {
+            transform: translateY(0px);
+          }
+          50% {
+            transform: translateY(-10px);
+          }
         }
-        
+
         @keyframes glow {
-          0%, 100% { box-shadow: 0 0 20px rgba(255, 255, 255, 0.1); }
-          50% { box-shadow: 0 0 40px rgba(255, 255, 255, 0.2); }
+          0%,
+          100% {
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+          }
+          50% {
+            box-shadow: 0 0 40px rgba(255, 255, 255, 0.2);
+          }
         }
 
         /* Enhanced hover effects */

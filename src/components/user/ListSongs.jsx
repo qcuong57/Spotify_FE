@@ -424,7 +424,6 @@ const SmoothSongGrid = React.memo(
                 contextMenu={contextMenu}
                 setContextMenu={setContextMenu}
                 handleCloseContextMenu={handleCloseContextMenu}
-
                 index={index}
               />
             </Suspense>
@@ -566,7 +565,7 @@ const ListSongs = ({ listSongs }) => {
     return (
       <motion.div 
         ref={scrollContainerRef}
-        className="text-white flex-1 mr-2 sm:mr-0 rounded-lg overflow-y-auto"
+        className="text-white flex-1 mr-2 sm:mr-0 rounded-lg overflow-y-auto custom-songs-scroll"
         style={{
           scrollBehavior: isMobile ? "auto" : "smooth",
           overscrollBehavior: "contain",
@@ -630,6 +629,32 @@ const ListSongs = ({ listSongs }) => {
             ))}
           </motion.div>
         </motion.div>
+
+        {/* Custom Scrollbar Styles */}
+        <style jsx>{`
+          .custom-songs-scroll {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+          }
+
+          .custom-songs-scroll::-webkit-scrollbar {
+            width: 4px;
+          }
+
+          .custom-songs-scroll::-webkit-scrollbar-track {
+            background: transparent;
+          }
+
+          .custom-songs-scroll::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 2px;
+            transition: background 0.2s ease;
+          }
+
+          .custom-songs-scroll::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.25);
+          }
+        `}</style>
       </motion.div>
     );
   }
@@ -738,7 +763,7 @@ const ListSongs = ({ listSongs }) => {
   return (
     <motion.div 
       ref={scrollContainerRef}
-      className="text-white flex-1 mr-2 sm:mr-0 rounded-lg overflow-y-auto"
+      className="text-white flex-1 mr-2 sm:mr-0 rounded-lg overflow-y-auto custom-songs-scroll"
       style={{
         scrollBehavior: isMobile ? "auto" : "smooth",
         overscrollBehavior: "contain",
@@ -793,6 +818,32 @@ const ListSongs = ({ listSongs }) => {
           isMobile={isMobile}
         />
       </motion.div>
+
+      {/* Custom Scrollbar Styles - matching ExpandedSyncedLyrics */}
+      <style jsx>{`
+        .custom-songs-scroll {
+          scrollbar-width: thin;
+          scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+        }
+
+        .custom-songs-scroll::-webkit-scrollbar {
+          width: 4px;
+        }
+
+        .custom-songs-scroll::-webkit-scrollbar-track {
+          background: transparent;
+        }
+
+        .custom-songs-scroll::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.15);
+          border-radius: 2px;
+          transition: background 0.2s ease;
+        }
+
+        .custom-songs-scroll::-webkit-scrollbar-thumb:hover {
+          background: rgba(255, 255, 255, 0.25);
+        }
+      `}</style>
     </motion.div>
   );
 };
