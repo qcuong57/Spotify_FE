@@ -20,39 +20,39 @@ export const AudioProvider = ({ children }) => {
   // Setup Media Session API
   const setupMediaSession = (song) => {
     if ('mediaSession' in navigator) {
-      // Set metadata cho notification panel
+      // Set metadata cho notification panel - sử dụng đúng field names
       navigator.mediaSession.metadata = new MediaMetadata({
-        title: song.title || 'Unknown Title',
-        artist: song.artist || 'Unknown Artist',
+        title: song.song_name || song.title || 'Unknown Title',
+        artist: song.singer_name || song.artist || 'Unknown Artist', 
         album: song.album || '',
         artwork: [
           {
-            src: song.image || song.artwork || '/default-album.jpg',
+            src: song.image || song.artwork || 'https://via.placeholder.com/512x512/4f46e5/ffffff?text=Music',
             sizes: '96x96',
             type: 'image/jpeg'
           },
           {
-            src: song.image || song.artwork || '/default-album.jpg',
-            sizes: '128x128',
+            src: song.image || song.artwork || 'https://via.placeholder.com/512x512/4f46e5/ffffff?text=Music',
+            sizes: '128x128', 
             type: 'image/jpeg'
           },
           {
-            src: song.image || song.artwork || '/default-album.jpg',
+            src: song.image || song.artwork || 'https://via.placeholder.com/512x512/4f46e5/ffffff?text=Music',
             sizes: '192x192',
             type: 'image/jpeg'
           },
           {
-            src: song.image || song.artwork || '/default-album.jpg',
+            src: song.image || song.artwork || 'https://via.placeholder.com/512x512/4f46e5/ffffff?text=Music',
             sizes: '256x256',
             type: 'image/jpeg'
           },
           {
-            src: song.image || song.artwork || '/default-album.jpg',
+            src: song.image || song.artwork || 'https://via.placeholder.com/512x512/4f46e5/ffffff?text=Music',
             sizes: '384x384',
             type: 'image/jpeg'
           },
           {
-            src: song.image || song.artwork || '/default-album.jpg',
+            src: song.image || song.artwork || 'https://via.placeholder.com/512x512/4f46e5/ffffff?text=Music',
             sizes: '512x512',
             type: 'image/jpeg'
           }
@@ -72,13 +72,20 @@ export const AudioProvider = ({ children }) => {
         }
       });
 
-      navigator.mediaSession.setActionHandler('previoustrack', () => {
-        playBackSong();
-      });
+      // Chỉ set next/previous nếu có playlist với nhiều bài
+      if (playlist.length > 1) {
+        navigator.mediaSession.setActionHandler('previoustrack', () => {
+          playBackSong();
+        });
 
-      navigator.mediaSession.setActionHandler('nexttrack', () => {
-        playNextSong();
-      });
+        navigator.mediaSession.setActionHandler('nexttrack', () => {
+          playNextSong();
+        });
+      } else {
+        // Remove handlers nếu chỉ có 1 bài
+        navigator.mediaSession.setActionHandler('previoustrack', null);
+        navigator.mediaSession.setActionHandler('nexttrack', null);
+      }
 
       navigator.mediaSession.setActionHandler('seekbackward', (details) => {
         const skipTime = details.seekOffset || 10;
@@ -205,9 +212,13 @@ export const AudioProvider = ({ children }) => {
         .catch((error) => console.error("Playback failed:", error));
       setAudio(newAudio);
       setIsPlaying(true);
-      navigator.mediaSession.playbackState = 'playing';
+      
+      // Set playback state
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.playbackState = 'playing';
+      }
     }
-  }, [currentSong]);
+  }, [currentSong, playlist.length]); // Thêm playlist.length vào dependencies
 
   // Lấy duration của bài hát
   useEffect(() => {
