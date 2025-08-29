@@ -3,12 +3,14 @@ import { useAudio } from "../../utils/audioContext";
 import { useTheme } from "../../context/themeContext";
 import Hls from "hls.js";
 import SyncedLyricsDisplay from "../../components/user/SyncedLyricsDisplay";
+import ExpandedSongView from "../../components/user/ExpandedSongView";
 import {
   IconX,
   IconChevronDown,
   IconHeart,
   IconHeartFilled,
   IconMicrophone,
+  IconMaximize,
 } from "@tabler/icons-react";
 import { Box, Text } from "@mantine/core";
 
@@ -31,6 +33,7 @@ const SongDescription = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [showLyrics, setShowLyrics] = useState(false);
+  const [showExpandedView, setShowExpandedView] = useState(false);
 
   useEffect(() => {
     setIsVisible(false);
@@ -293,6 +296,14 @@ const SongDescription = () => {
     }
   };
 
+  const handleExpandClick = () => {
+    setShowExpandedView(true);
+  };
+
+  const handleExpandedViewClose = () => {
+    setShowExpandedView(false);
+  };
+
   const hasLyrics = currentSong?.lyrics && currentSong.lyrics.trim().length > 0;
   const hasTimestamps =
     hasLyrics &&
@@ -302,247 +313,293 @@ const SongDescription = () => {
   if (!currentSong) return null;
 
   return (
-    <div
-      className={`fixed inset-0 md:pb-0 pb-16 z-[10000] bg-gradient-to-t ${
-        theme.colors.backgroundOverlay
-      } flex flex-col md:relative md:inset-auto md:max-w-[400px] md:shadow-lg md:rounded-lg transition-all duration-300 ease-out backdrop-blur-md ${
-        isVisible && !isClosing
-          ? "translate-y-0 opacity-100 md:translate-x-0"
-          : "translate-y-full opacity-0 md:translate-y-0 md:translate-x-full"
-      }`}
-    >
+    <>
       <div
-        className={`flex items-center justify-between p-4 md:hidden transition-all duration-300 delay-100 bg-gradient-to-r ${
+        className={`fixed inset-0 md:pb-0 pb-16 z-[10000] bg-gradient-to-t ${
           theme.colors.backgroundOverlay
-        } backdrop-blur-md ${
+        } flex flex-col md:relative md:inset-auto md:max-w-[400px] md:shadow-lg md:rounded-lg transition-all duration-300 ease-out backdrop-blur-md ${
           isVisible && !isClosing
-            ? "translate-y-0 opacity-100"
-            : "translate-y-4 opacity-0"
+            ? "translate-y-0 opacity-100 md:translate-x-0"
+            : "translate-y-full opacity-0 md:translate-y-0 md:translate-x-full"
         }`}
-        style={{ zIndex: 10001 }} // Đảm bảo nút đóng trên mobile hiển thị trên header
       >
-        <button
-          onClick={handleClose}
-          className={`p-2 rounded-full hover:bg-${theme.colors.primary}-600/50 transition-colors z-[10002]`}
-        >
-          <IconChevronDown size={24} className={`text-${theme.colors.text}`} />
-        </button>
-        <span className={`text-sm text-${theme.colors.text} font-medium`}>
-          {isVideoFullscreen ? "Video Playing" : "Now Playing"}
-        </span>
-        <div className="w-10" />
-      </div>
-
-      <div
-        className={`hidden md:flex items-center justify-between p-3 border-b border-${
-          theme.colors.border
-        } transition-all duration-300 delay-100 bg-gradient-to-r ${
-          theme.colors.backgroundOverlay
-        } backdrop-blur-md ${
-          isVisible && !isClosing
-            ? "translate-y-0 opacity-100"
-            : "translate-y-4 opacity-0"
-        }`}
-        style={{ zIndex: 10001 }} // Đảm bảo nút đóng trên desktop hiển thị trên header
-      >
-        <h2 className={`text-lg font-semibold text-${theme.colors.text}`}>
-          Now Playing
-        </h2>
-        <button
-          onClick={handleClose}
-          className={`p-2 rounded-full hover:bg-${theme.colors.primary}-600/50 transition-colors z-[10002]`}
-        >
-          <IconX size={20} className={`text-${theme.colors.text}`} />
-        </button>
-      </div>
-
-      <div className="flex-1 flex flex-col overflow-hidden">
         <div
-          className={`flex-shrink-0 p-3 md:p-4 transition-all duration-500 delay-200 ${
-            isVisible && !isClosing
-              ? "scale-100 opacity-100"
-              : "scale-95 opacity-0"
-          }`}
-        >
-          <div
-            className={`relative bg-gradient-to-br from-${
-              theme.colors.primary
-            }-900/50 to-${
-              theme.colors.secondary
-            }-800/50 rounded-lg overflow-hidden shadow-xl ${
-              showLyrics && hasLyrics ? "aspect-[16/9]" : "aspect-video"
-            }`}
-          >
-            {currentSong.url_video && !videoError ? (
-              <>
-                <video
-                  id="song-video"
-                  ref={videoRef}
-                  playsInline
-                  webkit-playsinline="true"
-                  muted
-                  preload={isIOS ? "none" : "metadata"}
-                  className="w-full h-full object-cover"
-                  onContextMenu={(e) => e.preventDefault()}
-                  onClick={handleVideoClick}
-                  onTouchStart={isIOS ? (e) => e.preventDefault() : undefined}
-                />
-                {isIOS && (
-                  <div
-                    className="absolute inset-0 bg-transparent"
-                    onTouchStart={(e) => e.preventDefault()}
-                    onTouchEnd={(e) => e.preventDefault()}
-                    onTouchMove={(e) => e.preventDefault()}
-                    onClick={(e) => e.preventDefault()}
-                  />
-                )}
-              </>
-            ) : (
-              <div
-                className={`w-full h-full flex items-center justify-center bg-gradient-to-br from-${theme.colors.primary}-600 to-${theme.colors.secondary}-500`}
-              >
-                <img
-                  src={currentSong.image}
-                  alt={currentSong.song_name}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.target.style.display = "none";
-                  }}
-                />
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div
-          className={`flex-shrink-0 px-3 md:px-4 pb-2 transition-all duration-500 delay-300 ${
+          className={`flex items-center justify-between p-4 md:hidden transition-all duration-300 delay-100 bg-gradient-to-r ${
+            theme.colors.backgroundOverlay
+          } backdrop-blur-md ${
             isVisible && !isClosing
               ? "translate-y-0 opacity-100"
               : "translate-y-4 opacity-0"
           }`}
+          style={{ zIndex: 10001 }}
         >
-          <div className="text-center md:text-left">
-            <h3
-              className={`font-bold text-white leading-tight mb-1 line-clamp-1 ${
-                showLyrics && hasLyrics ? "text-base" : "text-xl md:text-lg"
-              }`}
-            >
-              {currentSong.song_name || "Unknown Title"}
-            </h3>
-            <p
-              className={`text-${theme.colors.text} mb-2 line-clamp-1 ${
-                showLyrics && hasLyrics ? "text-xs" : "text-base md:text-sm"
-              }`}
-            >
-              {currentSong.singer_name || "Unknown Artist"}
-            </p>
+          <button
+            onClick={handleClose}
+            className={`p-2 rounded-full hover:bg-${theme.colors.primary}-600/50 transition-colors z-[10002]`}
+          >
+            <IconChevronDown size={24} className={`text-${theme.colors.text}`} />
+          </button>
+          <span className={`text-sm text-${theme.colors.text} font-medium`}>
+            {isVideoFullscreen ? "Video Playing" : "Now Playing"}
+          </span>
+          <button
+            onClick={handleExpandClick}
+            className={`p-2 rounded-full hover:bg-${theme.colors.primary}-600/50 transition-colors z-[10002]`}
+            title="Expand view"
+          >
+            <IconMaximize size={20} className={`text-${theme.colors.text}`} />
+          </button>
+        </div>
 
-            <div className="flex items-center justify-center md:justify-start space-x-3">
-              <button
-                onClick={handleLike}
-                className={`p-2 rounded-full hover:bg-${theme.colors.primary}-600/50 transition-colors`}
-              >
-                {isLiked ? (
-                  <IconHeartFilled
-                    size={18}
-                    className={`text-${theme.colors.secondary}-400`}
-                  />
-                ) : (
-                  <IconHeart
-                    size={18}
-                    className={`text-${theme.colors.text} hover:text-${theme.colors.secondary}-400`}
-                  />
-                )}
-              </button>
-
-              {hasLyrics && (
-                <button
-                  onClick={() => setShowLyrics(!showLyrics)}
-                  className={`p-2 rounded-full transition-colors ${
-                    showLyrics
-                      ? `bg-${theme.colors.button} text-${theme.colors.primary}-900`
-                      : `hover:bg-${theme.colors.primary}-600/50 text-${theme.colors.text} hover:text-${theme.colors.textHover}`
-                  }`}
-                  title={showLyrics ? "Hide Lyrics" : "Show Lyrics"}
-                >
-                  <IconMicrophone size={18} />
-                </button>
-              )}
-            </div>
+        <div
+          className={`hidden md:flex items-center justify-between p-3 border-b border-${
+            theme.colors.border
+          } transition-all duration-300 delay-100 bg-gradient-to-r ${
+            theme.colors.backgroundOverlay
+          } backdrop-blur-md ${
+            isVisible && !isClosing
+              ? "translate-y-0 opacity-100"
+              : "translate-y-4 opacity-0"
+          }`}
+          style={{ zIndex: 10001 }}
+        >
+          <h2 className={`text-lg font-semibold text-${theme.colors.text}`}>
+            Now Playing
+          </h2>
+          <div className="flex items-center space-x-2">
+            {/* <button
+              onClick={handleExpandClick}
+              className={`p-2 rounded-full hover:bg-${theme.colors.primary}-600/50 transition-colors z-[10002]`}
+              title="Expand view"
+            >
+              <IconMaximize size={18} className={`text-${theme.colors.text}`} />
+            </button> */}
+            <button
+              onClick={handleClose}
+              className={`p-2 rounded-full hover:bg-${theme.colors.primary}-600/50 transition-colors z-[10002]`}
+            >
+              <IconX size={20} className={`text-${theme.colors.text}`} />
+            </button>
           </div>
         </div>
 
-        {showLyrics && hasLyrics && (
+        <div className="flex-1 flex flex-col overflow-hidden">
           <div
-            className={`flex-1 mx-3 md:mx-4 mb-3 md:mb-4 transition-all duration-500 delay-400 ${
+            className={`flex-shrink-0 p-3 md:p-4 transition-all duration-500 delay-200 ${
               isVisible && !isClosing
-                ? "translate-y-0 opacity-100"
-                : "translate-y-4 opacity-0"
+                ? "scale-100 opacity-100"
+                : "scale-95 opacity-0"
             }`}
           >
             <div
-              className="bg-transparent rounded-lg overflow-hidden"
-              style={{ height: "230px", width: "100%" }}
+              className={`relative bg-gradient-to-br from-${
+                theme.colors.primary
+              }-900/50 to-${
+                theme.colors.secondary
+              }-800/50 rounded-lg overflow-hidden shadow-xl ${
+                showLyrics && hasLyrics ? "aspect-[16/9]" : "aspect-video"
+              }`}
             >
-              {hasTimestamps ? (
-                <SyncedLyricsDisplay
-                  lyricsText={currentSong.lyrics}
-                  audioElement={audio}
-                  isPlaying={isPlaying}
-                  className="h-full"
-                />
+              {currentSong.url_video && !videoError ? (
+                <>
+                  <video
+                    id="song-video"
+                    ref={videoRef}
+                    playsInline
+                    webkit-playsinline="true"
+                    muted
+                    preload={isIOS ? "none" : "metadata"}
+                    className="w-full h-full object-cover"
+                    onContextMenu={(e) => e.preventDefault()}
+                    onClick={handleVideoClick}
+                    onTouchStart={isIOS ? (e) => e.preventDefault() : undefined}
+                  />
+                  {isIOS && (
+                    <div
+                      className="absolute inset-0 bg-transparent"
+                      onTouchStart={(e) => e.preventDefault()}
+                      onTouchEnd={(e) => e.preventDefault()}
+                      onTouchMove={(e) => e.preventDefault()}
+                      onClick={(e) => e.preventDefault()}
+                    />
+                  )}
+                </>
               ) : (
-                <Box
-                  style={{
-                    height: "100%",
-                    width: "100%",
-                    overflowY: "auto",
-                    padding: "16px",
-                  }}
-                  className="no-scrollbar scrollbar-spotify"
+                <div
+                  className={`w-full h-full flex items-center justify-center bg-gradient-to-br from-${theme.colors.primary}-600 to-${theme.colors.secondary}-500`}
                 >
-                  <Text
-                    style={{
-                      color: `rgba(209, 250, 229, 0.8)`,
-                      fontSize: "14px",
-                      fontWeight: 400,
-                      lineHeight: 1.5,
-                      textAlign: "center",
-                      wordWrap: "break-word",
+                  <img
+                    src={currentSong.image}
+                    alt={currentSong.song_name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.style.display = "none";
                     }}
-                  >
-                    {currentSong.lyrics.split("\n").map((line, index) => (
-                      <div
-                        key={`lyric-line-${index}`}
-                        style={{ marginBottom: "8px" }}
-                      >
-                        {line.trim() || <br />}
-                      </div>
-                    ))}
-                  </Text>
-                </Box>
+                  />
+                </div>
               )}
+
+              {/* Expand Button Overlay */}
+              <button
+                onClick={handleExpandClick}
+                className="absolute top-3 right-3 p-2 rounded-full bg-black/30 hover:bg-black/50 transition-colors backdrop-blur-sm"
+                title="Expand view"
+              >
+                <IconMaximize size={16} className="text-white/80 hover:text-white" />
+              </button>
             </div>
           </div>
-        )}
 
-        {(!showLyrics || !hasLyrics) && (
           <div
-            className={`text-center md:hidden mt-auto p-4 transition-all duration-500 delay-400 ${
+            className={`flex-shrink-0 px-3 md:px-4 pb-2 transition-all duration-500 delay-300 ${
               isVisible && !isClosing
                 ? "translate-y-0 opacity-100"
                 : "translate-y-4 opacity-0"
             }`}
           >
-            <p className={`text-sm text-${theme.colors.text}/80`}>
-              {isVideoFullscreen
-                ? "Exit fullscreen to control playback"
-                : "Swipe down to close"}
-            </p>
+            <div className="text-center md:text-left">
+              <h3
+                className={`font-bold text-white leading-tight mb-1 line-clamp-1 ${
+                  showLyrics && hasLyrics ? "text-base" : "text-xl md:text-lg"
+                }`}
+              >
+                {currentSong.song_name || "Unknown Title"}
+              </h3>
+              <p
+                className={`text-${theme.colors.text} mb-2 line-clamp-1 ${
+                  showLyrics && hasLyrics ? "text-xs" : "text-base md:text-sm"
+                }`}
+              >
+                {currentSong.singer_name || "Unknown Artist"}
+              </p>
+
+              <div className="flex items-center justify-center md:justify-start space-x-3">
+                <button
+                  onClick={handleLike}
+                  className={`p-2 rounded-full hover:bg-${theme.colors.primary}-600/50 transition-colors`}
+                >
+                  {isLiked ? (
+                    <IconHeartFilled
+                      size={18}
+                      className={`text-${theme.colors.secondary}-400`}
+                    />
+                  ) : (
+                    <IconHeart
+                      size={18}
+                      className={`text-${theme.colors.text} hover:text-${theme.colors.secondary}-400`}
+                    />
+                  )}
+                </button>
+
+                {hasLyrics && (
+                  <button
+                    onClick={() => setShowLyrics(!showLyrics)}
+                    className={`p-2 rounded-full transition-colors ${
+                      showLyrics
+                        ? `bg-${theme.colors.button} text-${theme.colors.primary}-900`
+                        : `hover:bg-${theme.colors.primary}-600/50 text-${theme.colors.text} hover:text-${theme.colors.textHover}`
+                    }`}
+                    title={showLyrics ? "Hide Lyrics" : "Show Lyrics"}
+                  >
+                    <IconMicrophone size={18} />
+                  </button>
+                )}
+
+                <button
+                  onClick={handleExpandClick}
+                  className={`p-2 rounded-full hover:bg-${theme.colors.primary}-600/50 transition-colors text-${theme.colors.text} hover:text-${theme.colors.textHover}`}
+                  title="Expand view"
+                >
+                  <IconMaximize size={18} />
+                </button>
+              </div>
+            </div>
           </div>
-        )}
+
+          {showLyrics && hasLyrics && (
+            <div
+              className={`flex-1 mx-3 md:mx-4 mb-3 md:mb-4 transition-all duration-500 delay-400 ${
+                isVisible && !isClosing
+                  ? "translate-y-0 opacity-100"
+                  : "translate-y-4 opacity-0"
+              }`}
+            >
+              <div
+                className="bg-transparent rounded-lg overflow-hidden"
+                style={{ height: "230px", width: "100%" }}
+              >
+                {hasTimestamps ? (
+                  <SyncedLyricsDisplay
+                    lyricsText={currentSong.lyrics}
+                    audioElement={audio}
+                    isPlaying={isPlaying}
+                    className="h-full"
+                  />
+                ) : (
+                  <Box
+                    style={{
+                      height: "100%",
+                      width: "100%",
+                      overflowY: "auto",
+                      padding: "16px",
+                    }}
+                    className="no-scrollbar scrollbar-spotify"
+                  >
+                    <Text
+                      style={{
+                        color: `rgba(209, 250, 229, 0.8)`,
+                        fontSize: "14px",
+                        fontWeight: 400,
+                        lineHeight: 1.5,
+                        textAlign: "center",
+                        wordWrap: "break-word",
+                      }}
+                    >
+                      {currentSong.lyrics.split("\n").map((line, index) => (
+                        <div
+                          key={`lyric-line-${index}`}
+                          style={{ marginBottom: "8px" }}
+                        >
+                          {line.trim() || <br />}
+                        </div>
+                      ))}
+                    </Text>
+                  </Box>
+                )}
+              </div>
+            </div>
+          )}
+
+          {(!showLyrics || !hasLyrics) && (
+            <div
+              className={`text-center md:hidden mt-auto p-4 transition-all duration-500 delay-400 ${
+                isVisible && !isClosing
+                  ? "translate-y-0 opacity-100"
+                  : "translate-y-4 opacity-0"
+              }`}
+            >
+              <p className={`text-sm text-${theme.colors.text}/80`}>
+                {isVideoFullscreen
+                  ? "Exit fullscreen to control playback"
+                  : "Swipe down to close"}
+              </p>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+
+      {/* Expanded Song View */}
+      {showExpandedView && (
+        <ExpandedSongView
+          currentSong={currentSong}
+          audio={audio}
+          isPlaying={isPlaying}
+          theme={theme}
+          onClose={handleExpandedViewClose}
+          isVisible={showExpandedView}
+        />
+      )}
+    </>
   );
 };
 
