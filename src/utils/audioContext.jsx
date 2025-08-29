@@ -61,31 +61,34 @@ export const AudioProvider = ({ children }) => {
 
       // Set action handlers cho các nút điều khiển
       navigator.mediaSession.setActionHandler('play', () => {
+        console.log('Media Session: Play button pressed');
         if (audio && !isPlaying) {
-          togglePlay();
+          audio.play()
+            .then(() => {
+              setIsPlaying(true);
+              navigator.mediaSession.playbackState = 'playing';
+            })
+            .catch(error => console.error("Play failed:", error));
         }
       });
 
       navigator.mediaSession.setActionHandler('pause', () => {
+        console.log('Media Session: Pause button pressed');
         if (audio && isPlaying) {
-          togglePlay();
+          audio.pause();
+          setIsPlaying(false);
+          navigator.mediaSession.playbackState = 'paused';
         }
       });
 
-      // Chỉ set next/previous nếu có playlist với nhiều bài
-      if (playlist.length > 1) {
-        navigator.mediaSession.setActionHandler('previoustrack', () => {
-          playBackSong();
-        });
+      // Luôn luôn set next/previous handlers
+      navigator.mediaSession.setActionHandler('previoustrack', () => {
+        playBackSong();
+      });
 
-        navigator.mediaSession.setActionHandler('nexttrack', () => {
-          playNextSong();
-        });
-      } else {
-        // Remove handlers nếu chỉ có 1 bài
-        navigator.mediaSession.setActionHandler('previoustrack', null);
-        navigator.mediaSession.setActionHandler('nexttrack', null);
-      }
+      navigator.mediaSession.setActionHandler('nexttrack', () => {
+        playNextSong();
+      });
 
       navigator.mediaSession.setActionHandler('seekbackward', (details) => {
         const skipTime = details.seekOffset || 10;
@@ -178,6 +181,18 @@ export const AudioProvider = ({ children }) => {
     setCurrentSong(playlist[nextIndex]);
   };
 
+  // Hàm để phát single song (không cần playlist)
+  const playSingleSong = (song) => {
+    setSongDescriptionAvailable(true);
+    if (audio) {
+      audio.pause();
+      setIsPlaying(false);
+    }
+    setPlaylist([song]); // Tạo playlist với 1 bài
+    setCurrentSongIndex(0);
+    setCurrentSong(song);
+  };
+
   // Hàm để thêm danh sách bài hát
   const setNewPlaylist = (newPlaylist, startIndex = 0) => {
     setSongDescriptionAvailable(true);
@@ -218,7 +233,7 @@ export const AudioProvider = ({ children }) => {
         navigator.mediaSession.playbackState = 'playing';
       }
     }
-  }, [currentSong, playlist.length]); // Thêm playlist.length vào dependencies
+  }, [currentSong, playlist]); // Thêm playlist vào dependencies để re-setup khi playlist thay đổi
 
   // Lấy duration của bài hát
   useEffect(() => {
@@ -332,6 +347,7 @@ export const AudioProvider = ({ children }) => {
         songDescriptionAvailable,
         setSongDescriptionAvailable,
         repeatMode,
+        playSingleSong,
         setRepeatMode,
       }}
     >
