@@ -9,7 +9,7 @@ import {
 import {
   IconChevronRight,
   IconMusic,
-  IconPlayerPlayFilled,
+  IconArrowsShuffle, // Thay đổi: Import IconShuffle thay vì IconPlayerPlayFilled
   IconList,
   IconDotsVertical,
   IconClockHour3,
@@ -25,7 +25,7 @@ import { deletePlaylistService } from "../../../services/playlistService";
 import { useAudio } from "../../../utils/audioContext";
 import { useTheme } from "../../../context/themeContext";
 
-// Animation variants
+// Animation variants (giữ nguyên tất cả variants...)
 const pageVariants = {
   initial: { opacity: 0, y: 20 },
   animate: {
@@ -121,7 +121,8 @@ const controlsVariants = {
   },
 };
 
-const playButtonVariants = {
+// Thay đổi: Rename từ playButtonVariants thành shuffleButtonVariants
+const shuffleButtonVariants = {
   initial: { opacity: 0, scale: 0.8 },
   animate: {
     opacity: 1,
@@ -133,6 +134,7 @@ const playButtonVariants = {
   },
   hover: {
     scale: 1.1,
+    rotate: 15, // Thêm hiệu ứng xoay khi hover cho shuffle
     transition: {
       duration: 0.2,
       ease: [0.4, 0, 0.2, 1],
@@ -292,7 +294,6 @@ const deleteButtonVariants = {
   },
 };
 
-// Fixed icon animation variants - sử dụng transform thay vì scale để tránh ảnh hưởng layout
 const iconFloatVariants = {
   animate: {
     y: [0, -8, 0],
@@ -499,9 +500,20 @@ const MyLibrary = ({ playlist, setCurrentView }) => {
     setSearchQuery("");
   };
 
-  const playSongFromThisList = () => {
+  // Thay đổi: Function mới để shuffle và play playlist
+  const shuffleAndPlayPlaylist = () => {
     if (songs.length > 0) {
-      setNewPlaylist(songs, 0);
+      // Tạo bản copy của songs array để không ảnh hưởng đến state gốc
+      const shuffledSongs = [...songs];
+      
+      // Fisher-Yates shuffle algorithm
+      for (let i = shuffledSongs.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffledSongs[i], shuffledSongs[j]] = [shuffledSongs[j], shuffledSongs[i]];
+      }
+      
+      // Set playlist với thứ tự đã shuffle, bắt đầu từ bài đầu tiên (index 0)
+      setNewPlaylist(shuffledSongs, 0);
     }
   };
 
@@ -718,25 +730,27 @@ const MyLibrary = ({ playlist, setCurrentView }) => {
           className="flex flex-col sm:flex-row justify-between items-start sm:items-center mx-4 sm:mx-6 py-4 gap-4"
           variants={controlsVariants}
         >
-          {/* Play button và List info */}
+          {/* Shuffle button và List info */}
           <div className="flex flex-row justify-between items-center w-full sm:w-auto">
             <div className="flex flex-row items-center">
               {songs.length > 0 ? (
                 <motion.div
-                  onClick={playSongFromThisList}
+                  onClick={shuffleAndPlayPlaylist} // Thay đổi: Gọi function shuffle mới
                   className={`mr-2 sm:mr-4 bg-${theme.colors.primary}-500 cursor-pointer rounded-full transition-all duration-300 hover:scale-110 hover:bg-${theme.colors.primary}-400 shadow-lg`}
-                  variants={playButtonVariants}
+                  variants={shuffleButtonVariants} // Thay đổi: Sử dụng shuffleButtonVariants
                   whileHover="hover"
                   whileTap="tap"
                 >
-                  <IconPlayerPlayFilled className="size-8 sm:size-12 p-2 sm:p-3 text-black" />
+                  {/* Thay đổi: Sử dụng IconShuffle thay vì IconPlayerPlayFilled */}
+                  <IconArrowsShuffle className="size-8 sm:size-12 p-2 sm:p-3 text-black" />
                 </motion.div>
               ) : (
                 <motion.div
                   className="mr-2 sm:mr-4 bg-gray-600 rounded-full"
-                  variants={playButtonVariants}
+                  variants={shuffleButtonVariants} // Thay đổi: Sử dụng shuffleButtonVariants
                 >
-                  <IconPlayerPlayFilled className="size-8 sm:size-12 p-2 sm:p-3 text-gray-400" />
+                  {/* Thay đổi: Sử dụng IconArrowsShuffle thay vì IconShuffle */}
+                  <IconArrowsShuffle className="size-8 sm:size-12 p-2 sm:p-3 text-gray-400" />
                 </motion.div>
               )}
             </div>
