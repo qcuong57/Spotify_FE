@@ -28,7 +28,7 @@ html {
 
 .scrollbar-spotify {
   scrollbar-width: thin;
-  scrollbar-color: rgba(17, 94, 89, 0.6) rgba(17, 94, 89, 0.2);
+  scrollbar-color: rgba(0, 0, 0, 0.6) rgba(0, 0, 0, 0.15);
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
 

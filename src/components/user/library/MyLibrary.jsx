@@ -598,7 +598,7 @@ const MyLibrary = ({ playlist, setCurrentView }) => {
 
   return (
     <motion.div
-      className={`bg-gradient-to-b ${theme.colors.backgroundOverlay} backdrop-blur-md text-white flex-1 mr-0 sm:mr-2 rounded-lg overflow-y-auto`}
+      className={`bg-gradient-to-b ${theme.colors.backgroundOverlay} backdrop-blur-md text-white flex-1 mr-0 sm:mr-2 rounded-lg overflow-y-auto scrollbar-spotify`}
       variants={pageVariants}
       initial="initial"
       animate="animate"
