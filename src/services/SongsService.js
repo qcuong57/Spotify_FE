@@ -165,7 +165,8 @@ export const getSongById = async (id) => {
     if (!id) {
       throw new Error("Song ID is required");
     }
-    return await axiosCustom.get(`/api/songs/${id}/`);
+    const response = await axiosCustom.get(`/api/songs/${id}/`);
+    return response.data; // <--- TRẢ VỀ DỮ LIỆU TRỰC TIẾP
   } catch (error) {
     handleApiError(error, "Get song by ID");
   }

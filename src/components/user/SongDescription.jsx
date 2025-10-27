@@ -11,11 +11,14 @@ import {
   IconHeartFilled,
   IconMicrophone,
   IconMaximize,
+  IconEye,
 } from "@tabler/icons-react";
 import { Box, Text } from "@mantine/core";
+import { useNavigate } from "react-router-dom";
 
 const SongDescription = () => {
   const { theme } = useTheme();
+  const navigate = useNavigate();
   const {
     currentSong,
     audio,
@@ -304,6 +307,14 @@ const SongDescription = () => {
     setShowExpandedView(false);
   };
 
+  // Handler cho nút xem chi tiết
+  const handleDetailsClick = (e) => {
+    e.stopPropagation();
+    if (currentSong?.id) {
+      navigate(`/song/${currentSong.id}`);
+    }
+  };
+
   const hasLyrics = currentSong?.lyrics && currentSong.lyrics.trim().length > 0;
   const hasTimestamps =
     hasLyrics &&
@@ -367,13 +378,6 @@ const SongDescription = () => {
             Now Playing
           </h2>
           <div className="flex items-center space-x-2">
-            {/* <button
-              onClick={handleExpandClick}
-              className={`p-2 rounded-full hover:bg-${theme.colors.primary}-600/50 transition-colors z-[10002]`}
-              title="Expand view"
-            >
-              <IconMaximize size={18} className={`text-${theme.colors.text}`} />
-            </button> */}
             <button
               onClick={handleClose}
               className={`p-2 rounded-full hover:bg-${theme.colors.primary}-600/50 transition-colors z-[10002]`}
@@ -477,6 +481,7 @@ const SongDescription = () => {
                 <button
                   onClick={handleLike}
                   className={`p-2 rounded-full hover:bg-${theme.colors.primary}-600/50 transition-colors`}
+                  title={isLiked ? "Bỏ thích" : "Thích bài hát"}
                 >
                   {isLiked ? (
                     <IconHeartFilled
@@ -499,11 +504,20 @@ const SongDescription = () => {
                         ? `bg-${theme.colors.button} text-${theme.colors.primary}-900`
                         : `hover:bg-${theme.colors.primary}-600/50 text-${theme.colors.text} hover:text-${theme.colors.textHover}`
                     }`}
-                    title={showLyrics ? "Hide Lyrics" : "Show Lyrics"}
+                    title={showLyrics ? "Ẩn lời bài hát" : "Hiện lời bài hát"}
                   >
                     <IconMicrophone size={18} />
                   </button>
                 )}
+
+                {/* Nút xem chi tiết (Con mắt) */}
+                <button
+                  onClick={handleDetailsClick}
+                  className={`p-2 rounded-full hover:bg-${theme.colors.primary}-600/50 transition-colors text-${theme.colors.text} hover:text-${theme.colors.textHover}`}
+                  title="Xem chi tiết bài hát"
+                >
+                  <IconEye size={18} />
+                </button>
 
                 <button
                   onClick={handleExpandClick}
@@ -580,8 +594,8 @@ const SongDescription = () => {
             >
               <p className={`text-sm text-${theme.colors.text}/80`}>
                 {isVideoFullscreen
-                  ? "Exit fullscreen to control playback"
-                  : "Swipe down to close"}
+                  ? "Thoát toàn màn hình để điều khiển phát nhạc"
+                  : "Vuốt xuống để đóng"}
               </p>
             </div>
           )}

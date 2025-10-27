@@ -3,6 +3,31 @@ import { createContext, useContext, useState, useEffect } from "react";
 // Tạo Context
 const AudioContext = createContext();
 
+const originalWarn = console.warn;
+const originalError = console.error;
+
+console.warn = (...args) => {
+  const message = args.join(" ");
+  if (
+    message.includes("MediaSession: duration is not ready yet") ||
+    message.includes("Playback aborted")
+  ) {
+    return;
+  }
+  originalWarn(...args);
+};
+
+console.error = (...args) => {
+  const message = args.join(" ");
+  if (
+    message.includes("Playback failed: AbortError") ||
+    message.includes("MediaSession: duration is not ready yet")
+  ) {
+    return;
+  }
+  originalError(...args);
+};
+
 // Provider Component
 export const AudioProvider = ({ children }) => {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -14,83 +39,103 @@ export const AudioProvider = ({ children }) => {
   const [duration, setDuration] = useState(0);
   const [playlist, setPlaylist] = useState([]);
   const [currentSongIndex, setCurrentSongIndex] = useState(-1);
-  const [songDescriptionAvailable, setSongDescriptionAvailable] = useState(false);
+  const [songDescriptionAvailable, setSongDescriptionAvailable] =
+    useState(false);
   const [repeatMode, setRepeatMode] = useState("all");
 
   // Setup Media Session API
   const setupMediaSession = (song) => {
-    if ('mediaSession' in navigator) {
+    if ("mediaSession" in navigator) {
       // Set metadata cho notification panel - sử dụng đúng field names
       navigator.mediaSession.metadata = new MediaMetadata({
-        title: song.song_name || song.title || 'Unknown Title',
-        artist: song.singer_name || song.artist || 'Unknown Artist', 
-        album: song.album || '',
+        title: song.song_name || song.title || "Unknown Title",
+        artist: song.singer_name || song.artist || "Unknown Artist",
+        album: song.album || "",
         artwork: [
           {
-            src: song.image || song.artwork || 'https://via.placeholder.com/512x512/4f46e5/ffffff?text=Music',
-            sizes: '96x96',
-            type: 'image/jpeg'
+            src:
+              song.image ||
+              song.artwork ||
+              "https://via.placeholder.com/512x512/4f46e5/ffffff?text=Music",
+            sizes: "96x96",
+            type: "image/jpeg",
           },
           {
-            src: song.image || song.artwork || 'https://via.placeholder.com/512x512/4f46e5/ffffff?text=Music',
-            sizes: '128x128', 
-            type: 'image/jpeg'
+            src:
+              song.image ||
+              song.artwork ||
+              "https://via.placeholder.com/512x512/4f46e5/ffffff?text=Music",
+            sizes: "128x128",
+            type: "image/jpeg",
           },
           {
-            src: song.image || song.artwork || 'https://via.placeholder.com/512x512/4f46e5/ffffff?text=Music',
-            sizes: '192x192',
-            type: 'image/jpeg'
+            src:
+              song.image ||
+              song.artwork ||
+              "https://via.placeholder.com/512x512/4f46e5/ffffff?text=Music",
+            sizes: "192x192",
+            type: "image/jpeg",
           },
           {
-            src: song.image || song.artwork || 'https://via.placeholder.com/512x512/4f46e5/ffffff?text=Music',
-            sizes: '256x256',
-            type: 'image/jpeg'
+            src:
+              song.image ||
+              song.artwork ||
+              "https://via.placeholder.com/512x512/4f46e5/ffffff?text=Music",
+            sizes: "256x256",
+            type: "image/jpeg",
           },
           {
-            src: song.image || song.artwork || 'https://via.placeholder.com/512x512/4f46e5/ffffff?text=Music',
-            sizes: '384x384',
-            type: 'image/jpeg'
+            src:
+              song.image ||
+              song.artwork ||
+              "https://via.placeholder.com/512x512/4f46e5/ffffff?text=Music",
+            sizes: "384x384",
+            type: "image/jpeg",
           },
           {
-            src: song.image || song.artwork || 'https://via.placeholder.com/512x512/4f46e5/ffffff?text=Music',
-            sizes: '512x512',
-            type: 'image/jpeg'
-          }
-        ]
+            src:
+              song.image ||
+              song.artwork ||
+              "https://via.placeholder.com/512x512/4f46e5/ffffff?text=Music",
+            sizes: "512x512",
+            type: "image/jpeg",
+          },
+        ],
       });
 
       // Set action handlers cho các nút điều khiển
-      navigator.mediaSession.setActionHandler('play', () => {
-        console.log('Media Session: Play button pressed');
+      navigator.mediaSession.setActionHandler("play", () => {
+        console.log("Media Session: Play button pressed");
         if (audio && !isPlaying) {
-          audio.play()
+          audio
+            .play()
             .then(() => {
               setIsPlaying(true);
-              navigator.mediaSession.playbackState = 'playing';
+              navigator.mediaSession.playbackState = "playing";
             })
-            .catch(error => console.error("Play failed:", error));
+            .catch((error) => console.error("Play failed:", error));
         }
       });
 
-      navigator.mediaSession.setActionHandler('pause', () => {
-        console.log('Media Session: Pause button pressed');
+      navigator.mediaSession.setActionHandler("pause", () => {
+        console.log("Media Session: Pause button pressed");
         if (audio && isPlaying) {
           audio.pause();
           setIsPlaying(false);
-          navigator.mediaSession.playbackState = 'paused';
+          navigator.mediaSession.playbackState = "paused";
         }
       });
 
       // Luôn luôn set next/previous handlers
-      navigator.mediaSession.setActionHandler('previoustrack', () => {
+      navigator.mediaSession.setActionHandler("previoustrack", () => {
         playBackSong();
       });
 
-      navigator.mediaSession.setActionHandler('nexttrack', () => {
+      navigator.mediaSession.setActionHandler("nexttrack", () => {
         playNextSong();
       });
 
-      navigator.mediaSession.setActionHandler('seekbackward', (details) => {
+      navigator.mediaSession.setActionHandler("seekbackward", (details) => {
         const skipTime = details.seekOffset || 10;
         if (audio) {
           const newTime = Math.max(0, audio.currentTime - skipTime);
@@ -98,37 +143,49 @@ export const AudioProvider = ({ children }) => {
         }
       });
 
-      navigator.mediaSession.setActionHandler('seekforward', (details) => {
+      navigator.mediaSession.setActionHandler("seekforward", (details) => {
         const skipTime = details.seekOffset || 10;
         if (audio) {
-          const newTime = Math.min(audio.duration, audio.currentTime + skipTime);
+          const newTime = Math.min(
+            audio.duration,
+            audio.currentTime + skipTime
+          );
           setPlaybackTime(newTime);
         }
       });
 
-      navigator.mediaSession.setActionHandler('seekto', (details) => {
+      navigator.mediaSession.setActionHandler("seekto", (details) => {
         if (details.seekTime && audio) {
           setPlaybackTime(details.seekTime);
         }
       });
 
       // Update position state cho progress bar trên notification
-      navigator.mediaSession.setPositionState({
-        duration: audio ? audio.duration : 0,
-        playbackRate: 1,
-        position: audio ? audio.currentTime : 0
-      });
+      // Update position state cho progress bar trên notification
+      if (audio && !isNaN(audio.duration) && isFinite(audio.duration)) {
+        navigator.mediaSession.setPositionState({
+          duration: audio.duration,
+          playbackRate: audio.playbackRate || 1,
+          position: audio.currentTime || 0,
+        });
+      } else {
+        console.warn(
+          "MediaSession: duration is not ready yet, skipping setPositionState"
+        );
+      }
     }
   };
 
   // Update Media Session position
   const updateMediaSessionPosition = () => {
-    if ('mediaSession' in navigator && audio) {
-      navigator.mediaSession.setPositionState({
-        duration: audio.duration || 0,
-        playbackRate: audio.playbackRate || 1,
-        position: audio.currentTime || 0
-      });
+    if ("mediaSession" in navigator && audio) {
+      if (!isNaN(audio.duration) && isFinite(audio.duration)) {
+        navigator.mediaSession.setPositionState({
+          duration: audio.duration,
+          playbackRate: audio.playbackRate || 1,
+          position: audio.currentTime || 0,
+        });
+      }
     }
   };
 
@@ -138,11 +195,11 @@ export const AudioProvider = ({ children }) => {
       if (isPlaying) {
         audio.pause();
         setIsPlaying(false);
-        navigator.mediaSession.playbackState = 'paused';
+        navigator.mediaSession.playbackState = "paused";
       } else {
         audio.play().catch((error) => console.error("Playback failed:", error));
         setIsPlaying(true);
-        navigator.mediaSession.playbackState = 'playing';
+        navigator.mediaSession.playbackState = "playing";
       }
     }
   };
@@ -218,19 +275,19 @@ export const AudioProvider = ({ children }) => {
       }
       const newAudio = new Audio(currentSong.url_audio);
       newAudio.volume = isMute ? 0 : volume / 100;
-      
+
       // Setup Media Session cho bài hát mới
       setupMediaSession(currentSong);
-      
+
       newAudio
         .play()
         .catch((error) => console.error("Playback failed:", error));
       setAudio(newAudio);
       setIsPlaying(true);
-      
+
       // Set playback state
-      if ('mediaSession' in navigator) {
-        navigator.mediaSession.playbackState = 'playing';
+      if ("mediaSession" in navigator) {
+        navigator.mediaSession.playbackState = "playing";
       }
     }
   }, [currentSong, playlist]); // Thêm playlist vào dependencies để re-setup khi playlist thay đổi
@@ -268,8 +325,8 @@ export const AudioProvider = ({ children }) => {
     if (audio) {
       const handleEnded = () => {
         console.log("Audio ended, repeat mode:", repeatMode);
-        navigator.mediaSession.playbackState = 'paused';
-        
+        navigator.mediaSession.playbackState = "paused";
+
         if (repeatMode === "one") {
           setTimeout(() => {
             if (audio && !isNaN(audio.duration) && audio.duration > 0) {
@@ -279,7 +336,7 @@ export const AudioProvider = ({ children }) => {
                 .play()
                 .catch((error) => console.error("Repeat failed:", error));
               setIsPlaying(true);
-              navigator.mediaSession.playbackState = 'playing';
+              navigator.mediaSession.playbackState = "playing";
             }
           }, 100);
         } else {
@@ -308,15 +365,15 @@ export const AudioProvider = ({ children }) => {
         audio.pause();
       }
       // Clear media session
-      if ('mediaSession' in navigator) {
+      if ("mediaSession" in navigator) {
         navigator.mediaSession.metadata = null;
-        navigator.mediaSession.setActionHandler('play', null);
-        navigator.mediaSession.setActionHandler('pause', null);
-        navigator.mediaSession.setActionHandler('previoustrack', null);
-        navigator.mediaSession.setActionHandler('nexttrack', null);
-        navigator.mediaSession.setActionHandler('seekbackward', null);
-        navigator.mediaSession.setActionHandler('seekforward', null);
-        navigator.mediaSession.setActionHandler('seekto', null);
+        navigator.mediaSession.setActionHandler("play", null);
+        navigator.mediaSession.setActionHandler("pause", null);
+        navigator.mediaSession.setActionHandler("previoustrack", null);
+        navigator.mediaSession.setActionHandler("nexttrack", null);
+        navigator.mediaSession.setActionHandler("seekbackward", null);
+        navigator.mediaSession.setActionHandler("seekforward", null);
+        navigator.mediaSession.setActionHandler("seekto", null);
       }
     };
   }, []);
