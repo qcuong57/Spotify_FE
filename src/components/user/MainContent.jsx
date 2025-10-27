@@ -5,6 +5,8 @@ import {
   getAllSongsWithPagination,
   getTrendingSongs,
   getLatestSongs,
+  getTopSongs, // <--- THÊM MỚI
+  getGenreRanking, // <--- THÊM MỚI
 } from "../../services/SongsService";
 import { getAllGenres } from "../../services/genresService";
 import { useTheme } from "../../context/themeContext";
@@ -14,6 +16,8 @@ import TrendingSection from "../../components/user/main/TrendingSection";
 import LoadingState from "../../components/user/main/LoadingState";
 import ErrorState from "../../components/user/main/ErrorState";
 import Section from "../../components/user/main/Section";
+import TopSongsSection from "../../components/user/TopSongsSection";
+import DailyMixSection from "../../components/user/DailyMixSection";
 
 const pageVariants = {
   initial: { opacity: 0, y: 20 },
@@ -53,6 +57,8 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
   const [allSongs, setAllSongs] = useState([]);
   const [trendingSongs, setTrendingSongs] = useState([]);
   const [latestSongs, setLatestSongs] = useState([]);
+  const [topSongs, setTopSongs] = useState([]); // <--- THÊM MỚI
+  const [genreRanking, setGenreRanking] = useState([]);
   const [contextMenu, setContextMenu] = useState(null);
   const [genres, setGenres] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -63,6 +69,7 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
   const [loadingStates, setLoadingStates] = useState({
     allSongs: false,
     latest: false,
+    topSongs: false,
     genres: {},
   });
 
@@ -136,11 +143,15 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
           songsResponse,
           genresResponse,
           trendingResponse,
+          topSongsResponse, // <--- THÊM MỚI
+          genreRankingResponse, // <--- THÊM MỚI
           latestResponse,
         ] = await Promise.all([
           getAllSongs(),
           getAllGenres(),
           getTrendingSongs(12),
+          getTopSongs(10), // <--- THÊM MỚI: Top 10 bài hát
+          getGenreRanking(5), // <--- THÊM MỚI: Top 5 bài/thể loại
           getLatestSongs(12),
         ]);
 
@@ -148,6 +159,8 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
         setGenres(genresResponse?.data?.results || []);
         setTrendingSongs(trendingResponse?.data?.results || []);
         setLatestSongs(latestResponse?.data?.results || []);
+        setTopSongs(topSongsResponse?.data?.results || []); // <--- THÊM MỚI
+        setGenreRanking(genreRankingResponse?.data || []); // <--- THÊM MỚI
         setFilteredSongs(songsResponse?.data?.results || []);
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -354,6 +367,55 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
     [handleAllSongs]
   );
 
+  // Optimized load all top songs with progress indication
+  const handleLoadAllTopSongs = useCallback(async () => {
+    // <--- THÊM MỚI
+    if (loadingStates.topSongs) return;
+
+    try {
+      setLoadingStates((prev) => ({ ...prev, topSongs: true }));
+
+      const loadingToast = {
+        songs: [],
+        title: "Đang tải Top 100 bài hát...",
+        isLoading: true,
+      };
+      setListSongsDetail(loadingToast);
+      setCurrentView("listSongs");
+
+      // Gọi API với limit lớn hơn (ví dụ 100)
+      const topSongsResponse = await getTopSongs(100);
+
+      if (topSongsResponse?.data?.results) {
+        const data = {
+          songs: topSongsResponse.data.results,
+          title: `👑 Top 100 Bài hát (${topSongsResponse.data.results.length} bài)`,
+          isLoading: false,
+        };
+        setListSongsDetail(data);
+      }
+    } catch (error) {
+      console.error("Error loading all top songs:", error);
+
+      let errorMessage = "Không thể tải Top bài hát. Vui lòng thử lại.";
+
+      if (isTokenExpired(error)) {
+        errorMessage =
+          "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại để tiếp tục.";
+      }
+
+      const errorData = {
+        songs: [],
+        title: "Lỗi tải dữ liệu",
+        error: errorMessage,
+        isLoading: false,
+      };
+      setListSongsDetail(errorData);
+    } finally {
+      setLoadingStates((prev) => ({ ...prev, topSongs: false }));
+    }
+  }, [setListSongsDetail, setCurrentView, loadingStates.topSongs]); // <--- THAY ĐỔI DEPENDENCY
+
   // Memoized filtered genres
   const validGenres = useMemo(() => {
     return genres.filter(
@@ -442,6 +504,29 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
               />
             )}
 
+
+            {topSongs.length > 0 && ( // <--- THÊM MỚI
+              <TopSongsSection
+              topSongs={topSongs}
+              contextMenu={contextMenu}
+              setContextMenu={setContextMenu}
+              handleCloseContextMenu={handleCloseContextMenu}
+              onViewAll={handleLoadAllTopSongs}
+              isLoading={loadingStates.topSongs}
+              index={1} // Đổi index
+              />
+            )}
+
+            {/* Daily Mix Section (TEST COMPONENT) */} 
+            <DailyMixSection // <--- THÊM COMPONENT MỚI
+                contextMenu={contextMenu}
+                setContextMenu={setContextMenu}
+                handleCloseContextMenu={handleCloseContextMenu}
+                setCurrentView={setCurrentView}
+                setListSongsDetail={setListSongsDetail}
+                index={1}
+            />
+            
             {/* Latest Songs Section */}
             {latestSongs.length > 0 && (
               <Section
@@ -461,6 +546,17 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
                 />
               </Section>
             )}
+
+            {/* {genreRanking.length > 0 && ( // <--- THÊM MỚI
+              <GenreRankingSection
+                genreRanking={genreRanking}
+                handleGenreViewAll={handleGenreViewAll}
+                contextMenu={contextMenu}
+                setContextMenu={setContextMenu}
+                handleCloseContextMenu={handleCloseContextMenu}
+                loadingStates={loadingStates}
+              />
+            )} */}
 
             {/* All Songs Section */}
             {allSongs.length > 0 && (

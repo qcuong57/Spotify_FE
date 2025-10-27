@@ -24,6 +24,7 @@ import AuthProvider from "./context/auth/AuthProvider";
 import { PlayListProvider } from "./utils/playlistContext";
 import ProtectedAdminRoute from "./components/ProtectedAdminRoute";
 import ThemeProvider from "./context/ThemeProvider";
+import SongDetail from "./components/user/SongDetail";
 
 function App() {
   return (
@@ -40,6 +41,7 @@ function App() {
                     <Route path="/login" element={<Login />} />
                     <Route path="/signup" element={<SignUp />} />
                     <Route path="/auth/callback" element={<OAuthCallback />} />
+                    <Route path="/song/:songId" element={<SongDetail />} />
                     {/* Bảo vệ route /admin và các route con */}
                     <Route element={<ProtectedAdminRoute />}>
                       <Route path="admin" element={<Admin />}>

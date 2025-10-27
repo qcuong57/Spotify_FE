@@ -355,6 +355,7 @@ export const getGenreRanking = async (limitPerGenre = 5) => {
   }
 };
 
+
 // Get general statistics
 export const getStats = async () => {
   try {
@@ -371,5 +372,37 @@ export const getLatestSongs = async (limit = 10) => {
     return await axiosCustom.get(`/api/songs/latest/?limit=${validLimit}`);
   } catch (error) {
     handleApiError(error, "Get latest songs");
+  }
+};
+
+// Get a list of completely random songs
+export const getRandomSongs = async (limit = 10) => {
+  try {
+    const validLimit = Math.min(Math.max(parseInt(limit) || 10, 1), 100);
+    return await axiosCustom.get(`/api/songs/random/?limit=${validLimit}`);
+  } catch (error) {
+    handleApiError(error, "Get random songs");
+  }
+};
+
+// Get a daily fixed random mix (for "Daily Mix" playlists)
+export const getDailyMixSongs = async (limit = 30) => {
+  try {
+    const validLimit = Math.min(Math.max(parseInt(limit) || 30, 1), 100);
+    return await axiosCustom.get(`/api/songs/daily-mix/?limit=${validLimit}`);
+  } catch (error) {
+    handleApiError(error, "Get daily mix songs");
+  }
+};
+
+export const getRelatedSongs = async (songId, limit = 10) => {
+  try {
+    if (!songId) {
+      throw new Error("Song ID is required for related songs API");
+    }
+    const validLimit = Math.min(Math.max(parseInt(limit) || 10, 1), 50);
+    return await axiosCustom.get(`/api/songs/${songId}/related/?limit=${validLimit}`);
+  } catch (error) {
+    handleApiError(error, "Get related songs");
   }
 };
