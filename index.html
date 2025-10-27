@@ -1,32 +1,73 @@
 <!doctype html>
-<html lang="en">
+<html lang="vi">
 
 <head>
   <meta charset="UTF-8" />
-  <link rel="icon"
-    href="https://yzfbdwvbybecxhbitkmc.supabase.co/storage/v1/object/sign/image/78ed005b-b0aa-427b-bc0d-6f1efb29e653.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV82OTc4ZGU2My0wOWQzLTRhYmYtOWRjZC0wZjY0NTBlN2VlYmIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJpbWFnZS83OGVkMDA1Yi1iMGFhLTQyN2ItYmMwZC02ZjFlZmIyOWU2NTMucG5nIiwiaWF0IjoxNzU0MTM1Mzk4LCJleHAiOjIwNjk0OTUzOTh9.MxsdoFIdkMKWNqhTMN5PTDT2k_K-ELn-q7OzxBEF9PM" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Preserve existing favicon/logo -->
+  <link rel="icon" href="https://yzfbdwvbybecxhbitkmc.supabase.co/storage/v1/object/sign/image/78ed005b-b0aa-427b-bc0d-6f1efb29e653.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV82OTc4ZGU2My0wOWQzLTRhYmYtOWRjZC0wZjY0NTBlN2VlYmIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJpbWFnZS83OGVkMDA1Yi1iMGFhLTQyN2ItYmMwZC02ZjFlZmIyOWU2NTMucG5nIiwiaWF0IjoxNzU0MTM1Mzk4LCJleHAiOjIwNjk0OTUzOTh9.MxsdoFIdkMKWNqhTMN5PTDT2k_K-ELn-q7OzxBEF9PM">
+
+  <!-- Google verification (kept from your original) -->
   <meta name="google-site-verification" content="2oL1h1m7UXJZnTxU4XhP2l2e-73atAblhzcELBXFl_k" />
-  <title>UIA Music</title>
-  <meta name="description"
-    content="UIA Music là website nghe nhạc vui vẻ, dễ dùng, mang lại cảm giác thư giãn và chill mỗi ngày.">
-  <!-- Open Graph -->
-  <meta property="og:title" content="UIAMusic" />
-  <meta property="og:description" content="UIAMusic – Nghe là phê, mèo cũng mê" />
-  <meta property="og:image"
-    content="https://yzfbdwvbybecxhbitkmc.supabase.co/storage/v1/object/sign/image/78ed005b-b0aa-427b-bc0d-6f1efb29e653.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV82OTc4ZGU2My0wOWQzLTRhYmYtOWRjZC0wZjY0NTBlN2VlYmIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJpbWFnZS83OGVkMDA1Yi1iMGFhLTQyN2ItYmMwZC02ZjFlZmIyOWU2NTMucG5nIiwiaWF0IjoxNzU0MTM1Mzk4LCJleHAiOjIwNjk0OTUzOTh9.MxsdoFIdkMKWNqhTMN5PTDT2k_K-ELn-q7OzxBEF9PM" />
+
+  <!-- Primary SEO tags -->
+  <title>UIA Music 🎵 — Nơi nghe nhạc vui vẻ, chill & giới thiệu bài hay</title>
+  <meta name="description" content="UIA Music là web nhỏ giới thiệu nhạc vui, playlist chill và những bài hát đáng nghe. Nghe nhạc, chia sẻ và thư giãn cùng UIA Music." />
+  <meta name="keywords" content="UIA Music, nghe nhạc, playlist chill, nhạc vui, nghe nhạc online" />
+  <meta name="robots" content="index, follow" />
+
+  <!-- Canonical -->
+  <link rel="canonical" href="https://uiamusic.vercel.app/" />
+
+  <!-- Open Graph (Facebook, social preview) -->
+  <meta property="og:locale" content="vi_VN" />
+  <meta property="og:title" content="UIA Music — Nơi nghe nhạc vui vẻ" />
+  <meta property="og:description" content="UIA Music – nghe nhạc chill, giới thiệu bài hay và không khí vui vẻ cho mọi người." />
+  <meta property="og:image" content="https://yzfbdwvbybecxhbitkmc.supabase.co/storage/v1/object/sign/image/78ed005b-b0aa-427b-bc0d-6f1efb29e653.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV82OTc4ZGU2My0wOWQzLTRhYmYtOWRjZC0wZjY0NTBlN2VlYmIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJpbWFnZS83OGVkMDA1Yi1iMGFhLTQyN2ItYmMwZC02ZjFlZmIyOWU2NTMucG5nIiwiaWF0IjoxNzU0MTM1Mzk4LCJleHAiOjIwNjk0OTUzOTh9.MxsdoFIdkMKWNqhTMN5PTDT2k_K-ELn-q7OzxBEF9PM" />
   <meta property="og:url" content="https://uiamusic.vercel.app/" />
   <meta property="og:type" content="website" />
 
-  <!-- Twitter Card (nếu share lên Twitter) -->
+  <!-- Twitter card -->
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="UIAMusic" />
-  <meta name="twitter:description" content="UIAMusic – Nghe là phê, mèo cũng mê" />
-  <meta name="twitter:image"
-    content="https://yzfbdwvbybecxhbitkmc.supabase.co/storage/v1/object/sign/image/78ed005b-b0aa-427b-bc0d-6f1efb29e653.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV82OTc4ZGU2My0wOWQzLTRhYmYtOWRjZC0wZjY0NTBlN2VlYmIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJpbWFnZS83OGVkMDA1Yi1iMGFhLTQyN2ItYmMwZC02ZjFlZmIyOWU2NTMucG5nIiwiaWF0IjoxNzU0MTM1Mzk4LCJleHAiOjIwNjk0OTUzOTh9.MxsdoFIdkMKWNqhTMN5PTDT2k_K-ELn-q7OzxBEF9PM" />
+  <meta name="twitter:title" content="UIA Music — Nơi nghe nhạc vui vẻ" />
+  <meta name="twitter:description" content="Nghe nhạc chill, chia sẻ playlist và tận hưởng không khí vui vẻ cùng UIA Music." />
+  <meta name="twitter:image" content="https://yzfbdwvbybecxhbitkmc.supabase.co/storage/v1/object/sign/image/78ed005b-b0aa-427b-bc0d-6f1efb29e653.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV82OTc4ZGU2My0wOWQzLTRhYmYtOWRjZC0wZjY0NTBlN2VlYmIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJpbWFnZS83OGVkMDA1Yi1iMGFhLTQyN2ItYmMwZC02ZjFlZmIyOWU2NTMucG5nIiwiaWF0IjoxNzU0MTM1Mzk4LCJleHAiOjIwNjk0OTUzOTh9.MxsdoFIdkMKWNqhTMN5PTDT2k_K-ELn-q7OzxBEF9PM" />
 
-  <!-- Tùy chọn bổ sung -->
+  <!-- Performance hints -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <!-- Structured Data (JSON-LD) for better understanding by search engines -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "name": "UIA Music",
+        "url": "https://uiamusic.vercel.app/",
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": "https://uiamusic.vercel.app/?s={search_term_string}",
+          "query-input": "required name=search_term_string"
+        }
+      },
+      {
+        "@type": "Organization",
+        "name": "UIA Music",
+        "url": "https://uiamusic.vercel.app/",
+        "logo": "https://yzfbdwvbybecxhbitkmc.supabase.co/storage/v1/object/sign/image/78ed005b-b0aa-427b-bc0d-6f1efb29e653.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV82OTc4ZGU2My0wOWQzLTRhYmYtOWRjZC0wZjY0NTBlN2VlYmIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJpbWFnZS83OGVkMDA1Yi1iMGFhLTQyN2ItYmMwZC02ZjFlZmIyOWU2NTMucG5nIiwiaWF0IjoxNzU0MTM1Mzk4LCJleHAiOjIwNjk0OTUzOTh9.MxsdoFIdkMKWNqhTMN5PTDT2k_K-ELn-q7OzxBEF9PM"
+      }
+    ]
+  }
+  </script>
+
+  <!-- Theme color for mobile browsers -->
   <meta name="theme-color" content="#ffffff" />
+
+  <!-- Minimal inline style for better CLS on initial load (optional) -->
+  <style>html{background:#fff;color:#111}img{max-width:100%;height:auto;display:block}</style>
 </head>
 
 <body>
