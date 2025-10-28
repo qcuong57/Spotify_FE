@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, memo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion"; 
+import { motion, AnimatePresence } from "framer-motion";
 import {
   IconPlayerPlayFilled,
   IconPlayerPauseFilled,
@@ -14,7 +14,8 @@ import {
 // Imports từ Context và Service
 import { useTheme } from "../../context/themeContext";
 import { useAudio } from "../../utils/audioContext";
-import { getSongById } from "../../services/SongsService";
+// THÊM getRelatedSongs
+import { getSongById, getRelatedSongs } from "../../services/SongsService";
 // import { toggleLikeService } from '../../services/SongPlaylistService'; // Giả định API like
 
 // Imports từ Components
@@ -22,7 +23,7 @@ import RelatedSongsSection from "./RelatedSongsSection";
 import LoadingState from "../../components/user/main/LoadingState";
 import ErrorState from "../../components/user/main/ErrorState";
 
-// --- Helper Components for UI ---
+// --- Helper Components for UI (Giữ nguyên) ---
 
 const PlayButton = memo(
   ({ isCurrentSong, isPlaying, handlePlayPause, theme }) => {
@@ -77,87 +78,119 @@ const SongDetail = () => {
   const { theme } = useTheme();
   const {
     currentSong: audioCurrentSong,
-    setNewPlaylist, 
+    setNewPlaylist,
     isPlaying,
-    togglePlay, 
+    togglePlay,
   } = useAudio();
 
   const [currentSongDetail, setCurrentSongDetail] = useState(null);
+  const [relatedSongs, setRelatedSongs] = useState([]); // THÊM STATE CHO BÀI HÁT LIÊN QUAN
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isLiked, setIsLiked] = useState(false);
 
-  const isCurrentSong = audioCurrentSong && audioCurrentSong.id === currentSongDetail?.id;
+  // THÊM: Quản lý Context Menu (để truyền xuống RelatedSongsSection)
+  const [contextMenu, setContextMenu] = useState({
+    show: false,
+    x: 0,
+    y: 0,
+    song: null,
+  });
+  const handleCloseContextMenu = useCallback(() => {
+    setContextMenu((prev) => ({ ...prev, show: false }));
+  }, []);
 
-  // --- LOGIC FETCH SONG DETAIL ---
-  const fetchSongDetail = useCallback(async (id) => {
+  const isCurrentSong =
+    audioCurrentSong && audioCurrentSong.id === currentSongDetail?.id;
+
+  // --- LOGIC FETCH ALL DATA (Gộp cả chi tiết và bài hát liên quan) ---
+  const fetchAllData = useCallback(async (id) => {
+    console.log("🔄 BẮT ĐẦU FETCH - songId:", id);
     setIsLoading(true);
     setError(null);
+    setCurrentSongDetail(null);
+    setRelatedSongs([]);
+
     try {
-      const data = await getSongById(id);
-      if (data) {
-        setCurrentSongDetail(data);
-        setIsLiked(data.is_liked || false);
+      console.log("⏳ Đang tải song song...");
+      const [detailData, relatedResponse] = await Promise.all([
+        getSongById(id),
+        getRelatedSongs(id, 12),
+      ]);
+
+      console.log("✅ Detail data:", detailData ? "OK" : "NULL");
+      console.log(
+        "✅ Related data:",
+        relatedResponse?.data?.results?.length || 0,
+        "songs"
+      );
+
+      if (detailData) {
+        setCurrentSongDetail(detailData);
+        setIsLiked(detailData.is_liked || false);
       } else {
-        setError("Không tìm thấy chi tiết bài hát.");
+        throw new Error("Không tìm thấy chi tiết bài hát.");
       }
+
+      if (relatedResponse?.data?.results) {
+        setRelatedSongs(relatedResponse.data.results);
+      }
+
+      console.log("✅ ĐÃ SET STATE - Sắp tắt loading");
     } catch (err) {
-      console.error("Lỗi khi fetch chi tiết bài hát:", err);
-      setError("Không thể tải chi tiết bài hát. Vui lòng thử lại.");
+      console.error("❌ Lỗi khi fetch dữ liệu:", err);
+      setError(err.message || "Không thể tải dữ liệu. Vui lòng thử lại.");
     } finally {
+      console.log("🏁 TẮT LOADING");
       setIsLoading(false);
     }
   }, []);
 
   useEffect(() => {
     if (songId) {
-      fetchSongDetail(songId);
+      fetchAllData(songId);
     }
-  }, [songId, fetchSongDetail]);
-  
-  // --- LOGIC PHÁT NHẠC (ĐÃ SỬA: SỬ DỤNG togglePlay) ---
+  }, [songId, fetchAllData]);
+
+  // --- LOGIC PHÁT NHẠC (Giữ nguyên) ---
   const handlePlayPause = useCallback(
     (e) => {
       e.stopPropagation();
 
       if (!currentSongDetail) return;
-      
+
       if (!isCurrentSong) {
-        // Phát bài hát mới bằng cách set một playlist 1 bài
         if (setNewPlaylist) {
-             setNewPlaylist([currentSongDetail], 0);
+          setNewPlaylist([currentSongDetail], 0);
         } else {
-             console.warn("setNewPlaylist is missing from AudioContext.");
+          console.warn("setNewPlaylist is missing from AudioContext.");
         }
       } else {
-        // Toggle nếu nó là bài đang phát
-        if (typeof togglePlay === 'function') {
-            togglePlay();
+        if (typeof togglePlay === "function") {
+          togglePlay();
         } else {
-            console.warn("togglePlay is not a function in AudioContext.");
+          console.warn("togglePlay is not a function in AudioContext.");
         }
       }
     },
-    [currentSongDetail, isCurrentSong, setNewPlaylist, togglePlay] 
+    [currentSongDetail, isCurrentSong, setNewPlaylist, togglePlay]
   );
-  
-  // --- LOGIC NÚT ĐÓNG ---
+
+  // --- LOGIC NÚT ĐÓNG (Giữ nguyên) ---
   const handleClose = useCallback(() => {
     navigate(-1); // Quay lại trang trước đó
   }, [navigate]);
 
-  // --- Logic Xử lý Like (Giả lập) ---
+  // --- Logic Xử lý Like (Giả lập) (Giữ nguyên) ---
   const handleToggleLike = useCallback((e) => {
     e.stopPropagation();
-    setIsLiked(prev => !prev);
+    setIsLiked((prev) => !prev);
   }, []);
 
   // --- Render Logic ---
 
-  // Lớp gradient nhẹ cho header, vẫn giữ nguyên
   const headerBackground = `bg-gradient-to-b from-${theme.colors.cardHover}/70 to-transparent`;
 
-  // Bọc logic render trong AnimatePresence
   return (
     <AnimatePresence mode="wait">
       {isLoading ? (
@@ -167,7 +200,6 @@ const SongDetail = () => {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3 }}
-          // THAY ĐỔI: Sử dụng bg-black
           className={`text-${theme.colors.text} flex-1 overflow-y-auto scrollbar-spotify pt-12 bg-black`}
         >
           <LoadingState message={`Đang tải chi tiết bài hát...`} />
@@ -179,7 +211,6 @@ const SongDetail = () => {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3 }}
-          // THAY ĐỔI: Sử dụng bg-black
           className={`text-${theme.colors.text} flex-1 overflow-y-auto scrollbar-spotify pt-12 bg-black`}
         >
           <ErrorState message={error} />
@@ -190,18 +221,18 @@ const SongDetail = () => {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
-          transition={{ duration: 0.3 }} 
-          // THAY ĐỔI: Sử dụng bg-black
-          className={`text-${theme.colors.text} flex-1 overflow-y-auto scrollbar-spotify pt-12 bg-black`} 
+          transition={{ duration: 0.3 }}
+          className={`text-${theme.colors.text} flex-1 overflow-y-auto scrollbar-spotify pt-12 bg-black`}
         >
-          <div className={`min-h-full p-4 md:p-8 space-y-8 ${headerBackground}`}>
-            
+          <div
+            className={`min-h-full p-4 md:p-8 space-y-8 ${headerBackground}`}
+          >
             {/* NÚT ĐÓNG */}
             <motion.div
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.3 }}
-              className="flex justify-end mb-2" 
+              className="flex justify-end mb-2"
             >
               <button
                 onClick={handleClose}
@@ -213,16 +244,15 @@ const SongDetail = () => {
                 <IconX className="w-6 h-6" />
               </button>
             </motion.div>
-            
+
             {/* A. PHẦN HEADER VÀ THÔNG TIN BÀI HÁT */}
-            <header className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-6 items-start"> 
-              
+            <header className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-6 items-start">
               {/* Album Art */}
-              <motion.div 
+              <motion.div
                 className="flex justify-center md:justify-start md:col-span-1"
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.3 }} 
+                transition={{ duration: 0.3 }}
               >
                 <img
                   src={currentSongDetail.image}
@@ -232,8 +262,8 @@ const SongDetail = () => {
               </motion.div>
 
               {/* Info & Controls */}
-              <motion.div 
-                className="md:col-span-2 xl:col-span-3 flex flex-col justify-start min-w-0 mt-4 md:mt-0" 
+              <motion.div
+                className="md:col-span-2 xl:col-span-3 flex flex-col justify-start min-w-0 mt-4 md:mt-0"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
@@ -242,11 +272,11 @@ const SongDetail = () => {
                 <h1
                   className={`text-4xl sm:text-5xl lg:text-5xl font-extrabold line-clamp-2 
                                 text-${theme.colors.title} mb-2`}
-                  title={currentSongDetail.song_name} 
+                  title={currentSongDetail.song_name}
                 >
                   {currentSongDetail.song_name}
                 </h1>
-                
+
                 {/* Ca sĩ */}
                 <p
                   className={`text-lg sm:text-xl font-semibold 
@@ -254,7 +284,7 @@ const SongDetail = () => {
                 >
                   {currentSongDetail.singer_name}
                 </p>
-                
+
                 {/* Album và Lượt nghe */}
                 <p
                   className={`text-sm opacity-60 mt-1 text-${theme.colors.text}/70`}
@@ -265,7 +295,7 @@ const SongDetail = () => {
                   Lượt nghe:{" "}
                   {currentSongDetail.play_count?.toLocaleString() || 0}
                 </p>
-                
+
                 {/* B. PHẦN ĐIỀU KHIỂN & TƯƠNG TÁC */}
                 <section className="flex items-center space-x-6 pt-4">
                   <PlayButton
@@ -281,16 +311,29 @@ const SongDetail = () => {
                     theme={theme}
                   />
                 </section>
-
               </motion.div>
             </header>
 
             <hr className={`my-8 border-${theme.colors.border}`} />
 
-            {/* C. PHẦN GỢI Ý BÀI HÁT LIÊN QUAN */}
-            <RelatedSongsSection
-              songId={currentSongDetail.id}
-            />
+            {/* C. PHẦN GỢI Ý BÀI HÁT LIÊN QUAN (Cập nhật props) */}
+            {/* Chỉ render nếu có bài hát liên quan */}
+            {relatedSongs.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.2 }} // Delay nhẹ để mượt
+              >
+                <RelatedSongsSection
+                  songs={relatedSongs} // TRUYỀN DỮ LIỆU ĐÃ FETCH
+                  songGenreName={currentSongDetail.genre_name} // TRUYỀN TÊN THỂ LOẠI
+                  contextMenu={contextMenu}
+                  setContextMenu={setContextMenu}
+                  handleCloseContextMenu={handleCloseContextMenu}
+                />
+                ;
+              </motion.div>
+            )}
           </div>
         </motion.div>
       )}
