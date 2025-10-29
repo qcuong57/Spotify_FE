@@ -103,8 +103,8 @@ const ExpandedSongView = ({
           {/* Album Art Section */}
           {/* CẬP NHẬT: Logic responsive w-full md:w-5/12 */}
           <div
-            className={`flex-shrink-0 transition-all duration-500 w-full flex justify-center ${
-              showLyrics && hasLyrics ? "md:w-5/12" : "md:w-full"
+            className={`flex-shrink-0 transition-all duration-500 flex justify-center ${
+              showLyrics && hasLyrics ? "hidden md:flex md:w-5/12" : "w-full"
             }`}
           >
             <div className="relative group">
