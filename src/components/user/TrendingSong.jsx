@@ -15,45 +15,45 @@ import { incrementPlayCount } from "../../services/SongsService";
 import { useNavigate } from "react-router-dom";
 
 
-// --- NEW COMPONENT: Details Button (Nút Con mắt) ---
-const DetailsButton = memo(({ song, showPlayButton, navigate, theme }) => {
-  const handleDetailsClick = useCallback(
-    (e) => {
-      e.stopPropagation(); // NGĂN SỰ KIỆN NỔI BỌT LÊN THẺ CHA (NGĂN PLAY NHẠC)
-      navigate(`/song/${song.id}`); // CHUYỂN ĐẾN TRANG CHI TIẾT
-    },
-    [navigate, song.id]
-  );
+// // --- NEW COMPONENT: Details Button (Nút Con mắt) ---
+// const DetailsButton = memo(({ song, showPlayButton, navigate, theme }) => {
+//   const handleDetailsClick = useCallback(
+//     (e) => {
+//       e.stopPropagation(); // NGĂN SỰ KIỆN NỔI BỌT LÊN THẺ CHA (NGĂN PLAY NHẠC)
+//       navigate(`/song/${song.id}`); // CHUYỂN ĐẾN TRANG CHI TIẾT
+//     },
+//     [navigate, song.id]
+//   );
 
-  // Class cho nút Con Mắt, chỉ hiện khi hover
-  const buttonClass = useMemo(
-    () =>
-      `
-      w-6 h-6 flex items-center justify-center rounded-full 
-      text-${theme.colors.songArtist} hover:text-${theme.colors.songTextHover}
-      transition-all duration-200 transform
-      ${showPlayButton ? "opacity-100 scale-100" : "opacity-0 scale-75"}
-    `
-        .replace(/\s+/g, " ")
-        .trim(),
-    [showPlayButton, theme]
-  );
+//   // Class cho nút Con Mắt, chỉ hiện khi hover
+//   const buttonClass = useMemo(
+//     () =>
+//       `
+//       w-6 h-6 flex items-center justify-center rounded-full 
+//       text-${theme.colors.songArtist} hover:text-${theme.colors.songTextHover}
+//       transition-all duration-200 transform
+//       ${showPlayButton ? "opacity-100 scale-100" : "opacity-0 scale-75"}
+//     `
+//         .replace(/\s+/g, " ")
+//         .trim(),
+//     [showPlayButton, theme]
+//   );
 
-  return (
-    <button
-      className={buttonClass}
-      onClick={handleDetailsClick}
-      title="Xem chi tiết bài hát"
-      style={{
-        pointerEvents: showPlayButton ? "auto" : "none",
-        transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-      }}
-    >
-      <IconEye className="w-4 h-4" /> {/* <--- SỬ DỤNG ICON CON MẮT */}
-    </button>
-  );
-});
-// ---------------------------------------------------
+//   return (
+//     <button
+//       className={buttonClass}
+//       onClick={handleDetailsClick}
+//       title="Xem chi tiết bài hát"
+//       style={{
+//         pointerEvents: showPlayButton ? "auto" : "none",
+//         transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+//       }}
+//     >
+//       <IconEye className="w-4 h-4" /> {/* <--- SỬ DỤNG ICON CON MẮT */}
+//     </button>
+//   );
+// });
+// // ---------------------------------------------------
 
 
 // Optimized PlayButton with theme support
@@ -396,15 +396,15 @@ const TrendingSong = ({ song, list, rank }) => {
         theme={theme}
       />
       
-      {/* NÚT CON MẮT (Details Button) */}
-      <div className="ml-auto flex-shrink-0">
-        <DetailsButton
-            song={song}
-            navigate={navigate}
-            theme={theme}
-            showPlayButton={showPlayButton}
-        />
-      </div>
+      {/* NÚT CON MẮT (Details Button)
+      // <div className="ml-auto flex-shrink-0">
+      //   <DetailsButton
+      //       song={song}
+      //       navigate={navigate}
+      //       theme={theme}
+      //       showPlayButton={showPlayButton}
+      //   />
+      // </div> */}
     </div>
   );
 };

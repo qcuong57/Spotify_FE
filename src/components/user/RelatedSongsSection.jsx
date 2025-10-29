@@ -2,9 +2,8 @@
 
 import React, { memo } from "react";
 import { motion } from "framer-motion";
-import { useTheme } from "../../context/themeContext";
-import Section from "./main/Section";
-import SongGrid from "./main/SongGrid";
+import Section from "./main/Section"; // Đảm bảo đường dẫn đúng
+import SongGrid from "./main/SongGrid"; // Đảm bảo đường dẫn đúng
 
 const sectionVariants = {
   initial: { opacity: 0, y: 30 },
@@ -13,22 +12,22 @@ const sectionVariants = {
 
 const RelatedSongsSection = memo(
   ({
-    songs, // NHẬN TRỰC TIẾP TỪ PROPS
+    songs,
     songGenreName,
     contextMenu,
     setContextMenu,
     handleCloseContextMenu,
+    onSongSelect, // <-- 1. NHẬN PROP MỚI
   }) => {
-    // Không cần theme ở đây trừ khi <Section> hoặc <SongGrid> cần
-    // const { theme } = useTheme();
-
-    // Dùng memoization cho các props của SongGrid
-    const gridProps = { contextMenu, setContextMenu, handleCloseContextMenu };
-
-    // BỎ check loading (vì cha đã check)
-    // BỎ if (!songs || songs.length === 0) return null; (vì cha đã check)
     
-    // Hàm onViewAll (Giữ nguyên)
+    // Dùng memoization cho các props của SongGrid
+    const gridProps = {
+      contextMenu,
+      setContextMenu,
+      handleCloseContextMenu,
+      onSongSelect, // <-- 2. THÊM VÀO PROPS
+    };
+
     const handleViewAll = () => {
       console.log(`Maps to genre list: ${songGenreName}`);
     };
@@ -49,18 +48,13 @@ const RelatedSongsSection = memo(
           emoji="💡"
           onViewAll={handleViewAll}
           buttonText="Xem tất cả"
-          index={10} 
+          index={10}
         >
-          {/* KHỐI NÀY LÀ QUAN TRỌNG NHẤT:
-            Không còn bất kỳ toán tử 3 ngôi (ternary) hay if/else nào ở đây.
-            Chúng ta render SongGrid trực tiếp, vì chúng ta biết
-            component này chỉ được render khi đã có data.
-          */}
           <SongGrid
-            songs={songs} // Dùng 'songs' từ props
+            songs={songs}
             keyPrefix={`related-songs`}
-            {...gridProps}
-            isLoading={false} // Gán cứng là FALSE, vì SongDetail đã đảm bảo data sẵn sàng
+            {...gridProps} // <-- 3. TRUYỀN XUỐNG TẠI ĐÂY
+            isLoading={false}
             index={10}
           />
         </Section>
@@ -69,4 +63,4 @@ const RelatedSongsSection = memo(
   }
 );
 
-export default RelatedSongsSection; 
+export default RelatedSongsSection;

@@ -14,7 +14,11 @@ import { useTheme } from "../context/themeContext.js"; // Import useTheme
 import ThemeSelector from "../components/user/ThemeSelector.jsx";
 import { ThemeParticles } from "../components/user/ThemeParticles.jsx";
 
+// --- THÊM MỚI: Import SongDetail ---
+import SongDetail from "./user/SongDetail.jsx";
+
 const Banner = ({ onClose, theme }) => {
+  // ... (Nội dung component Banner giữ nguyên) ...
   const [isVisible, setIsVisible] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
 
@@ -137,6 +141,13 @@ const HomePage = () => {
   const { currentSong, songDescriptionAvailable } = useAudio();
   const { theme } = useTheme(); // Use theme context
 
+  // --- THÊM MỚI: State quản lý SongDetail Modal ---
+  const [songDetailModal, setSongDetailModal] = useState({
+    isVisible: false,
+    songId: null,
+  });
+  // ---------------------------------------------
+
   const handleCloseBanner = () => {
     setShowBanner(false);
   };
@@ -152,6 +163,16 @@ const HomePage = () => {
   const handleCloseLibraries = () => {
     setShowLibraries(false);
   };
+
+  // --- THÊM MỚI: Hàm mở/đóng SongDetail Modal ---
+  const handleOpenSongDetail = (songId) => {
+    setSongDetailModal({ isVisible: true, songId: songId });
+  };
+
+  const handleCloseSongDetail = () => {
+    setSongDetailModal({ isVisible: false, songId: null });
+  };
+  // ---------------------------------------------
 
   return (
     <div
@@ -169,8 +190,6 @@ const HomePage = () => {
 
       {/* Banner */}
       {showBanner && <Banner onClose={handleCloseBanner} theme={theme} />}
-
-
 
       <Header
         setCurrentView={setCurrentView}
@@ -212,7 +231,11 @@ const HomePage = () => {
           ) : (
             <MyLibrary playlist={currentView} setCurrentView={setCurrentView} />
           )}
-          {songDescriptionAvailable && <SongDescription />}
+
+          {/* CẬP NHẬT: Truyền prop 'onOpenDetail' vào SongDescription */}
+          {songDescriptionAvailable && (
+            <SongDescription onOpenDetail={handleOpenSongDetail} />
+          )}
         </div>
       </div>
 
@@ -226,6 +249,15 @@ const HomePage = () => {
 
       {/* Theme Selector Modal */}
       <ThemeSelector />
+
+      {/* --- THÊM MỚI: Render SongDetail Modal --- */}
+      {songDetailModal.isVisible && (
+        <SongDetail
+          songId={songDetailModal.songId}
+          onClose={handleCloseSongDetail}
+        />
+      )}
+      {/* -------------------------------------- */}
     </div>
   );
 };

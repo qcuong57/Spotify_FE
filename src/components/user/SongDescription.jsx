@@ -14,11 +14,12 @@ import {
   IconEye,
 } from "@tabler/icons-react";
 import { Box, Text } from "@mantine/core";
-import { useNavigate } from "react-router-dom";
+// BỎ: import { useNavigate } from "react-router-dom";
 
-const SongDescription = () => {
+// CẬP NHẬT: Nhận 'onOpenDetail' từ props
+const SongDescription = ({ onOpenDetail }) => {
   const { theme } = useTheme();
-  const navigate = useNavigate();
+  // BỎ: const navigate = useNavigate();
   const {
     currentSong,
     audio,
@@ -48,6 +49,7 @@ const SongDescription = () => {
 
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
+  // ... (Tất cả các useEffect dài (từ dòng 51 đến 286) giữ nguyên) ...
   useEffect(() => {
     const videoElement = videoRef.current;
     if (!videoElement || !currentSong) return;
@@ -269,6 +271,7 @@ const SongDescription = () => {
     }
   }, [currentTime, videoError, isVideoFullscreen]);
 
+
   const handleClose = () => {
     setIsClosing(true);
 
@@ -307,11 +310,12 @@ const SongDescription = () => {
     setShowExpandedView(false);
   };
 
-  // Handler cho nút xem chi tiết
+  // CẬP NHẬT: Handler cho nút xem chi tiết
   const handleDetailsClick = (e) => {
     e.stopPropagation();
-    if (currentSong?.id) {
-      navigate(`/song/${currentSong.id}`);
+    // Gọi prop onOpenDetail thay vì navigate
+    if (currentSong?.id && onOpenDetail) {
+      onOpenDetail(currentSong.id);
     }
   };
 
@@ -334,6 +338,7 @@ const SongDescription = () => {
             : "translate-y-full opacity-0 md:translate-y-0 md:translate-x-full"
         }`}
       >
+        {/* ... (Phần header trên mobile giữ nguyên) ... */}
         <div
           className={`flex items-center justify-between p-4 md:hidden transition-all duration-300 delay-100 bg-gradient-to-r ${
             theme.colors.backgroundOverlay
@@ -362,6 +367,7 @@ const SongDescription = () => {
           </button>
         </div>
 
+        {/* ... (Phần header trên desktop giữ nguyên) ... */}
         <div
           className={`hidden md:flex items-center justify-between p-3 border-b border-${
             theme.colors.border
@@ -388,6 +394,7 @@ const SongDescription = () => {
         </div>
 
         <div className="flex-1 flex flex-col overflow-hidden">
+          {/* ... (Phần Video/Ảnh bìa giữ nguyên) ... */}
           <div
             className={`flex-shrink-0 p-3 md:p-4 transition-all duration-500 delay-200 ${
               isVisible && !isClosing
@@ -462,6 +469,7 @@ const SongDescription = () => {
             }`}
           >
             <div className="text-center md:text-left">
+              {/* ... (Tên bài hát, ca sĩ giữ nguyên) ... */}
               <h3
                 className={`font-bold text-white leading-tight mb-1 line-clamp-1 ${
                   showLyrics && hasLyrics ? "text-base" : "text-xl md:text-lg"
@@ -478,6 +486,7 @@ const SongDescription = () => {
               </p>
 
               <div className="flex items-center justify-center md:justify-start space-x-3">
+                {/* ... (Nút Like, Nút Lyrics giữ nguyên) ... */}
                 <button
                   onClick={handleLike}
                   className={`p-2 rounded-full hover:bg-${theme.colors.primary}-600/50 transition-colors`}
@@ -510,7 +519,7 @@ const SongDescription = () => {
                   </button>
                 )}
 
-                {/* Nút xem chi tiết (Con mắt) */}
+                {/* Nút xem chi tiết (Con mắt) - Đã được cập nhật handleDetailsClick */}
                 <button
                   onClick={handleDetailsClick}
                   className={`p-2 rounded-full hover:bg-${theme.colors.primary}-600/50 transition-colors text-${theme.colors.text} hover:text-${theme.colors.textHover}`}
@@ -530,6 +539,7 @@ const SongDescription = () => {
             </div>
           </div>
 
+          {/* ... (Phần hiển thị Lyrics giữ nguyên) ... */}
           {showLyrics && hasLyrics && (
             <div
               className={`flex-1 mx-3 md:mx-4 mb-3 md:mb-4 transition-all duration-500 delay-400 ${
@@ -584,7 +594,8 @@ const SongDescription = () => {
             </div>
           )}
 
-          {(!showLyrics || !hasLyrics) && (
+          {/* ... (Phần text "Vuốt xuống để đóng" giữ nguyên) ... */}
+           {(!showLyrics || !hasLyrics) && (
             <div
               className={`text-center md:hidden mt-auto p-4 transition-all duration-500 delay-400 ${
                 isVisible && !isClosing
