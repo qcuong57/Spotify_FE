@@ -65,7 +65,8 @@ const ExpandedSongView = ({
       </div>
 
       {/* Header - Only Close Button */}
-      <div className="absolute top-0 left-0 right-0 z-10 p-6">
+      {/* CẬP NHẬT: Responsive padding (p-4 md:p-6) */}
+      <div className="absolute top-0 left-0 right-0 z-10 p-4 md:p-6">
         <div className="flex items-center justify-end">
           <div className="flex items-center space-x-3">
             {hasLyrics && (
@@ -92,16 +93,18 @@ const ExpandedSongView = ({
       </div>
 
       {/* Main Content */}
-      <div className="flex items-start justify-center h-full p-8 pt-24 pb-20 overflow-hidden">
+      {/* CẬP NHẬT: Thêm flex-col, overflow-y-auto, và padding responsive */}
+      <div className="flex flex-col md:flex-row items-center md:items-start h-full p-4 pt-20 pb-16 md:p-8 md:pt-24 md:pb-20 overflow-y-auto scrollbar-spotify">
         <div
-          className={`flex items-start w-full h-full max-w-7xl mx-auto transition-all duration-500 ${
-            showLyrics && hasLyrics ? "gap-8" : "justify-center items-center"
+          className={`flex flex-col md:flex-row items-center md:items-start w-full h-full max-w-7xl mx-auto transition-all duration-500 gap-4 md:gap-8 ${
+            showLyrics && hasLyrics ? "" : "justify-center"
           }`}
         >
           {/* Album Art Section */}
+          {/* CẬP NHẬT: Logic responsive w-full md:w-5/12 */}
           <div
-            className={`flex-shrink-0 transition-all duration-500 ${
-              showLyrics && hasLyrics ? "w-5/12" : "w-full flex justify-center"
+            className={`flex-shrink-0 transition-all duration-500 w-full flex justify-center ${
+              showLyrics && hasLyrics ? "md:w-5/12" : "md:w-full"
             }`}
           >
             <div className="relative group">
@@ -113,15 +116,10 @@ const ExpandedSongView = ({
                 }}
               />
 
-              {/* Main Album Art Container - FIXED SIZE */}
+              {/* Main Album Art Container - CẬP NHẬT: Kích thước responsive */}
               <div
-                className="relative mx-auto aspect-square rounded-3xl overflow-hidden shadow-2xl border border-white/10 transition-all duration-300 group-hover:shadow-3xl group-hover:scale-105"
-                style={{
-                  width: "400px",
-                  height: "400px",
-                  minWidth: "400px",
-                  minHeight: "400px",
-                }}
+                className="relative mx-auto aspect-square rounded-3xl overflow-hidden shadow-2xl border border-white/10 transition-all duration-300 group-hover:shadow-3xl group-hover:scale-105 w-full max-w-xs sm:max-w-sm md:max-w-none md:w-[400px] md:h-[400px]"
+                // BỎ: style={{ width: "400px", height: "400px", ... }}
               >
                 <img
                   src={currentSong.image}
@@ -129,8 +127,7 @@ const ExpandedSongView = ({
                   className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
                   style={{
                     filter: "brightness(1.1) contrast(1.1) saturate(1.2)",
-                    width: "400px",
-                    height: "400px",
+                    // BỎ: width: "400px", height: "400px",
                   }}
                   onError={(e) => {
                     e.target.src = "/placeholder-album.jpg";
@@ -157,11 +154,17 @@ const ExpandedSongView = ({
               </div>
 
               {/* Song Info Below Album */}
-              <div className="mt-8 text-center">
+              {/* CẬP NHẬT: Responsive margin (mt-6 md:mt-8) */}
+              <div className="mt-6 md:mt-8 text-center">
                 <h1
-                  className="font-bold text-white leading-tight mb-4 transition-all duration-300"
+                  // CẬP NHẬT: Thêm class font-size responsive
+                  className={`font-bold text-white leading-tight mb-4 transition-all duration-300 text-2xl ${
+                    showLyrics && hasLyrics
+                      ? "md:text-[32px]"
+                      : "md:text-[36px]"
+                  }`}
                   style={{
-                    fontSize: showLyrics && hasLyrics ? "32px" : "36px",
+                    // BỎ: fontSize
                     lineHeight: 1.1,
                     textShadow: "0 2px 20px rgba(0,0,0,0.3)",
                   }}
@@ -169,9 +172,10 @@ const ExpandedSongView = ({
                   {currentSong.song_name || "Unknown Title"}
                 </h1>
                 <p
-                  className="text-white/90 mb-8 transition-all duration-300"
+                  // CẬP NHẬT: Thêm class font-size responsive (text-lg md:text-xl)
+                  className={`text-white/90 mb-8 transition-all duration-300 text-lg md:text-xl`}
                   style={{
-                    fontSize: showLyrics && hasLyrics ? "20px" : "20px",
+                    // BỎ: fontSize
                     fontWeight: 500,
                     textShadow: "0 1px 10px rgba(0,0,0,0.2)",
                   }}
@@ -183,9 +187,10 @@ const ExpandedSongView = ({
           </div>
 
           {/* Lyrics Section */}
+          {/* CẬP NHẬT: Thêm w-full cho mobile */}
           {showLyrics && hasLyrics && (
-            <div className="flex-1 h-full min-w-0 flex flex-col">
-              <div className="h-full flex flex-col max-h-[calc(100vh-200px)]">
+            <div className="flex-1 h-full min-w-0 flex flex-col w-full">
+              <div className="h-full flex flex-col md:max-h-[calc(100vh-200px)]">
                 {/* Lyrics Container */}
                 <div className="flex-1 min-h-0 relative overflow-hidden">
                   <div className="h-full w-full rounded-2xl overflow-hidden">
@@ -201,24 +206,27 @@ const ExpandedSongView = ({
                     ) : (
                       <div className="h-full w-full overflow-hidden">
                         <Box
+                          // CẬP NHẬT: Thêm class padding responsive
+                          className="custom-scrollbar p-4 md:p-8"
                           style={{
                             height: "100%",
                             width: "100%",
                             overflowY: "auto",
                             overflowX: "hidden",
-                            padding: "32px",
                             borderRadius: "16px",
                             maxHeight: "100%",
                             background: "transparent",
+                            // BỎ: padding: "32px",
                           }}
-                          className="custom-scrollbar"
                         >
                           <Text
+                            // CẬP NHẬT: Thêm class font-size & line-height responsive
+                            className="text-lg leading-relaxed md:text-2xl md:leading-[1.8]"
                             style={{
                               color: "rgba(255, 255, 255, 0.95)",
-                              fontSize: "24px",
+                              // BỎ: fontSize: "24px",
                               fontWeight: 500,
-                              lineHeight: 1.8,
+                              // BỎ: lineHeight: 1.8,
                               textAlign: "left",
                               wordWrap: "break-word",
                               wordBreak: "break-word",
@@ -232,7 +240,8 @@ const ExpandedSongView = ({
                                   key={`lyric-line-${index}`}
                                   className="transition-all duration-200 hover:text-white/95"
                                   style={{
-                                    marginBottom: line.trim() ? "16px" : "8px",
+                                    // CẬP NHẬT: Giảm margin bottom một chút
+                                    marginBottom: line.trim() ? "12px" : "8px",
                                     maxWidth: "100%",
                                   }}
                                 >

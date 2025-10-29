@@ -7,6 +7,8 @@ import {
   IconPalette,
   IconMusic,
   IconMicrophone,
+  IconClock, // ĐÃ THÊM
+  IconHeadphones, // ĐÃ THÊM
 } from "@tabler/icons-react";
 import { memo, useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -156,6 +158,12 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
   const [isSearching, setIsSearching] = useState(false);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
 
+  // --- BEGIN THÊM MỚI: State cho đồng hồ ---
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [listenTime, setListenTime] = useState(0); // Đếm giây
+  const [showClock, setShowClock] = useState(true); // true = đồng hồ, false = giờ nghe
+  // --- END THÊM MỚI ---
+
   // Refs
   const searchInputRef = useRef(null);
   const mobileSearchInputRef = useRef(null);
@@ -200,6 +208,27 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
       }
     };
   }, []);
+
+  // --- BEGIN THÊM MỚI: Logic cho đồng hồ và timer ---
+  // Cập nhật đồng hồ thời gian thực
+  useEffect(() => {
+    const timerId = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timerId);
+  }, []);
+
+  // Cập nhật đếm giờ nghe (timer phiên)
+  useEffect(() => {
+    // Lưu ý: Đây là bộ đếm thời gian phiên đơn giản.
+    // Để đếm chính xác thời gian *phát nhạc*, nó cần truy cập
+    // vào state `isPlaying` từ useAudio context (nếu có).
+    const intervalId = setInterval(() => {
+      setListenTime((prevTime) => prevTime + 1);
+    }, 1000);
+    return () => clearInterval(intervalId);
+  }, []);
+  // --- END THÊM MỚI ---
 
   const handleLogout = useCallback(() => {
     localStorage.removeItem("access_token");
@@ -557,6 +586,17 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
     setShowMobileMenu((prev) => !prev);
   }, []);
 
+  // --- BEGIN THÊM MỚI: Hàm format thời gian cho timer ---
+  const formatListenTime = (totalSeconds) => {
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    return [hours, minutes, seconds]
+      .map((val) => val.toString().padStart(2, "0"))
+      .join(":");
+  };
+  // --- END THÊM MỚI ---
+
   return (
     <>
       {/* Header - Simplified animations and reduced re-renders */}
@@ -732,6 +772,57 @@ const Header = ({ setCurrentView, setListSongsDetail }) => {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.2, delay: 0.1 }}
         >
+          {/* --- BEGIN THÊM MỚI: Đồng hồ / Timer có thể hoán đổi --- */}
+          <motion.button
+            onClick={() => setShowClock((prev) => !prev)}
+            className={`
+              flex items-center gap-2 px-3 py-2 rounded-full
+              bg-${themeClasses.primary}-600/60 hover:bg-${themeClasses.secondary}-600/80
+              border border-${themeClasses.primary}-400/30
+              text-white backdrop-blur-sm transition-all duration-150
+              relative overflow-hidden group w-[120px] justify-center
+            `}
+            title={
+              showClock ? "Hiển thị đồng hồ" : "Hiển thị giờ đã nghe"
+            }
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            transition={{ duration: 0.1 }}
+          >
+            <AnimatePresence mode="wait">
+              {showClock ? (
+                <motion.div
+                  key="clock"
+                  className="flex items-center gap-2"
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  <IconClock className="w-5 h-5 flex-shrink-0" />
+                  <span className="text-sm font-medium font-mono tracking-wider">
+                    {currentTime.toLocaleTimeString("en-GB")}
+                  </span>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="timer"
+                  className="flex items-center gap-2"
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  <IconHeadphones className="w-5 h-5 flex-shrink-0" />
+                  <span className="text-sm font-medium font-mono tracking-wider">
+                    {formatListenTime(listenTime)}
+                  </span>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.button>
+          {/* --- END THÊM MỚI --- */}
+
           {/* Theme Button */}
           <motion.button
             onClick={() => setShowThemeSelector(true)}
