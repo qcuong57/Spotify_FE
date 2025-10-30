@@ -455,7 +455,8 @@ const Song = ({ song, playlist, deleteSong, songs, index, list }) => {
             <motion.img
               src={song.image}
               alt={song.song_name}
-              className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl shadow-lg flex-shrink-0`}
+              // --- THAY ĐỔI DÒNG NÀY ---
+              className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl shadow-lg flex-shrink-0 object-cover`}
               variants={imageVariants}
               whileHover="hover"
               onError={(e) => {

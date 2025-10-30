@@ -6,7 +6,7 @@ import PropTypes from 'prop-types';
 const ThemeContext = createContext();
 
 const ThemeProvider = ({ children }) => {
-  const [currentTheme, setCurrentTheme] = useState('ocean');
+  const [currentTheme, setCurrentTheme] = useState('darkmode');
   const [showThemeSelector, setShowThemeSelector] = useState(false);
 
   // Load theme từ localStorage

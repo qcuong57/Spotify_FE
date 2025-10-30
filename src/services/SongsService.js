@@ -166,11 +166,26 @@ export const getSongById = async (id) => {
       throw new Error("Song ID is required");
     }
     const response = await axiosCustom.get(`/api/songs/${id}/`);
-    return response.data; // <--- TRẢ VỀ DỮ LIỆU TRỰC TIẾP
+    // return response.data; // <--- OLD
+    return response; // <--- NEW: Return the full response
   } catch (error) {
     handleApiError(error, "Get song by ID");
   }
 };
+
+export const getSongNameById = async (id) => {
+  try {
+    if (!id) {
+      throw new Error("Song ID is required");
+    }
+    const response = await axiosCustom.get(`/api/songs/${id}/`);
+    // return response.data; // <--- OLD
+    return response.data; // <--- NEW: Return the full response
+  } catch (error) {
+    handleApiError(error, "Get song by ID");
+  }
+};
+
 
 export const createSong = async (songData) => {
   try {

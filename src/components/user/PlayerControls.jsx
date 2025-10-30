@@ -18,8 +18,13 @@ import {
   IconChevronUp,
   IconPlaylistAdd,
   IconMusic,
+  IconCheck,
+  IconVideo, // <-- THÊM ICON MỚI
+  IconFileMusic, // <-- THÊM ICON MỚI
 } from "@tabler/icons-react";
-import { Menu, Button, Anchor, Modal, Text, ScrollArea } from "@mantine/core";
+import { motion, AnimatePresence } from "framer-motion";
+// THÊM Menu.Divider
+import { Menu, Button, Anchor, Modal } from "@mantine/core";
 import { useAudio } from "../../utils/audioContext";
 import { useTheme } from "../../context/themeContext";
 import { usePlayList } from "../../utils/playlistContext";
@@ -60,8 +65,12 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
   const [showPlaylistModal, setShowPlaylistModal] = useState(false);
   const [userPlaylists, setUserPlaylists] = useState([]);
   const [loadingLike, setLoadingLike] = useState(false);
-  const [loadingPlaylist, setLoadingPlaylist] = useState(false);
+  const [loadingPlaylistId, setLoadingPlaylistId] = useState(null);
   const [user, setUser] = useState(null);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+
+  // (Toàn bộ logic useEffect và các hàm xử lý giữ nguyên... 
+  // ... từ dòng 72 đến 464 ... )
 
   // Kiểm tra user đăng nhập
   useEffect(() => {
@@ -201,19 +210,24 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
   };
 
   const handleAddToPlaylist = async (playlistId) => {
-    if (!currentSong?.id || !user) return;
+    if (!currentSong?.id || !user || loadingPlaylistId) return;
 
     try {
-      setLoadingPlaylist(true);
+      setLoadingPlaylistId(playlistId);
 
       const formData = new FormData();
       formData.append("playlist_id", playlistId);
       formData.append("song_id", currentSong.id);
 
       await addSongToPlaylistService(formData);
+      
+      setShowSuccessMessage(true);
 
-      setShowPlaylistModal(false);
-      alert("Đã thêm bài hát vào playlist!");
+      setTimeout(() => {
+        setShowPlaylistModal(false);
+        setShowSuccessMessage(false);
+      }, 2000);
+
     } catch (error) {
       console.error("Error adding song to playlist:", error);
       if (error.response?.status === 400) {
@@ -222,7 +236,7 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
         alert("Có lỗi xảy ra khi thêm vào playlist!");
       }
     } finally {
-      setLoadingPlaylist(false);
+      setLoadingPlaylistId(null);
     }
   };
 
@@ -252,7 +266,6 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
     }
   };
 
-  // Get theme-specific progress colors
   const getProgressColors = () => {
     switch (theme.id) {
       case "ocean":
@@ -413,6 +426,7 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
     setSongDescriptionAvailable(true);
   };
 
+
   if (!currentSong) return null;
 
   return (
@@ -540,7 +554,16 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
                 </button>
               </div>
 
-              <Menu shadow="md" position="top">
+              {/* --- BẮT ĐẦU SỬA MOBILE MENU --- */}
+              <Menu
+                shadow="md"
+                position="top-end" // Đổi 'top' thành 'top-end'
+                zIndex={10002} // THÊM Z-INDEX
+                classNames={{ // THÊM STYLING
+                  dropdown: `bg-gradient-to-b ${theme.colors.backgroundOverlay} border border-${theme.colors.border} shadow-2xl backdrop-blur-md rounded-xl p-1`,
+                  item: `text-white hover:bg-${theme.colors.cardHover} rounded-md font-medium`,
+                }}
+              >
                 <Menu.Target>
                   <button
                     className={`text-${theme.colors.text} hover:text-white transition-colors p-2 touch-manipulation`}
@@ -548,27 +571,18 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
                     <IconDotsVertical size={18} />
                   </button>
                 </Menu.Target>
-                <Menu.Dropdown
-                  className={`bg-${theme.colors.card} border-none backdrop-blur-md`}
-                >
+                <Menu.Dropdown>
                   <Menu.Item
-                    className={`text-white hover:bg-${theme.colors.cardHover}`}
                     onClick={toggleRepeat}
+                    leftSection={getRepeatIcon()} // Dùng leftSection
                   >
-                    <div className="flex items-center gap-2">
-                      {getRepeatIcon()}
-                      <span>
-                        Repeat: {repeatMode === "all" ? "All" : "One"}
-                      </span>
-                    </div>
+                    Repeat: {repeatMode === "all" ? "All" : "One"}
                   </Menu.Item>
                   <Menu.Item
-                    className={`text-white hover:bg-${theme.colors.cardHover}`}
                     onClick={toggleLike}
                     disabled={loadingLike}
-                  >
-                    <div className="flex items-center gap-2">
-                      {loadingLike ? (
+                    leftSection={ // Dùng leftSection
+                      loadingLike ? (
                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                       ) : isLiked ? (
                         <IconHeartFilled
@@ -577,65 +591,48 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
                         />
                       ) : (
                         <IconHeart size={16} />
-                      )}
-                      <span>
-                        {loadingLike
-                          ? "Đang xử lý..."
-                          : isLiked
-                          ? "Bỏ yêu thích"
-                          : "Yêu thích"}
-                      </span>
-                    </div>
+                      )
+                    }
+                  >
+                    {loadingLike
+                      ? "Đang xử lý..."
+                      : isLiked
+                      ? "Bỏ yêu thích"
+                      : "Yêu thích"}
                   </Menu.Item>
                   <Menu.Item
-                    className={`text-white hover:bg-${theme.colors.cardHover}`}
                     onClick={() => setShowPlaylistModal(true)}
                     disabled={!user}
+                    leftSection={<IconPlaylistAdd size={16} />} // Dùng leftSection
                   >
-                    <div className="flex items-center gap-2">
-                      <IconPlaylistAdd size={16} />
-                      <span>
-                        {!user ? "Đăng nhập để thêm" : "Thêm vào playlist"}
-                      </span>
-                    </div>
+                    {!user ? "Đăng nhập để thêm" : "Thêm vào playlist"}
                   </Menu.Item>
                   <Menu.Item
-                    className={`text-white hover:bg-${theme.colors.cardHover}`}
                     onClick={handleAvailable}
+                    leftSection={<IconArticle size={16} />} // Dùng leftSection
                   >
-                    <div className="flex items-center gap-2">
-                      <IconArticle size={16} />
-                      <span>Now Playing</span>
-                    </div>
+                    Now Playing
+                  </Menu.Item>
+                  
+                  <Menu.Divider className={`border-${theme.colors.border} my-1`} />
+
+                  <Menu.Item
+                    component="a" // Dùng component="a"
+                    href={currentSong.video_download_url}
+                    leftSection={<IconVideo size={16} />} // Thêm icon
+                  >
+                    Download video
                   </Menu.Item>
                   <Menu.Item
-                    className={`text-white hover:bg-${theme.colors.cardHover}`}
+                    component="a" // Dùng component="a"
+                    href={currentSong.audio_download_url}
+                    leftSection={<IconFileMusic size={16} />} // Thêm icon
                   >
-                    <Anchor
-                      href={currentSong.video_download_url}
-                      underline="never"
-                      size="sm"
-                      className="text-white flex items-center gap-2"
-                    >
-                      <IconDownload size={16} />
-                      Download video
-                    </Anchor>
-                  </Menu.Item>
-                  <Menu.Item
-                    className={`text-white hover:bg-${theme.colors.cardHover}`}
-                  >
-                    <Anchor
-                      href={currentSong.audio_download_url}
-                      underline="never"
-                      size="sm"
-                      className="text-white flex items-center gap-2"
-                    >
-                      <IconDownload size={16} />
-                      Download audio
-                    </Anchor>
+                    Download audio
                   </Menu.Item>
                 </Menu.Dropdown>
               </Menu>
+              {/* --- KẾT THÚC SỬA MOBILE MENU --- */}
             </div>
           </div>
 
@@ -766,9 +763,7 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
                 className={`text-${theme.colors.text} hover:text-white transition-colors`}
                 onClick={() => setShowPlaylistModal(true)}
                 disabled={!user}
-                title
-                scheduled
-                tasks={!user ? "Đăng nhập để sử dụng" : "Thêm vào playlist"}
+                title={!user ? "Đăng nhập để sử dụng" : "Thêm vào playlist"}
               >
                 <IconPlaylistAdd size={18} />
               </button>
@@ -780,7 +775,16 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
                 <IconArticle size={18} />
               </button>
 
-              <Menu shadow="md" position="top">
+              {/* --- BẮT ĐẦU SỬA DESKTOP MENU --- */}
+              <Menu
+                shadow="md"
+                position="top-end" // Đổi 'top' thành 'top-end'
+                zIndex={10002} // THÊM Z-INDEX
+                classNames={{ // THÊM STYLING
+                  dropdown: `bg-gradient-to-b ${theme.colors.backgroundOverlay} border border-${theme.colors.border} shadow-2xl backdrop-blur-md rounded-xl p-1`,
+                  item: `text-white hover:bg-${theme.colors.cardHover} rounded-md font-medium`,
+                }}
+              >
                 <Menu.Target>
                   <button
                     className={`text-${theme.colors.text} hover:text-white transition-colors`}
@@ -788,35 +792,24 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
                     <IconDownload size={18} />
                   </button>
                 </Menu.Target>
-                <Menu.Dropdown
-                  className={`bg-${theme.colors.card} border-none backdrop-blur-md`}
-                >
+                <Menu.Dropdown>
                   <Menu.Item
-                    className={`text-white hover:bg-${theme.colors.cardHover}`}
+                    component="a"
+                    href={currentSong.video_download_url}
+                    leftSection={<IconVideo size={16} />} // Thêm icon
                   >
-                    <Anchor
-                      href={currentSong.video_download_url}
-                      underline="never"
-                      size="sm"
-                      className="text-white"
-                    >
-                      Download video
-                    </Anchor>
+                    Download video
                   </Menu.Item>
                   <Menu.Item
-                    className={`text-white hover:bg-${theme.colors.cardHover}`}
+                    component="a"
+                    href={currentSong.audio_download_url}
+                    leftSection={<IconFileMusic size={16} />} // Thêm icon
                   >
-                    <Anchor
-                      href={currentSong.audio_download_url}
-                      underline="never"
-                      size="sm"
-                      className="text-white"
-                    >
-                      Download audio
-                    </Anchor>
+                    Download audio
                   </Menu.Item>
                 </Menu.Dropdown>
               </Menu>
+              {/* --- KẾT THÚC SỬA DESKTOP MENU --- */}
 
               <div className="hidden md:flex items-center gap-2">
                 <button
@@ -836,7 +829,7 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
                     max="100"
                     value={volume}
                     onChange={handleVolumeChange}
-                    className="w>See full conversation (3 messages)full h-1 rounded-lg appearance-none cursor-pointer slider"
+                    className="w-full h-1 rounded-lg appearance-none cursor-pointer slider"
                     style={{
                       background: `linear-gradient(to right, ${progressColors.thumbColor} 0%, ${progressColors.thumbColor} ${volume}%, #4d4d4d ${volume}%, #4d4d4d 100%)`,
                     }}
@@ -847,6 +840,7 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
           </div>
         </div>
 
+        {/* (CSS giữ nguyên) */}
         <style jsx>{`
           .pb-safe {
             padding-bottom: env(safe-area-inset-bottom);
@@ -907,441 +901,185 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
         `}</style>
       </div>
 
-      {/* Playlist Selection Modal */}
+      {/* (Modal "Thêm vào playlist" giữ nguyên) */}
       <Modal
         opened={showPlaylistModal}
-        onClose={() => setShowPlaylistModal(false)}
+        onClose={() => {
+          setShowPlaylistModal(false);
+          setShowSuccessMessage(false);
+        }}
         title={
-          <Text className={`text-lg font-bold ${theme.colors.songText}`}>
+          <h3
+            className={`text-lg font-bold bg-gradient-to-r ${theme.colors.gradient} bg-clip-text text-transparent`}
+          >
             Thêm vào playlist
-          </Text>
+          </h3>
         }
         size="md"
+        centered
+        classNames={{
+          overlay: "bg-black/70 backdrop-blur-sm",
+          modal: `bg-gradient-to-b ${theme.colors.backgroundOverlay} border border-${theme.colors.border} shadow-2xl backdrop-blur-md rounded-xl`,
+          header: `bg-transparent border-b border-${theme.colors.border} pt-3 px-4 pb-3`,
+          title: `text-white`,
+          close: `text-${theme.colors.text} hover:bg-${theme.colors.cardHover} rounded-full`,
+          body: `p-3 sm:p-4`,
+        }}
         styles={{
-          overlay: {
-            backgroundColor: "rgba(0, 0, 0, 0.7)",
-            backdropFilter: "blur(8px)",
-          },
-          modal: {
-            backgroundColor:
-              theme.id === "ocean"
-                ? "#0f172a"
-                : theme.id === "forest"
-                ? "#0c1f0a"
-                : theme.id === "space"
-                ? "#1a0f2e"
-                : theme.id === "sunset"
-                ? "#1a0f0a"
-                : "#0f172a",
-            border:
-              theme.id === "ocean"
-                ? "1px solid rgb(45 212 191 / 0.3)"
-                : theme.id === "forest"
-                ? "1px solid rgb(251 191 36 / 0.4)"
-                : theme.id === "space"
-                ? "1px solid rgb(168 85 247 / 0.3)"
-                : theme.id === "sunset"
-                ? "1px solid rgb(251 146 60 / 0.3)"
-                : "1px solid rgb(45 212 191 / 0.3)",
-            backdropFilter: "blur(16px)",
-            boxShadow:
-              theme.id === "ocean"
-                ? "0 25px 50px -12px rgba(45, 212, 191, 0.25)"
-                : theme.id === "forest"
-                ? "0 25px 50px -12px rgba(34, 197, 94, 0.25)"
-                : theme.id === "space"
-                ? "0 25px 50px -12px rgba(168, 85, 247, 0.25)"
-                : theme.id === "sunset"
-                ? "0 25px 50px -12px rgba(251, 146, 60, 0.25)"
-                : "0 25px 50px -12px rgba(45, 212, 191, 0.25)",
-            // Thêm background gradient overlay
-            backgroundImage:
-              theme.id === "ocean"
-                ? "linear-gradient(135deg, rgba(20, 184, 166, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%)"
-                : theme.id === "forest"
-                ? "linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(251, 191, 36, 0.05) 100%)"
-                : theme.id === "space"
-                ? "linear-gradient(135deg, rgba(168, 85, 247, 0.1) 0%, rgba(236, 72, 153, 0.05) 100%)"
-                : theme.id === "sunset"
-                ? "linear-gradient(135deg, rgba(251, 146, 60, 0.1) 0%, rgba(239, 68, 68, 0.05) 100%)"
-                : "linear-gradient(135deg, rgba(20, 184, 166, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%)",
-          },
-          header: {
-            backgroundColor: "transparent",
-            borderBottom:
-              theme.id === "ocean"
-                ? "1px solid rgb(45 212 191 / 0.2)"
-                : theme.id === "forest"
-                ? "1px solid rgb(251 191 36 / 0.3)"
-                : theme.id === "space"
-                ? "1px solid rgb(168 85 247 / 0.2)"
-                : theme.id === "sunset"
-                ? "1px solid rgb(251 146 60 / 0.2)"
-                : "1px solid rgb(45 212 191 / 0.2)",
-            paddingBottom: "12px",
-          },
-          close: {
-            color:
-              theme.id === "ocean"
-                ? "#5eead4"
-                : theme.id === "forest"
-                ? "#fbbf24"
-                : theme.id === "space"
-                ? "#c084fc"
-                : theme.id === "sunset"
-                ? "#fb923c"
-                : "#5eead4",
-            "&:hover": {
-              backgroundColor:
-                theme.id === "ocean"
-                  ? "rgba(45, 212, 191, 0.1)"
-                  : theme.id === "forest"
-                  ? "rgba(34, 197, 94, 0.1)"
-                  : theme.id === "space"
-                  ? "rgba(168, 85, 247, 0.1)"
-                  : theme.id === "sunset"
-                  ? "rgba(251, 146, 60, 0.1)"
-                  : "rgba(45, 212, 191, 0.1)",
-            },
-          },
           body: {
-            paddingTop: "16px",
-            // Thêm background pattern cho body
-            backgroundImage:
-              theme.id === "ocean"
-                ? `radial-gradient(circle at 20% 80%, rgba(45, 212, 191, 0.05) 0%, transparent 50%),
-             radial-gradient(circle at 80% 20%, rgba(16, 185, 129, 0.05) 0%, transparent 50%)`
-                : theme.id === "forest"
-                ? `radial-gradient(circle at 20% 80%, rgba(34, 197, 94, 0.05) 0%, transparent 50%),
-             radial-gradient(circle at 80% 20%, rgba(251, 191, 36, 0.05) 0%, transparent 50%)`
-                : theme.id === "space"
-                ? `radial-gradient(circle at 20% 80%, rgba(168, 85, 247, 0.05) 0%, transparent 50%),
-             radial-gradient(circle at 80% 20%, rgba(236, 72, 153, 0.05) 0%, transparent 50%)`
-                : theme.id === "sunset"
-                ? `radial-gradient(circle at 20% 80%, rgba(251, 146, 60, 0.05) 0%, transparent 50%),
-             radial-gradient(circle at 80% 20%, rgba(239, 68, 68, 0.05) 0%, transparent 50%)`
-                : `radial-gradient(circle at 20% 80%, rgba(45, 212, 191, 0.05) 0%, transparent 50%),
-             radial-gradient(circle at 80% 20%, rgba(16, 185, 129, 0.05) 0%, transparent 50%)`,
-          },
+            transition: 'height 0.3s ease-in-out'
+          }
         }}
       >
-        <div className="space-y-3">
-          {currentSong && (
-            <div
-              className={`flex items-center gap-3 p-3 rounded-lg border transition-all duration-200 hover:scale-[1.01]`}
-              style={{
-                backgroundColor:
-                  theme.id === "ocean"
-                    ? "rgba(15, 118, 110, 0.3)"
-                    : theme.id === "forest"
-                    ? "rgba(22, 163, 74, 0.3)"
-                    : theme.id === "space"
-                    ? "rgba(126, 34, 206, 0.3)"
-                    : theme.id === "sunset"
-                    ? "rgba(234, 88, 12, 0.3)"
-                    : "rgba(15, 118, 110, 0.3)",
-                borderColor:
-                  theme.id === "ocean"
-                    ? "rgba(45, 212, 191, 0.3)"
-                    : theme.id === "forest"
-                    ? "rgba(251, 191, 36, 0.4)"
-                    : theme.id === "space"
-                    ? "rgba(168, 85, 247, 0.3)"
-                    : theme.id === "sunset"
-                    ? "rgba(251, 146, 60, 0.3)"
-                    : "rgba(45, 212, 191, 0.3)",
-                boxShadow:
-                  theme.id === "ocean"
-                    ? "0 4px 12px rgba(45, 212, 191, 0.15)"
-                    : theme.id === "forest"
-                    ? "0 4px 12px rgba(34, 197, 94, 0.15)"
-                    : theme.id === "space"
-                    ? "0 4px 12px rgba(168, 85, 247, 0.15)"
-                    : theme.id === "sunset"
-                    ? "0 4px 12px rgba(251, 146, 60, 0.15)"
-                    : "0 4px 12px rgba(45, 212, 191, 0.15)",
-              }}
+        <AnimatePresence mode="wait">
+          {!showSuccessMessage ? (
+            <motion.div
+              key="playlist-list"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              transition={{ duration: 0.3 }}
+              className="space-y-4"
             >
-              <img
-                src={currentSong.image}
-                alt="Song cover"
-                className="w-12 h-12 rounded-lg object-cover shadow-lg"
-              />
-              <div className="flex-1 min-w-0">
-                <h4
-                  className={`${theme.colors.songText} text-sm font-medium truncate`}
+              {currentSong && (
+                <div
+                  className={`flex items-center gap-3 p-3 rounded-lg border border-${theme.colors.border} bg-${theme.colors.card} shadow-lg`}
                 >
-                  {currentSong.song_name}
-                </h4>
-                <p
-                  className={`text-xs ${theme.colors.text} truncate opacity-80`}
-                >
-                  {currentSong.singer_name}
-                </p>
-              </div>
-            </div>
-          )}
-
-          {!user ? (
-            <div className="text-center py-8">
-              <Text className={`${theme.colors.text} mb-4 opacity-90`}>
-                Vui lòng đăng nhập để sử dụng chức năng này
-              </Text>
-              <Button
-                className="border-none font-medium transition-all duration-200 hover:scale-105"
-                onClick={() => {
-                  window.location.href = "/login";
-                }}
-                styles={{
-                  root: {
-                    backgroundColor:
-                      theme.id === "ocean"
-                        ? "rgb(94 234 212)"
-                        : theme.id === "forest"
-                        ? "rgb(251 191 36)"
-                        : theme.id === "space"
-                        ? "rgb(196 181 253)"
-                        : theme.id === "sunset"
-                        ? "rgb(251 146 60)"
-                        : "rgb(94 234 212)",
-                    color:
-                      theme.id === "ocean"
-                        ? "#134e4a"
-                        : theme.id === "forest"
-                        ? "#92400e"
-                        : theme.id === "space"
-                        ? "#581c87"
-                        : theme.id === "sunset"
-                        ? "#9a3412"
-                        : "#134e4a",
-                    boxShadow:
-                      theme.id === "ocean"
-                        ? "0 8px 25px rgba(45, 212, 191, 0.3)"
-                        : theme.id === "forest"
-                        ? "0 8px 25px rgba(251, 191, 36, 0.3)"
-                        : theme.id === "space"
-                        ? "0 8px 25px rgba(168, 85, 247, 0.3)"
-                        : theme.id === "sunset"
-                        ? "0 8px 25px rgba(251, 146, 60, 0.3)"
-                        : "0 8px 25px rgba(45, 212, 191, 0.3)",
-                    "&:hover": {
-                      backgroundColor:
-                        theme.id === "ocean"
-                          ? "rgb(52 211 153)"
-                          : theme.id === "forest"
-                          ? "rgb(245 158 11)"
-                          : theme.id === "space"
-                          ? "rgb(236 72 153)"
-                          : theme.id === "sunset"
-                          ? "rgb(251 191 36)"
-                          : "rgb(52 211 153)",
-                      transform: "scale(1.05)",
-                      boxShadow:
-                        theme.id === "ocean"
-                          ? "0 12px 35px rgba(45, 212, 191, 0.4)"
-                          : theme.id === "forest"
-                          ? "0 12px 35px rgba(251, 191, 36, 0.4)"
-                          : theme.id === "space"
-                          ? "0 12px 35px rgba(168, 85, 247, 0.4)"
-                          : theme.id === "sunset"
-                          ? "0 12px 35px rgba(251, 146, 60, 0.4)"
-                          : "0 12px 35px rgba(45, 212, 191, 0.4)",
-                    },
-                  },
-                }}
-              >
-                Đăng nhập
-              </Button>
-            </div>
-          ) : userPlaylists.length === 0 ? (
-            <div className="text-center py-8">
-              <Text className={`${theme.colors.text} mb-4 opacity-90`}>
-                Bạn chưa có playlist nào
-              </Text>
-              <Text className={`text-xs ${theme.colors.text} opacity-60`}>
-                Hãy tạo playlist đầu tiên trong thư viện
-              </Text>
-            </div>
-          ) : (
-            <ScrollArea
-              className="max-h-96"
-              styles={{
-                scrollbar: {
-                  '&[data-orientation="vertical"] .mantine-ScrollArea-thumb': {
-                    backgroundColor:
-                      theme.id === "ocean"
-                        ? "rgb(45 212 191 / 0.6)"
-                        : theme.id === "forest"
-                        ? "rgb(34 197 94 / 0.6)"
-                        : theme.id === "space"
-                        ? "rgb(168 85 247 / 0.6)"
-                        : theme.id === "sunset"
-                        ? "rgb(251 146 60 / 0.6)"
-                        : "rgb(45 212 191 / 0.6)",
-                    borderRadius: "6px",
-                  },
-                  '&[data-orientation="vertical"]': {
-                    backgroundColor:
-                      theme.id === "ocean"
-                        ? "rgba(45, 212, 191, 0.1)"
-                        : theme.id === "forest"
-                        ? "rgba(34, 197, 94, 0.1)"
-                        : theme.id === "space"
-                        ? "rgba(168, 85, 247, 0.1)"
-                        : theme.id === "sunset"
-                        ? "rgba(251, 146, 60, 0.1)"
-                        : "rgba(45, 212, 191, 0.1)",
-                  },
-                },
-              }}
-            >
-              <div className="space-y-2">
-                {userPlaylists.map((playlist) => (
-                  <div
-                    key={playlist.id}
-                    className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all duration-200 hover:scale-[1.02] ${
-                      loadingPlaylist ? "opacity-50 pointer-events-none" : ""
-                    }`}
-                    style={{
-                      backgroundColor:
-                        theme.id === "ocean"
-                          ? "rgba(15, 118, 110, 0.2)"
-                          : theme.id === "forest"
-                          ? "rgba(22, 163, 74, 0.2)"
-                          : theme.id === "space"
-                          ? "rgba(126, 34, 206, 0.2)"
-                          : theme.id === "sunset"
-                          ? "rgba(234, 88, 12, 0.2)"
-                          : "rgba(15, 118, 110, 0.2)",
-                      borderColor:
-                        theme.id === "ocean"
-                          ? "rgba(45, 212, 191, 0.2)"
-                          : theme.id === "forest"
-                          ? "rgba(251, 191, 36, 0.3)"
-                          : theme.id === "space"
-                          ? "rgba(168, 85, 247, 0.2)"
-                          : theme.id === "sunset"
-                          ? "rgba(251, 146, 60, 0.2)"
-                          : "rgba(45, 212, 191, 0.2)",
-                      border: "1px solid",
-                      boxShadow:
-                        theme.id === "ocean"
-                          ? "0 2px 8px rgba(45, 212, 191, 0.1)"
-                          : theme.id === "forest"
-                          ? "0 2px 8px rgba(34, 197, 94, 0.1)"
-                          : theme.id === "space"
-                          ? "0 2px 8px rgba(168, 85, 247, 0.1)"
-                          : theme.id === "sunset"
-                          ? "0 2px 8px rgba(251, 146, 60, 0.1)"
-                          : "0 2px 8px rgba(45, 212, 191, 0.1)",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.target.style.backgroundColor =
-                        theme.id === "ocean"
-                          ? "rgba(15, 118, 110, 0.4)"
-                          : theme.id === "forest"
-                          ? "rgba(22, 163, 74, 0.4)"
-                          : theme.id === "space"
-                          ? "rgba(126, 34, 206, 0.4)"
-                          : theme.id === "sunset"
-                          ? "rgba(234, 88, 12, 0.4)"
-                          : "rgba(15, 118, 110, 0.4)";
-                      e.target.style.boxShadow =
-                        theme.id === "ocean"
-                          ? "0 8px 25px rgba(45, 212, 191, 0.2)"
-                          : theme.id === "forest"
-                          ? "0 8px 25px rgba(34, 197, 94, 0.2)"
-                          : theme.id === "space"
-                          ? "0 8px 25px rgba(168, 85, 247, 0.2)"
-                          : theme.id === "sunset"
-                          ? "0 8px 25px rgba(251, 146, 60, 0.2)"
-                          : "0 8px 25px rgba(45, 212, 191, 0.2)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.target.style.backgroundColor =
-                        theme.id === "ocean"
-                          ? "rgba(15, 118, 110, 0.2)"
-                          : theme.id === "forest"
-                          ? "rgba(22, 163, 74, 0.2)"
-                          : theme.id === "space"
-                          ? "rgba(126, 34, 206, 0.2)"
-                          : theme.id === "sunset"
-                          ? "rgba(234, 88, 12, 0.2)"
-                          : "rgba(15, 118, 110, 0.2)";
-                      e.target.style.boxShadow =
-                        theme.id === "ocean"
-                          ? "0 2px 8px rgba(45, 212, 191, 0.1)"
-                          : theme.id === "forest"
-                          ? "0 2px 8px rgba(34, 197, 94, 0.1)"
-                          : theme.id === "space"
-                          ? "0 2px 8px rgba(168, 85, 247, 0.1)"
-                          : theme.id === "sunset"
-                          ? "0 2px 8px rgba(251, 146, 60, 0.1)"
-                          : "0 2px 8px rgba(45, 212, 191, 0.1)";
-                    }}
-                    onClick={() => handleAddToPlaylist(playlist.id)}
-                  >
-                    {playlist.image ? (
-                      <img
-                        src={playlist.image}
-                        alt={playlist.title}
-                        className="w-10 h-10 rounded-lg object-cover shadow-lg"
-                      />
-                    ) : (
-                      <div
-                        className="w-10 h-10 rounded-lg opacity-90 flex items-center justify-center shadow-lg"
-                        style={{
-                          background:
-                            theme.id === "ocean"
-                              ? "linear-gradient(135deg, #14b8a6, #10b981)"
-                              : theme.id === "forest"
-                              ? "linear-gradient(135deg, #22c55e, #fbbf24)"
-                              : theme.id === "space"
-                              ? "linear-gradient(135deg, #a855f7, #ec4899)"
-                              : theme.id === "sunset"
-                              ? "linear-gradient(135deg, #fb923c, #fbbf24)"
-                              : "linear-gradient(135deg, #14b8a6, #10b981)",
-                        }}
-                      >
-                        <IconMusic size={20} className="text-white" />
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <h4
-                        className={`${theme.colors.songText} text-sm font-medium truncate transition-colors`}
-                      >
-                        {playlist.title}
-                      </h4>
-                      <p
-                        className={`text-xs ${theme.colors.text} truncate opacity-70`}
-                      >
-                        {playlist.song_count || 0} bài hát
-                      </p>
-                    </div>
-                    {loadingPlaylist && (
-                      <div
-                        className="w-5 h-5 border-2 border-t-transparent rounded-full animate-spin"
-                        style={{
-                          borderColor:
-                            theme.id === "ocean"
-                              ? "rgb(45 212 191 / 0.5)"
-                              : theme.id === "forest"
-                              ? "rgb(34 197 94 / 0.5)"
-                              : theme.id === "space"
-                              ? "rgb(168 85 247 / 0.5)"
-                              : theme.id === "sunset"
-                              ? "rgb(251 146 60 / 0.5)"
-                              : "rgb(45 212 191 / 0.5)",
-                          borderTopColor: "transparent",
-                        }}
-                      />
-                    )}
+                  <img
+                    src={currentSong.image}
+                    alt="Song cover"
+                    className="w-12 h-12 rounded-lg object-cover shadow-lg flex-shrink-0"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-white text-sm font-medium truncate">
+                      {currentSong.song_name}
+                    </h4>
+                    <p
+                      className={`text-xs ${theme.colors.text} truncate opacity-80`}
+                    >
+                      {currentSong.singer_name}
+                    </p>
                   </div>
-                ))}
-              </div>
-            </ScrollArea>
+                </div>
+              )}
+
+              {!user ? (
+                <div className="text-center py-8 flex flex-col items-center">
+                  <p
+                    className={`text-base ${theme.colors.text} mb-4 opacity-90`}
+                  >
+                    Vui lòng đăng nhập để sử dụng chức năng này
+                  </p>
+                  <Button
+                    className={`border-none font-medium transition-all duration-200 hover:scale-105 shadow-lg bg-${theme.colors.button} hover:bg-${theme.colors.buttonHover} text-${theme.colors.buttonText}`}
+                    onClick={() => {
+                      window.location.href = "/login";
+                    }}
+                  >
+                    Đăng nhập
+                  </Button>
+                </div>
+              ) : userPlaylists.length === 0 ? (
+                <div className="text-center py-8">
+                  <p
+                    className={`text-base ${theme.colors.text} mb-4 opacity-90`}
+                  >
+                    Bạn chưa có playlist nào
+                  </p>
+                  <p className={`text-sm ${theme.colors.text} opacity-60`}>
+                    Hãy tạo playlist đầu tiên trong thư viện
+                  </p>
+                </div>
+              ) : (
+                <div
+                  className={`max-h-80 overflow-y-auto space-y-2 pr-2 -mr-1 scrollbar-thin scrollbar-thumb-${theme.colors.primary}-500/70 scrollbar-track-transparent`}
+                >
+                  {userPlaylists.map((playlist) => {
+                    const isLoadingThis = loadingPlaylistId === playlist.id;
+                    
+                    return (
+                      <div
+                        key={playlist.id}
+                        className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all duration-200 
+                          bg-${theme.colors.card} border border-${theme.colors.border} shadow-sm
+                          hover:bg-${theme.colors.cardHover} hover:scale-[1.02] hover:shadow-lg hover:border-${theme.colors.primary}-500/30
+                          ${
+                            loadingPlaylistId
+                              ? "opacity-50 pointer-events-none"
+                              : ""
+                          }
+                          ${
+                            isLoadingThis ? "opacity-75" : ""
+                          }
+                        `}
+                        onClick={() => handleAddToPlaylist(playlist.id)}
+                      >
+                        {playlist.image ? (
+                          <img
+                            src={playlist.image}
+                            alt={playlist.title}
+                            className="w-10 h-10 rounded-lg object-cover shadow-lg flex-shrink-0"
+                          />
+                        ) : (
+                          <div
+                            className={`w-10 h-10 rounded-lg flex items-center justify-center shadow-lg bg-gradient-to-r ${theme.colors.gradient} flex-shrink-0`}
+                          >
+                            <IconMusic
+                              size={20}
+                              className="text-white opacity-80"
+                            />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <h4
+                            className={`text-white text-sm font-medium truncate transition-colors`}
+                          >
+                            {playlist.title}
+                          </h4>
+                          <p
+                            className={`text-xs ${theme.colors.text} truncate opacity-70`}
+                          >
+                            {playlist.song_count || 0} bài hát
+                          </p>
+                        </div>
+                        {isLoadingThis && (
+                          <div
+                            className={`w-5 h-5 border-2 border-${theme.colors.primary}-500 border-t-transparent rounded-full animate-spin`}
+                          />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </motion.div>
+          ) : (
+            <motion.div
+              key="success-message"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{ duration: 0.3 }}
+              className="flex flex-col items-center justify-center space-y-4 py-10 min-h-[300px]"
+            >
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1, rotate: 360 }}
+                transition={{ duration: 0.6, ease: 'backOut', delay: 0.1 }}
+              >
+                <IconCheck className={`w-16 h-16 text-${theme.colors.primary}-500`} stroke={3} />
+              </motion.div>
+              <motion.h3 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+                className="text-xl font-bold text-white"
+              >
+                Đã thêm thành công!
+              </motion.h3>
+            </motion.div>
           )}
-        </div>
+        </AnimatePresence>
       </Modal>
     </>
   );

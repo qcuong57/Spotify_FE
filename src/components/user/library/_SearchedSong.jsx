@@ -38,7 +38,8 @@ const SearchedSong = ({ song, playlist, addSongToPlaylist, songs }) => {
       <img
         src={song.image}
         alt="Song Cover"
-        className="w-12 h-12 rounded-lg shadow-md"
+        // --- THAY ĐỔI DÒNG NÀY ---
+        className="w-12 h-12 rounded-lg shadow-md object-cover flex-shrink-0" 
       />
       <div className="flex flex-col ml-3 flex-1">
         <span className={`text-white font-bold hover:text-${theme.colors.textHover} transition-colors`}>

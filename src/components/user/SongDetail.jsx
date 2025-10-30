@@ -20,7 +20,7 @@ import {
 // Imports từ Context và Service
 import { useTheme } from "../../context/themeContext";
 import { useAudio } from "../../utils/audioContext";
-import { getSongById, getRelatedSongs } from "../../services/SongsService";
+import { getSongNameById, getRelatedSongs } from "../../services/SongsService";
 // import { toggleLikeService } from '../../services/SongPlaylistService'; // Giả định API like
 
 // Imports từ Components
@@ -110,25 +110,16 @@ const SongDetail = ({ songId, onClose }) => {
   // --- LOGIC FETCH ALL DATA ---
   // (Không thay đổi logic bên trong, chỉ thay đổi cách nó được gọi)
   const fetchAllData = useCallback(async (id) => {
-    console.log("🔄 BẮT ĐẦU FETCH - songId:", id);
     setIsLoading(true);
     setError(null);
     setCurrentSongDetail(null); // Reset để kích hoạt loading
     setRelatedSongs([]);
 
     try {
-      console.log("⏳ Đang tải song song...");
       const [detailData, relatedResponse] = await Promise.all([
-        getSongById(id),
+        getSongNameById(id),
         getRelatedSongs(id, 12), // Vẫn lấy 12, service sẽ giới hạn 8
       ]);
-
-      console.log("✅ Detail data:", detailData ? "OK" : "NULL");
-      console.log(
-        "✅ Related data:",
-        relatedResponse?.data?.results?.length || 0,
-        "songs"
-      );
 
       if (detailData) {
         setCurrentSongDetail(detailData);
@@ -141,12 +132,10 @@ const SongDetail = ({ songId, onClose }) => {
         setRelatedSongs(relatedResponse.data.results);
       }
 
-      console.log("✅ ĐÃ SET STATE - Sắp tắt loading");
     } catch (err) {
       console.error("❌ Lỗi khi fetch dữ liệu:", err);
       setError(err.message || "Không thể tải dữ liệu. Vui lòng thử lại.");
     } finally {
-      console.log("🏁 TẮT LOADING");
       setIsLoading(false);
     }
   }, []); // Bỏ [fetchAllData] khỏi dependency array nếu nó được định nghĩa bên trong

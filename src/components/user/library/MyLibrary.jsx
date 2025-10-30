@@ -9,13 +9,15 @@ import {
 import {
   IconChevronRight,
   IconMusic,
-  IconArrowsShuffle, // Thay đổi: Import IconShuffle thay vì IconPlayerPlayFilled
+  IconArrowsShuffle,
   IconList,
   IconDotsVertical,
   IconClockHour3,
   IconSearch,
   IconX,
   IconTrash,
+  IconAlertTriangle, // <-- THÊM ICON
+  IconCheck,         // <-- THÊM ICON
 } from "@tabler/icons-react";
 import Song from "./_Song";
 import SearchedSong from "./_SearchedSong";
@@ -121,7 +123,6 @@ const controlsVariants = {
   },
 };
 
-// Thay đổi: Rename từ playButtonVariants thành shuffleButtonVariants
 const shuffleButtonVariants = {
   initial: { opacity: 0, scale: 0.8 },
   animate: {
@@ -134,7 +135,7 @@ const shuffleButtonVariants = {
   },
   hover: {
     scale: 1.1,
-    rotate: 15, // Thêm hiệu ứng xoay khi hover cho shuffle
+    rotate: 15,
     transition: {
       duration: 0.2,
       ease: [0.4, 0, 0.2, 1],
@@ -305,6 +306,52 @@ const iconFloatVariants = {
   },
 };
 
+// --- THÊM VARIANTS CHO MODAL ---
+const backdropVariants = {
+  initial: { opacity: 0 },
+  animate: { 
+    opacity: 1,
+    transition: { duration: 0.3 }
+  },
+  exit: { 
+    opacity: 0,
+    transition: { duration: 0.3 }
+  }
+};
+
+const modalVariants = {
+  initial: { 
+    opacity: 0, 
+    scale: 0.8, 
+    y: 50 
+  },
+  animate: { 
+    opacity: 1, 
+    scale: 1, 
+    y: 0,
+    transition: { duration: 0.4, ease: [0.4, 0, 0.2, 1] }
+  },
+  exit: { 
+    opacity: 0, 
+    scale: 0.9, 
+    y: 30,
+    transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] }
+  }
+};
+
+const successVariants = {
+  initial: { opacity: 0, scale: 0.8 },
+  animate: { opacity: 1, scale: 1, transition: { duration: 0.4, ease: [0.4, 0, 0.2, 1] } },
+  exit: { opacity: 0, scale: 0.8, transition: { duration: 0.3 } }
+};
+
+const successIconVariants = {
+  initial: { scale: 0 },
+  animate: { scale: 1, rotate: 360, transition: { duration: 0.6, ease: 'backOut', delay: 0.2 } }
+};
+// --- KẾT THÚC THÊM VARIANTS ---
+
+
 const MyLibrary = ({ playlist, setCurrentView }) => {
   const { theme } = useTheme();
   const [songs, setSongs] = useState([]);
@@ -322,6 +369,13 @@ const MyLibrary = ({ playlist, setCurrentView }) => {
   const [user, setUser] = useState(null);
   const { setNewPlaylist } = useAudio();
 
+  // --- THÊM STATE CHO MODAL XÓA ---
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteSuccess, setShowDeleteSuccess] = useState(false);
+  // --- KẾT THÚC THÊM STATE ---
+
+  // (Các hàm useEffect, handleSearch, ... giữ nguyên)
   // Kiểm tra user đăng nhập
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -500,50 +554,57 @@ const MyLibrary = ({ playlist, setCurrentView }) => {
     setSearchQuery("");
   };
 
-  // Thay đổi: Function mới để shuffle và play playlist
   const shuffleAndPlayPlaylist = () => {
     if (songs.length > 0) {
-      // Tạo bản copy của songs array để không ảnh hưởng đến state gốc
       const shuffledSongs = [...songs];
       
-      // Fisher-Yates shuffle algorithm
       for (let i = shuffledSongs.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [shuffledSongs[i], shuffledSongs[j]] = [shuffledSongs[j], shuffledSongs[i]];
       }
       
-      // Set playlist với thứ tự đã shuffle, bắt đầu từ bài đầu tiên (index 0)
       setNewPlaylist(shuffledSongs, 0);
     }
   };
 
-  const handleRemove = async () => {
-    if (!playlist || !playlist.id) return;
+  // --- THAY ĐỔI HÀM NÀY ---
+  // Đổi tên 'handleRemove' thành 'executeDelete' và cập nhật logic
+  const executeDelete = async () => {
+    if (!playlist || !playlist.id || isDeleting) return;
 
     try {
-      const isConfirmed = confirm("Bạn có chắc chắn xóa danh sách này không?");
-      if (isConfirmed) {
-        console.log("MyLibrary - Deleting playlist:", playlist.id);
-        await deletePlaylistService(playlist.id);
+      setIsDeleting(true); // Bắt đầu loading
+      console.log("MyLibrary - Deleting playlist:", playlist.id);
+      await deletePlaylistService(playlist.id);
 
-        // Xóa playlist khỏi danh sách trong context
-        setPlaylists((prevPlaylists) =>
-          prevPlaylists.filter((p) => p.id !== playlist.id)
-        );
-        setRefreshKeyPlayLists(Date.now());
+      // Hiển thị modal thành công
+      setShowDeleteSuccess(true);
+      setIsDeleting(false);
 
-        alert("Xóa thành công");
-        console.log("MyLibrary - Playlist deleted successfully");
+      // Cập nhật context
+      setPlaylists((prevPlaylists) =>
+        prevPlaylists.filter((p) => p.id !== playlist.id)
+      );
+      setRefreshKeyPlayLists(Date.now());
+      console.log("MyLibrary - Playlist deleted successfully");
+
+      // Đặt hẹn giờ để đóng modal và quay về main
+      setTimeout(() => {
+        setShowConfirmDelete(false);
+        setShowDeleteSuccess(false); // Reset state
         setCurrentView("main");
-      }
+      }, 2000); // 2 giây
+
     } catch (error) {
       console.error("MyLibrary - Error deleting playlist:", error);
       alert("Đã xảy ra lỗi khi xóa danh sách");
+      setIsDeleting(false); // Dừng loading
+      setShowConfirmDelete(false); // Đóng modal nếu lỗi
     }
   };
+  // --- KẾT THÚC THAY ĐỔI ---
 
   const handleEditComplete = (updatedPlaylist) => {
-    // Cập nhật playlist trong context sau khi edit
     setPlaylists((prevPlaylists) =>
       prevPlaylists.map((p) =>
         p.id === playlist.id ? { ...p, ...updatedPlaylist } : p
@@ -553,7 +614,7 @@ const MyLibrary = ({ playlist, setCurrentView }) => {
     setCurrentView(updatedPlaylist);
   };
 
-  // Nếu không có playlist, hiển thị loading hoặc error
+  // (Component rỗng giữ nguyên)
   if (!playlist) {
     return (
       <motion.div
@@ -605,7 +666,7 @@ const MyLibrary = ({ playlist, setCurrentView }) => {
       exit="exit"
     >
       <div className="flex flex-col">
-        {/* Header Section */}
+        {/* (Header Section giữ nguyên... ) */}
         <motion.div
           className={`flex flex-col sm:flex-row items-center sm:items-end gap-2 sm:gap-4 p-4 pb-4 sm:pb-6 bg-gradient-to-b ${theme.colors.background}`}
           variants={headerVariants}
@@ -715,17 +776,18 @@ const MyLibrary = ({ playlist, setCurrentView }) => {
               variants={deleteButtonVariants}
             >
               <motion.div whileHover="hover" whileTap="tap">
+                {/* --- THAY ĐỔI ONCLICK --- */}
                 <IconTrash
                   stroke={2}
                   className={`cursor-pointer size-5 sm:size-6 text-${theme.colors.text} hover:text-red-400 transition-colors`}
-                  onClick={handleRemove}
+                  onClick={() => setShowConfirmDelete(true)} // Mở modal xác nhận
                 />
               </motion.div>
             </motion.div>
           )}
         </motion.div>
 
-        {/* Controls Section với Search đơn giản */}
+        {/* (Controls, Search, Songs List... giữ nguyên) */}
         <motion.div
           className="flex flex-col sm:flex-row justify-between items-start sm:items-center mx-4 sm:mx-6 py-4 gap-4"
           variants={controlsVariants}
@@ -735,21 +797,19 @@ const MyLibrary = ({ playlist, setCurrentView }) => {
             <div className="flex flex-row items-center">
               {songs.length > 0 ? (
                 <motion.div
-                  onClick={shuffleAndPlayPlaylist} // Thay đổi: Gọi function shuffle mới
+                  onClick={shuffleAndPlayPlaylist} 
                   className={`mr-2 sm:mr-4 bg-${theme.colors.primary}-500 cursor-pointer rounded-full transition-all duration-300 hover:scale-110 hover:bg-${theme.colors.primary}-400 shadow-lg`}
-                  variants={shuffleButtonVariants} // Thay đổi: Sử dụng shuffleButtonVariants
+                  variants={shuffleButtonVariants} 
                   whileHover="hover"
                   whileTap="tap"
                 >
-                  {/* Thay đổi: Sử dụng IconShuffle thay vì IconPlayerPlayFilled */}
                   <IconArrowsShuffle className="size-8 sm:size-12 p-2 sm:p-3 text-black" />
                 </motion.div>
               ) : (
                 <motion.div
                   className="mr-2 sm:mr-4 bg-gray-600 rounded-full"
-                  variants={shuffleButtonVariants} // Thay đổi: Sử dụng shuffleButtonVariants
+                  variants={shuffleButtonVariants} 
                 >
-                  {/* Thay đổi: Sử dụng IconArrowsShuffle thay vì IconShuffle */}
                   <IconArrowsShuffle className="size-8 sm:size-12 p-2 sm:p-3 text-gray-400" />
                 </motion.div>
               )}
@@ -1025,6 +1085,123 @@ const MyLibrary = ({ playlist, setCurrentView }) => {
           />
         )}
       </AnimatePresence>
+      
+      {/* --- THÊM MODAL XÁC NHẬN XÓA --- */}
+      <AnimatePresence>
+        {showConfirmDelete && (
+          <motion.div
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            variants={backdropVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            onClick={() => !isDeleting && setShowConfirmDelete(false)} // Ngăn đóng khi đang xóa
+          >
+            <motion.div
+              className={`bg-gradient-to-b ${theme.colors.backgroundOverlay} backdrop-blur-md border border-${theme.colors.border} rounded-xl w-full max-w-md max-h-[90vh] overflow-hidden shadow-2xl`}
+              variants={modalVariants}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <AnimatePresence mode="wait">
+                {showDeleteSuccess ? (
+                  // --- VIEW THÀNH CÔNG ---
+                  <motion.div
+                    key="success"
+                    className="flex flex-col items-center justify-center p-10 space-y-4 min-h-[250px]"
+                    variants={successVariants}
+                    initial="initial"
+                    animate="animate"
+                    exit="exit"
+                  >
+                    <motion.div variants={successIconVariants}>
+                      <IconCheck className={`w-16 h-16 text-${theme.colors.primary}-500`} stroke={3} />
+                    </motion.div>
+                    <motion.h3
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5, delay: 0.4 }}
+                      className="text-xl font-bold text-white"
+                    >
+                      Đã xóa thành công!
+                    </motion.h3>
+                  </motion.div>
+                ) : (
+                  // --- VIEW XÁC NHẬN ---
+                  <motion.div
+                    key="confirm"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                  >
+                    <div className="flex flex-col items-center p-6 text-center">
+                      <motion.div
+                        className={`p-3 bg-red-500/10 rounded-full border border-red-500/30`}
+                        initial={{ scale: 0.5, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ duration: 0.3, delay: 0.1 }}
+                      >
+                        <IconAlertTriangle className="w-10 h-10 text-red-400" stroke={2} />
+                      </motion.div>
+                      <h2 className="text-xl font-bold text-white mt-4">
+                        Xác nhận xóa playlist?
+                      </h2>
+                      <p className={`text-sm text-${theme.colors.text} mt-2`}>
+                        Bạn có chắc chắn muốn xóa playlist <br />
+                        <strong className="text-white">{playlist.title}</strong>?
+                        <br />
+                        Hành động này không thể hoàn tác.
+                      </p>
+                    </div>
+                    <div className={`flex justify-end gap-3 p-4 border-t border-${theme.colors.border} bg-black/10`}>
+                      <motion.button
+                        onClick={() => setShowConfirmDelete(false)}
+                        className={`px-6 py-2.5 bg-${theme.colors.card} hover:bg-${theme.colors.cardHover} border border-${theme.colors.border} rounded-xl text-white font-medium transition-all disabled:opacity-50`}
+                        disabled={isDeleting}
+                        variants={buttonVariants}
+                        initial="initial" animate="animate" whileHover="hover" whileTap="tap"
+                      >
+                        Hủy
+                      </motion.button>
+                      <motion.button
+                        onClick={executeDelete}
+                        className={`px-6 py-2.5 bg-red-600 hover:bg-red-700 rounded-xl text-white font-medium transition-all disabled:opacity-50 flex items-center gap-2 shadow-lg shadow-red-500/20`}
+                        disabled={isDeleting}
+                        variants={buttonVariants}
+                        initial="initial" animate="animate" whileHover="hover" whileTap="tap"
+                      >
+                        <AnimatePresence mode="wait">
+                          {isDeleting ? (
+                            <motion.div
+                              key="loading"
+                              className="w-4 h-4 border-2 border-current border-t-transparent rounded-full"
+                              variants={loadingSpinnerVariants}
+                              animate="animate"
+                              initial={{ opacity: 0 }}
+                              exit={{ opacity: 0 }}
+                            />
+                          ) : (
+                            <motion.div
+                              key="trash"
+                              initial={{ opacity: 0, scale: 0.8 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              exit={{ opacity: 0, scale: 0.8 }}
+                            >
+                              <IconTrash className="w-4 h-4" />
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                        {isDeleting ? "Đang xóa..." : "Xóa"}
+                      </motion.button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      {/* --- KẾT THÚC MODAL XÓA --- */}
+      
     </motion.div>
   );
 };

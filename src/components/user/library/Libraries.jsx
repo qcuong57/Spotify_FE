@@ -152,22 +152,22 @@ const Libraries = ({ setCurrentView, onClose }) => {
           const playlistsData = response.data.playlists;
 
 
-          playlistsData.forEach((playlist, index) => {
-            console.log(`Playlist ${index + 1}:`, {
-              id: playlist.id,
-              title: playlist.title,
-              song_count: playlist.song_count,
-              is_liked_song: playlist.is_liked_song,
-            });
-          });
+          // playlistsData.forEach((playlist, index) => {
+          //   console.log(`Playlist ${index + 1}:`, {
+          //     id: playlist.id,
+          //     title: playlist.title,
+          //     song_count: playlist.song_count,
+          //     is_liked_song: playlist.is_liked_song,
+          //   });
+          // });
 
           setPlaylists(playlistsData);
         } else {
-          console.log("Libraries - response structure:", {
-            hasData: !!response?.data,
-            dataKeys: response?.data ? Object.keys(response.data) : [],
-            fullResponse: response,
-          });
+          // console.log("Libraries - response structure:", {
+          //   hasData: !!response?.data,
+          //   dataKeys: response?.data ? Object.keys(response.data) : [],
+          //   fullResponse: response,
+          // });
           setPlaylists([]);
         }
       } catch (error) {
