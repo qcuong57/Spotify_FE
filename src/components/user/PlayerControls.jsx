@@ -1,5 +1,6 @@
 import React from "react";
-import { useRef, useState, useEffect } from "react";
+// Thêm useCallback
+import { useRef, useState, useEffect, useCallback } from "react";
 import {
   IconPlayerSkipBackFilled,
   IconPlayerSkipForwardFilled,
@@ -19,11 +20,10 @@ import {
   IconPlaylistAdd,
   IconMusic,
   IconCheck,
-  IconVideo, // <-- THÊM ICON MỚI
-  IconFileMusic, // <-- THÊM ICON MỚI
+  IconVideo,
+  IconFileMusic,
 } from "@tabler/icons-react";
 import { motion, AnimatePresence } from "framer-motion";
-// THÊM Menu.Divider
 import { Menu, Button, Anchor, Modal } from "@mantine/core";
 import { useAudio } from "../../utils/audioContext";
 import { useTheme } from "../../context/themeContext";
@@ -51,7 +51,7 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
     setVolume,
     currentTime,
     duration,
-    setPlaybackTime,
+    setPlaybackTime, // Hàm này giờ đã ổn định từ context
     playNextSong,
     setSongDescriptionAvailable,
     playBackSong,
@@ -69,9 +69,7 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
   const [user, setUser] = useState(null);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
-  // (Toàn bộ logic useEffect và các hàm xử lý giữ nguyên... 
-  // ... từ dòng 72 đến 464 ... )
-
+  // (Các hàm useEffect và logic khác giữ nguyên...)
   // Kiểm tra user đăng nhập
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -160,21 +158,17 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
       return;
     }
 
-    // Prevent multiple clicks while processing
     if (loadingLike) return;
 
     try {
       setLoadingLike(true);
 
       if (isLiked) {
-        // Bỏ like - remove from liked songs
         await removeFromLikedSongsService(currentSong.id);
         setIsLiked(false);
       } else {
-        // Thêm like - add to liked songs
         const formData = new FormData();
         formData.append("song_id", currentSong.id.toString());
-
         await addToLikedSongsService(formData);
         setIsLiked(true);
       }
@@ -182,7 +176,6 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
       console.error("Error toggling like:", error);
       console.error("Error details:", error.response?.data);
 
-      // Show specific error message
       if (error.response?.status === 400) {
         alert("Bài hát này đã có trong danh sách yêu thích hoặc đã bị xóa!");
       } else if (error.response?.status === 404) {
@@ -191,7 +184,6 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
         alert("Có lỗi xảy ra khi cập nhật trạng thái yêu thích!");
       }
 
-      // Reset to correct state by checking again
       try {
         const response = await getLikedSongsService();
         if (response?.data?.results) {
@@ -266,37 +258,94 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
     }
   };
 
+  // Get theme-specific progress colors (Đã sửa)
   const getProgressColors = () => {
     switch (theme.id) {
+      case "pixelCyberpunk":
+        return {
+          trackBg: "bg-emerald-600/50",
+          progressBg: "bg-emerald-300",
+          progressHover: "hover:bg-violet-400",
+          thumbColor: "#a78bfa", // violet-300
+        };
+      case "villagePixelArt":
+        return {
+          trackBg: "bg-amber-600/50",
+          progressBg: "bg-amber-300",
+          progressHover: "hover:bg-sky-400",
+          thumbColor: "#67e8f9", // emerald-300 (theo songIndicator)
+        };
+      case "cherryBlossom":
+        return {
+          trackBg: "bg-rose-600/50",
+          progressBg: "bg-rose-300",
+          progressHover: "hover:bg-white",
+          thumbColor: "#ffffff", // white
+        };
       case "ocean":
         return {
           trackBg: "bg-teal-600/50",
           progressBg: "bg-teal-300",
           progressHover: "hover:bg-emerald-400",
-          thumbColor: "#5eead4",
+          thumbColor: "#5eead4", // teal-300
         };
       case "forest":
         return {
           trackBg: "bg-green-600/50",
           progressBg: "bg-amber-400",
           progressHover: "hover:bg-amber-300",
-          thumbColor: "#fbbf24",
+          thumbColor: "#fbbf24", // amber-400
         };
       case "space":
         return {
           trackBg: "bg-purple-600/50",
           progressBg: "bg-purple-300",
           progressHover: "hover:bg-pink-400",
-          thumbColor: "#a855f7",
+          thumbColor: "#d8b4fe", // purple-300
         };
       case "sunset":
         return {
           trackBg: "bg-orange-600/50",
           progressBg: "bg-orange-300",
           progressHover: "hover:bg-amber-400",
-          thumbColor: "#fb923c",
+          thumbColor: "#fb923c", // orange-300
         };
-      case "neon":
+      case "kitten":
+        return {
+          trackBg: "bg-lime-600/50",
+          progressBg: "bg-lime-300",
+          progressHover: "hover:bg-orange-400",
+          thumbColor: "#fdba74", // orange-300
+        };
+      case "darkmode":
+        return {
+          trackBg: "bg-gray-600/50",
+          progressBg: "bg-gray-300",
+          progressHover: "hover:bg-lime-400",
+          thumbColor: "#bef264", // lime-300
+        };
+      case "cyberpunk":
+        return {
+          trackBg: "bg-red-600/50",
+          progressBg: "bg-red-300",
+          progressHover: "hover:bg-lime-400",
+          thumbColor: "#bef264", // lime-300
+        };
+      case "autumn":
+        return {
+          trackBg: "bg-amber-600/50",
+          progressBg: "bg-amber-300",
+          progressHover: "hover:bg-orange-400",
+          thumbColor: "#fdba74", // orange-300
+        };
+      case "winter":
+        return {
+          trackBg: "bg-sky-600/50",
+          progressBg: "bg-sky-300",
+          progressHover: "hover:bg-blue-400",
+          thumbColor: "#67e8f9", // cyan-300
+        };
+      case "neon": 
         return {
           trackBg: "bg-gray-600/50",
           progressBg: "bg-cyan-300",
@@ -321,106 +370,108 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
   const progressPercent =
     isValidDuration && isValidCurrentTime ? (currentTime / duration) * 100 : 0;
 
-  const handleProgressClick = (e) => {
+  // --- BẮT ĐẦU SỬA CÁC HÀM XỬ LÝ KÉO ---
+
+  // Hàm này tính toán vị trí click/touch
+  const handleProgressChange = useCallback((e) => {
     if (!progressRef.current || !isValidDuration) return;
     try {
       const rect = progressRef.current.getBoundingClientRect();
-      const clientX = e.clientX || (e.touches && e.touches[0]?.clientX);
-      if (!clientX) return;
+
+      let clientX;
+      if (e.touches) {
+        clientX = e.touches[0].clientX; // Nếu là sự kiện touch
+      } else {
+        clientX = e.clientX; // Nếu là sự kiện mouse
+      }
+      
+      if (clientX === undefined) return;
+
       const clickX = clientX - rect.left;
       const width = rect.width;
       if (width <= 0) return;
-      const percentage = clickX / width;
+      
+      const percentage = Math.max(0, Math.min(clickX / width, 1));
       const newTime = percentage * duration;
-      const clampedTime = Math.max(0, Math.min(newTime, duration));
-      setPlaybackTime(Math.round(clampedTime));
+      setPlaybackTime(Math.round(newTime));
     } catch (error) {
-      console.error("Error in handleProgressClick:", error);
+      console.error("Error in handleProgressChange:", error);
     }
-  };
+  }, [isValidDuration, duration, setPlaybackTime]);
 
-  const handleProgressMouseDown = (e) => {
+  // Khi nhấn chuột xuống
+  const handleProgressMouseDown = useCallback((e) => {
     e.preventDefault();
     if (!isValidDuration) return;
     setIsDragging(true);
-    handleProgressClick(e);
+    handleProgressChange(e);
     document.body.style.overflow = "hidden";
-  };
+  }, [isValidDuration, handleProgressChange]);
 
-  const handleProgressTouchStart = (e) => {
-    e.preventDefault();
+  // Khi bắt đầu chạm (mobile)
+  const handleProgressTouchStart = useCallback((e) => {
+    // e.preventDefault(); // <-- XÓA DÒNG NÀY ĐỂ TRÁNH LỖI PASSIVE LISTENER
     e.stopPropagation();
     if (!isValidDuration) return;
     setIsDragging(true);
-    handleProgressClick(e);
+    handleProgressChange(e);
     document.body.style.overflow = "hidden";
     document.body.style.touchAction = "none";
-  };
+  }, [isValidDuration, handleProgressChange]);
 
-  const handleProgressMouseMove = (e) => {
-    if (!isDragging || !progressRef.current || !isValidDuration) return;
-    try {
-      e.preventDefault();
-      const rect = progressRef.current.getBoundingClientRect();
-      const clickX = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
-      const width = rect.width;
-      if (width <= 0) return;
-      const percentage = clickX / width;
-      const newTime = percentage * duration;
-      const clampedTime = Math.max(0, Math.min(newTime, duration));
-      setPlaybackTime(Math.round(clampedTime));
-    } catch (error) {
-      console.error("Error in handleProgressMouseMove:", error);
-    }
-  };
+  // Khi kéo chuột
+  const handleProgressMouseMove = useCallback((e) => {
+    if (!isDragging) return;
+    handleProgressChange(e);
+  }, [isDragging, handleProgressChange]);
 
-  const handleProgressTouchMove = (e) => {
-    if (!isDragging || !progressRef.current || !isValidDuration) return;
-    try {
-      e.preventDefault();
-      e.stopPropagation();
-      const rect = progressRef.current.getBoundingClientRect();
-      const clientX = e.touches[0]?.clientX;
-      if (!clientX) return;
-      const clickX = Math.max(0, Math.min(clientX - rect.left, rect.width));
-      const width = rect.width;
-      if (width <= 0) return;
-      const percentage = clickX / width;
-      const newTime = percentage * duration;
-      const clampedTime = Math.max(0, Math.min(newTime, duration));
-      setPlaybackTime(Math.round(clampedTime));
-    } catch (error) {
-      console.error("Error in handleProgressTouchMove:", error);
-    }
-  };
+  // Khi kéo trên mobile
+  const handleProgressTouchMove = useCallback((e) => {
+    if (!isDragging) return;
+    e.preventDefault(); // Giữ lại ở đây (vì listener đã được set {passive: false})
+    e.stopPropagation();
+    handleProgressChange(e);
+  }, [isDragging, handleProgressChange]);
 
-  const handleProgressMouseUp = () => {
+  // Khi nhả chuột
+  const handleProgressMouseUp = useCallback(() => {
     setIsDragging(false);
     document.body.style.overflow = "";
-  };
+  }, []);
 
-  const handleProgressTouchEnd = () => {
+  // Khi nhả tay (mobile)
+  const handleProgressTouchEnd = useCallback(() => {
     setIsDragging(false);
     document.body.style.overflow = "";
     document.body.style.touchAction = "";
-  };
+  }, []);
 
-  React.useEffect(() => {
+  // useEffect để gắn/gỡ listener
+  useEffect(() => {
     if (isDragging) {
       window.addEventListener("mousemove", handleProgressMouseMove);
       window.addEventListener("mouseup", handleProgressMouseUp);
       window.addEventListener("touchmove", handleProgressTouchMove, {
-        passive: false,
+        passive: false, // <-- Quan trọng: Cho phép preventDefault trong lúc kéo
       });
       window.addEventListener("touchend", handleProgressTouchEnd);
     }
+    
     return () => {
       window.removeEventListener("mousemove", handleProgressMouseMove);
       window.removeEventListener("mouseup", handleProgressMouseUp);
       window.removeEventListener("touchmove", handleProgressTouchMove);
       window.removeEventListener("touchend", handleProgressTouchEnd);
     };
-  }, [isDragging, isValidDuration]);
+  }, [
+    isDragging, 
+    handleProgressMouseMove, 
+    handleProgressMouseUp, 
+    handleProgressTouchMove, 
+    handleProgressTouchEnd
+  ]);
+  
+  // --- KẾT THÚC SỬA ---
 
   const handleAvailable = () => {
     setSongDescriptionAvailable(true);
@@ -471,7 +522,6 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
               <div
                 className={`h-3 flex-1 ${progressColors.trackBg} rounded-full cursor-pointer group relative`}
                 ref={progressRef}
-                onClick={handleProgressClick}
                 onMouseDown={handleProgressMouseDown}
                 onTouchStart={handleProgressTouchStart}
                 style={{
@@ -491,6 +541,7 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
                   <div
                     className={`absolute right-0 top-1/2 transform -translate-y-1/2 w-5 h-5 ${progressColors.progressBg} rounded-full shadow-lg`}
                     style={{
+                      backgroundColor: progressColors.thumbColor,
                       opacity: isDragging ? 1 : 0,
                       transition: "opacity 0.2s",
                     }}
@@ -554,12 +605,11 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
                 </button>
               </div>
 
-              {/* --- BẮT ĐẦU SỬA MOBILE MENU --- */}
               <Menu
                 shadow="md"
-                position="top-end" // Đổi 'top' thành 'top-end'
-                zIndex={10002} // THÊM Z-INDEX
-                classNames={{ // THÊM STYLING
+                position="top-end"
+                zIndex={10002}
+                classNames={{
                   dropdown: `bg-gradient-to-b ${theme.colors.backgroundOverlay} border border-${theme.colors.border} shadow-2xl backdrop-blur-md rounded-xl p-1`,
                   item: `text-white hover:bg-${theme.colors.cardHover} rounded-md font-medium`,
                 }}
@@ -574,14 +624,14 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
                 <Menu.Dropdown>
                   <Menu.Item
                     onClick={toggleRepeat}
-                    leftSection={getRepeatIcon()} // Dùng leftSection
+                    leftSection={getRepeatIcon()}
                   >
                     Repeat: {repeatMode === "all" ? "All" : "One"}
                   </Menu.Item>
                   <Menu.Item
                     onClick={toggleLike}
                     disabled={loadingLike}
-                    leftSection={ // Dùng leftSection
+                    leftSection={
                       loadingLike ? (
                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                       ) : isLiked ? (
@@ -603,13 +653,13 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
                   <Menu.Item
                     onClick={() => setShowPlaylistModal(true)}
                     disabled={!user}
-                    leftSection={<IconPlaylistAdd size={16} />} // Dùng leftSection
+                    leftSection={<IconPlaylistAdd size={16} />}
                   >
                     {!user ? "Đăng nhập để thêm" : "Thêm vào playlist"}
                   </Menu.Item>
                   <Menu.Item
                     onClick={handleAvailable}
-                    leftSection={<IconArticle size={16} />} // Dùng leftSection
+                    leftSection={<IconArticle size={16} />}
                   >
                     Now Playing
                   </Menu.Item>
@@ -617,26 +667,25 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
                   <Menu.Divider className={`border-${theme.colors.border} my-1`} />
 
                   <Menu.Item
-                    component="a" // Dùng component="a"
+                    component="a"
                     href={currentSong.video_download_url}
-                    leftSection={<IconVideo size={16} />} // Thêm icon
+                    leftSection={<IconVideo size={16} />}
                   >
                     Download video
                   </Menu.Item>
                   <Menu.Item
-                    component="a" // Dùng component="a"
+                    component="a"
                     href={currentSong.audio_download_url}
-                    leftSection={<IconFileMusic size={16} />} // Thêm icon
+                    leftSection={<IconFileMusic size={16} />}
                   >
                     Download audio
                   </Menu.Item>
                 </Menu.Dropdown>
               </Menu>
-              {/* --- KẾT THÚC SỬA MOBILE MENU --- */}
             </div>
           </div>
 
-          {/* Desktop Layout */}
+          {/* Desktop Layout (Giữ nguyên) */}
           <div className="hidden sm:flex items-center justify-between w-full">
             <div className="flex items-center w-1/4 min-w-0">
               <div className="flex items-center gap-3 md:gap-4 min-w-0">
@@ -734,7 +783,6 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
                 <div
                   className={`h-1 flex-1 ${progressColors.trackBg} rounded-full cursor-pointer group relative`}
                   ref={progressRef}
-                  onClick={handleProgressClick}
                   onMouseDown={handleProgressMouseDown}
                   onTouchStart={handleProgressTouchStart}
                   style={{
@@ -747,6 +795,7 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
                   >
                     <div
                       className={`absolute right-0 top-1/2 transform -translate-y-1/2 w-3 h-3 ${progressColors.progressBg} rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg`}
+                      style={{ backgroundColor: progressColors.thumbColor }}
                     ></div>
                   </div>
                 </div>
@@ -775,12 +824,11 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
                 <IconArticle size={18} />
               </button>
 
-              {/* --- BẮT ĐẦU SỬA DESKTOP MENU --- */}
               <Menu
                 shadow="md"
-                position="top-end" // Đổi 'top' thành 'top-end'
-                zIndex={10002} // THÊM Z-INDEX
-                classNames={{ // THÊM STYLING
+                position="top-end"
+                zIndex={10002}
+                classNames={{
                   dropdown: `bg-gradient-to-b ${theme.colors.backgroundOverlay} border border-${theme.colors.border} shadow-2xl backdrop-blur-md rounded-xl p-1`,
                   item: `text-white hover:bg-${theme.colors.cardHover} rounded-md font-medium`,
                 }}
@@ -796,20 +844,19 @@ const PlayerControls = ({ isVisible, onToggleVisibility }) => {
                   <Menu.Item
                     component="a"
                     href={currentSong.video_download_url}
-                    leftSection={<IconVideo size={16} />} // Thêm icon
+                    leftSection={<IconVideo size={16} />}
                   >
                     Download video
                   </Menu.Item>
                   <Menu.Item
                     component="a"
                     href={currentSong.audio_download_url}
-                    leftSection={<IconFileMusic size={16} />} // Thêm icon
+                    leftSection={<IconFileMusic size={16} />}
                   >
                     Download audio
                   </Menu.Item>
                 </Menu.Dropdown>
               </Menu>
-              {/* --- KẾT THÚC SỬA DESKTOP MENU --- */}
 
               <div className="hidden md:flex items-center gap-2">
                 <button
