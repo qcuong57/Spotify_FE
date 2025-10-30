@@ -10,10 +10,8 @@ import {
   IconChevronLeft,
 } from "@tabler/icons-react";
 import { useTheme } from "../../../context/themeContext";
-import {
-  createPlaylistService,
-  getUserPlaylistByIdService,
-} from "../../../services/playlistService";
+import { createPlaylistService } from "../../../services/playlistService";
+// --- XÓA import 'getUserPlaylistByIdService' ---
 import { usePlayList } from "../../../utils/playlistContext";
 
 const Library = ({
@@ -103,18 +101,19 @@ const Library = ({
 
 const Libraries = ({ setCurrentView, onClose }) => {
   const { theme } = useTheme();
-  const [loading, setLoading] = useState(false);
+  // --- SỬA LẠI CÁC STATE ---
+  const [loadingCreate, setLoadingCreate] = useState(false); // Đổi tên state
   const [searchValue, setSearchValue] = useState("");
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(null); // Vẫn giữ user state để check login/logout
   const [isVisible, setIsVisible] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
   const {
     playlists,
-    setPlaylists,
-    refreshKeyPlayLists,
+    setPlaylists, // Vẫn giữ setPlaylists để cập nhật UI khi tạo mới
     setRefreshKeyPlayLists,
+    loadingPlaylists, // <-- LẤY STATE LOADING TỪ CONTEXT
   } = usePlayList();
 
   const [filteredPlaylists, setFilteredPlaylists] = useState([]);
@@ -126,6 +125,7 @@ const Libraries = ({ setCurrentView, onClose }) => {
     return () => clearTimeout(timer);
   }, []);
 
+  // Vẫn giữ lại để kiểm tra và hiển thị thông báo
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     const accessToken = localStorage.getItem("access_token");
@@ -136,55 +136,10 @@ const Libraries = ({ setCurrentView, onClose }) => {
     }
   }, []);
 
-  useEffect(() => {
-    const fetchUserPlaylists = async () => {
-      if (!user || !user.id) {
-        setPlaylists([]);
-        return;
-      }
+  // --- XÓA TOÀN BỘ useEffect fetchUserPlaylists ---
+  // (Context đã làm việc này rồi)
 
-      try {
-        setLoading(true);
-
-        const response = await getUserPlaylistByIdService(user.id);
-
-        if (response && response.data && response.data.playlists) {
-          const playlistsData = response.data.playlists;
-
-
-          // playlistsData.forEach((playlist, index) => {
-          //   console.log(`Playlist ${index + 1}:`, {
-          //     id: playlist.id,
-          //     title: playlist.title,
-          //     song_count: playlist.song_count,
-          //     is_liked_song: playlist.is_liked_song,
-          //   });
-          // });
-
-          setPlaylists(playlistsData);
-        } else {
-          // console.log("Libraries - response structure:", {
-          //   hasData: !!response?.data,
-          //   dataKeys: response?.data ? Object.keys(response.data) : [],
-          //   fullResponse: response,
-          // });
-          setPlaylists([]);
-        }
-      } catch (error) {
-        console.error("Libraries - error fetching user playlists:", error);
-        if (error.response) {
-          console.error("Error response:", error.response.data);
-          console.error("Error status:", error.response.status);
-        }
-        setPlaylists([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUserPlaylists();
-  }, [user, refreshKeyPlayLists, setPlaylists]);
-
+  // useEffect này bây giờ chỉ lọc
   useEffect(() => {
     if (!searchValue.trim()) {
       setFilteredPlaylists(playlists);
@@ -194,7 +149,7 @@ const Libraries = ({ setCurrentView, onClose }) => {
       );
       setFilteredPlaylists(filtered);
     }
-  }, [playlists, searchValue]);
+  }, [playlists, searchValue]); // Phụ thuộc vào playlists từ context
 
   const handleClose = () => {
     setIsClosing(true);
@@ -215,7 +170,7 @@ const Libraries = ({ setCurrentView, onClose }) => {
     }
 
     try {
-      setLoading(true);
+      setLoadingCreate(true); // Dùng state mới
 
       const playlistData = {
         title: `Danh sách phát của tôi #${playlists.length + 1}`,
@@ -223,11 +178,11 @@ const Libraries = ({ setCurrentView, onClose }) => {
         image: null,
       };
 
-
       
       const response = await createPlaylistService(playlistData);
 
       if (response && response.data) {
+        // --- LOGIC TẠO PLAYLIST VẪN GIỮ NGUYÊN ---
         const newPlaylist = {
           id: response.data.id,
           title: response.data.title,
@@ -240,12 +195,13 @@ const Libraries = ({ setCurrentView, onClose }) => {
           updated_at: response.data.updated_at || new Date().toISOString(),
         };
 
-
+        // Cập nhật local state ngay lập tức
         setPlaylists((prevPlaylists) => {
           const updatedPlaylists = [newPlaylist, ...prevPlaylists];
           return updatedPlaylists;
         });
 
+        // Kích hoạt context fetch lại (để đảm bảo)
         setRefreshKeyPlayLists(Date.now());
 
         setTimeout(() => {
@@ -273,7 +229,7 @@ const Libraries = ({ setCurrentView, onClose }) => {
         alert("Có lỗi xảy ra khi tạo playlist!");
       }
     } finally {
-      setLoading(false);
+      setLoadingCreate(false); // Dùng state mới
     }
   };
 
@@ -358,21 +314,21 @@ const Libraries = ({ setCurrentView, onClose }) => {
           } flex items-center justify-center h-10 md:h-10 px-4 md:px-4 rounded-full cursor-pointer hover:bg-${
             theme.colors.cardHover
           } transition-all duration-200 hover:scale-105 shadow-lg ${
-            loading ? `bg-${theme.colors.primary}-600/20` : ""
+            loadingCreate ? `bg-${theme.colors.primary}-600/20` : "" // Sửa state
           }`}
           onClick={handleCreatePlaylist}
-          disabled={loading}
+          disabled={loadingCreate} // Sửa state
         >
           <IconPlus
             stroke={2}
             className={`w-5 h-5 md:w-5 md:h-5 mr-2 md:mr-1 transition-transform duration-200 text-${
               theme.colors.text
-            } ${loading ? "animate-spin" : ""}`}
+            } ${loadingCreate ? "animate-spin" : ""}`} // Sửa state
           />
           <span
             className={`text-sm md:text-base font-bold text-${theme.colors.text}`}
           >
-            {loading ? "Tạo..." : "Tạo"}
+            {loadingCreate ? "Tạo..." : "Tạo"} {/* Sửa state */}
           </span>
         </button>
       </div>
@@ -447,7 +403,7 @@ const Libraries = ({ setCurrentView, onClose }) => {
               Đăng nhập để tạo và quản lý danh sách phát của bạn
             </p>
           </div>
-        ) : loading ? (
+        ) : loadingPlaylists ? ( // <-- SỬ DỤNG STATE TỪ CONTEXT
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
               <div
@@ -480,9 +436,9 @@ const Libraries = ({ setCurrentView, onClose }) => {
               <button
                 className={`text-sm md:text-sm font-bold bg-${theme.colors.button} hover:bg-${theme.colors.buttonHover} text-${theme.colors.primary}-900 rounded-full py-2 px-4 transition-all duration-200 hover:scale-105 shadow-md`}
                 onClick={handleCreatePlaylist}
-                disabled={loading}
+                disabled={loadingCreate} // Sửa state
               >
-                {loading ? "Đang tạo..." : "Tạo danh sách phát"}
+                {loadingCreate ? "Đang tạo..." : "Tạo danh sách phát"} {/* Sửa state */}
               </button>
             )}
           </div>

@@ -10,6 +10,7 @@ import {
 } from "../../services/SongsService";
 import { getAllGenres } from "../../services/genresService";
 import { useTheme } from "../../context/themeContext";
+import { usePlayList } from "../../utils/playlistContext"; // <-- THÊM DÒNG NÀY
 import GenreFilter from "../../components/user/main/GenreFilter";
 import SongGrid from "../../components/user/main/SongGrid";
 import TrendingSection from "../../components/user/main/TrendingSection";
@@ -18,7 +19,7 @@ import ErrorState from "../../components/user/main/ErrorState";
 import Section from "../../components/user/main/Section";
 import TopSongsSection from "../../components/user/TopSongsSection";
 import DailyMixSection from "../../components/user/DailyMixSection";
-
+import PlaylistSection from "../../components/user/PlaylistSection"; // <-- THÊM DÒNG NÀY
 const pageVariants = {
   initial: { opacity: 0, y: 20 },
   animate: {
@@ -54,6 +55,7 @@ const emptyStateVariants = {
 
 const MainContent = ({ setCurrentView, setListSongsDetail }) => {
   const { theme } = useTheme();
+  const { playlists } = usePlayList(); // <-- THÊM DÒNG NÀY
   const [allSongs, setAllSongs] = useState([]);
   const [trendingSongs, setTrendingSongs] = useState([]);
   const [latestSongs, setLatestSongs] = useState([]);
@@ -458,6 +460,16 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
             isLoading={genreFilterLoading}
           />
         )}
+        {/* --- THÊM KHU VỰC PLAYLIST MỚI TẠI ĐÂY --- */}
+        <AnimatePresence>
+          {playlists.length > 0 && (
+            <PlaylistSection
+              playlists={playlists}
+              setCurrentView={setCurrentView}
+            />
+          )}
+        </AnimatePresence>
+        {/* --- KẾT THÚC KHU VỰC MỚI --- */}
       </AnimatePresence>
 
       {/* Filtered Songs Section (when genre is selected) */}
@@ -504,29 +516,28 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
               />
             )}
 
-
             {topSongs.length > 0 && ( // <--- THÊM MỚI
               <TopSongsSection
-              topSongs={topSongs}
-              contextMenu={contextMenu}
-              setContextMenu={setContextMenu}
-              handleCloseContextMenu={handleCloseContextMenu}
-              onViewAll={handleLoadAllTopSongs}
-              isLoading={loadingStates.topSongs}
-              index={1} // Đổi index
-              />
-            )}
-
-            {/* Daily Mix Section (TEST COMPONENT) */} 
-            <DailyMixSection // <--- THÊM COMPONENT MỚI
+                topSongs={topSongs}
                 contextMenu={contextMenu}
                 setContextMenu={setContextMenu}
                 handleCloseContextMenu={handleCloseContextMenu}
-                setCurrentView={setCurrentView}
-                setListSongsDetail={setListSongsDetail}
-                index={1}
+                onViewAll={handleLoadAllTopSongs}
+                isLoading={loadingStates.topSongs}
+                index={1} // Đổi index
+              />
+            )}
+
+            {/* Daily Mix Section (TEST COMPONENT) */}
+            <DailyMixSection // <--- THÊM COMPONENT MỚI
+              contextMenu={contextMenu}
+              setContextMenu={setContextMenu}
+              handleCloseContextMenu={handleCloseContextMenu}
+              setCurrentView={setCurrentView}
+              setListSongsDetail={setListSongsDetail}
+              index={1}
             />
-            
+
             {/* Latest Songs Section */}
             {latestSongs.length > 0 && (
               <Section
