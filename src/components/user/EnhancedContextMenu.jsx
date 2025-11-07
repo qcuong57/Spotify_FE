@@ -116,7 +116,7 @@ const EnhancedContextMenu = ({ x, y, deleteSong, song, onClose }) => {
     >
       {/* Add to Liked Songs */}
       <button
-        className="block w-full text-left px-4 py-3 text-white hover:bg-white/10 text-sm flex items-center gap-2 transition-colors duration-200"
+        className=" w-full text-left px-4 py-3 text-white hover:bg-white/10 text-sm flex items-center gap-2 transition-colors duration-200"
         onClick={addSongLikedSong}
       >
         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -131,7 +131,7 @@ const EnhancedContextMenu = ({ x, y, deleteSong, song, onClose }) => {
         onMouseEnter={() => setShowPlaylists(true)}
         onMouseLeave={() => setShowPlaylists(false)}
       >
-        <button className="block w-full text-left px-4 py-3 text-white hover:bg-white/10 text-sm flex items-center gap-2 transition-colors duration-200">
+        <button className=" w-full text-left px-4 py-3 text-white hover:bg-white/10 text-sm flex items-center gap-2 transition-colors duration-200">
           <IconPlus className="w-4 h-4" />
           Thêm vào danh sách phát
         </button>
@@ -258,7 +258,7 @@ const EnhancedContextMenu = ({ x, y, deleteSong, song, onClose }) => {
       {/* Remove from playlist option (if applicable) */}
       {deleteSong && (
         <button
-          className="block w-full text-left px-4 py-3 text-red-400 hover:bg-red-500/10 text-sm flex items-center gap-2 transition-colors duration-200"
+          className=" w-full text-left px-4 py-3 text-red-400 hover:bg-red-500/10 text-sm flex items-center gap-2 transition-colors duration-200"
           onClick={deleteSong}
         >
           <IconX className="w-4 h-4" />
