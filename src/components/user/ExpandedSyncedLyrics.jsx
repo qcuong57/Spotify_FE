@@ -16,6 +16,7 @@ const ExpandedSyncedLyrics = ({
   const [currentTime, setCurrentTime] = useState(0);
   const containerRef = useRef(null);
   const [visibleLyricIndex, setVisibleLyricIndex] = useState(-1);
+  const scrollAnimationRef = useRef(null);
 
   // Parse lyrics từ LRC format (Giữ nguyên)
   const parseLyricsFromText = (lyricsText) => {
@@ -80,28 +81,39 @@ const ExpandedSyncedLyrics = ({
     }
   }, [lyricsText]);
 
-  // Logic tìm lyric hiện tại (Giữ nguyên logic chính)
+  // --- THAY ĐỔI: Logic tìm lyric hiện tại (Sửa lỗi tua lại/lặp lại) ---
   useEffect(() => {
     if (!audioElement || lyrics.length === 0) return;
 
     let animationFrameId;
 
-    const findActiveLyricIndex = (time, syncedLyrics, currentLyricIndex) => {
-      let activeIndex = currentLyricIndex;
+    /**
+     * --- THAY ĐỔI: Hàm này được sửa lại để luôn tìm kiếm từ đầu ---
+     * Điều này sửa lỗi khi tua lại (seek backward) hoặc lặp lại bài hát.
+     * Nó tìm dòng lyric CUỐI CÙNG có thời gian <= thời gian hiện tại của bài hát.
+     */
+    const findActiveLyricIndex = (time, syncedLyrics) => {
+      let activeIndexInSynced = -1; // Chỉ số của lyric trong mảng `syncedLyrics` (đã lọc)
 
-      const searchStart = Math.max(0, currentLyricIndex - 3);
-      for (let i = searchStart; i < syncedLyrics.length; i++) {
-        const currentLyric = syncedLyrics[i];
-        const nextLyric = syncedLyrics[i + 1];
-
-        if (
-          currentLyric.time <= time &&
-          (!nextLyric || nextLyric.time > time)
-        ) {
-          return lyrics.findIndex((lyric) => lyric.id === currentLyric.id);
+      // Luôn tìm từ đầu mảng đã lọc
+      for (let i = 0; i < syncedLyrics.length; i++) {
+        if (syncedLyrics[i].time <= time) {
+          activeIndexInSynced = i; // Cập nhật lyric cuối cùng khớp với thời gian
+        } else {
+          // Vì mảng đã được sắp xếp, chúng ta có thể dừng ngay khi vượt quá thời gian
+          break;
         }
       }
-      return activeIndex;
+
+      if (activeIndexInSynced === -1) {
+        // Thời gian hiện tại sớm hơn lyric đầu tiên
+        return -1;
+      }
+
+      // Ánh xạ chỉ số `activeIndexInSynced` (từ mảng `syncedLyrics`)
+      // về chỉ số đúng trong mảng `lyrics` gốc (bao gồm cả dòng không có timestamp)
+      const targetId = syncedLyrics[activeIndexInSynced].id;
+      return lyrics.findIndex((lyric) => lyric.id === targetId);
     };
 
     const updateTime = () => {
@@ -115,13 +127,11 @@ const ExpandedSyncedLyrics = ({
 
       const syncedLyrics = lyrics.filter((l) => l.time !== null);
 
-      const newIndex = findActiveLyricIndex(
-        time,
-        syncedLyrics,
-        currentLyricIndex
-      );
-
-      if (newIndex !== -1 && newIndex !== currentLyricIndex) {
+      // --- THAY ĐỔI: Không truyền `currentLyricIndex` vào hàm tìm kiếm nữa ---
+      const newIndex = findActiveLyricIndex(time, syncedLyrics);
+      
+      // `currentLyricIndex` ở đây là bản "tươi" nhất từ state (do có trong dependency array)
+      if (newIndex !== currentLyricIndex) {
         setCurrentLyricIndex(newIndex);
       }
 
@@ -133,9 +143,9 @@ const ExpandedSyncedLyrics = ({
     return () => {
       cancelAnimationFrame(animationFrameId);
     };
-  }, [audioElement, isPlaying, lyrics, currentLyricIndex]);
+  }, [audioElement, isPlaying, lyrics, currentLyricIndex]); // <-- Giữ nguyên dependency array
 
-  // Seek to specific lyric
+  // Seek to specific lyric (Giữ nguyên)
   const seekToLyric = useCallback(
     (time) => {
       if (audioElement && time !== null) {
@@ -145,7 +155,15 @@ const ExpandedSyncedLyrics = ({
     [audioElement]
   );
 
-  // AUTO SCROLL: Căn dòng active vào 35% từ trên xuống (Giữ nguyên)
+  // Hủy cuộn tự động khi người dùng tương tác (Giữ nguyên)
+  const handleManualScroll = () => {
+    if (scrollAnimationRef.current) {
+      cancelAnimationFrame(scrollAnimationRef.current);
+      scrollAnimationRef.current = null;
+    }
+  };
+
+  // Logic AUTO SCROLL (Giữ nguyên)
   useEffect(() => {
     if (currentLyricIndex >= 0 && containerRef.current) {
       const container = containerRef.current;
@@ -164,10 +182,37 @@ const ExpandedSyncedLyrics = ({
           containerRect.height * targetPositionRatio +
           elementRect.height / 2;
 
-        container.scrollTo({
-          top: container.scrollTop + scrollOffset,
-          behavior: "smooth",
-        });
+        const targetScrollTop = container.scrollTop + scrollOffset;
+
+        if (scrollAnimationRef.current) {
+          cancelAnimationFrame(scrollAnimationRef.current);
+        }
+
+        const startScrollTop = container.scrollTop;
+        const distance = targetScrollTop - startScrollTop;
+        const duration = 600; // 600ms
+        let startTime = null;
+
+        const easeInOutCubic = (t) => {
+          return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        };
+
+        const animation = (currentTime) => {
+          if (startTime === null) startTime = currentTime;
+          const timeElapsed = currentTime - startTime;
+          const progress = Math.min(timeElapsed / duration, 1);
+          const easedProgress = easeInOutCubic(progress);
+
+          container.scrollTop = startScrollTop + distance * easedProgress;
+
+          if (timeElapsed < duration) {
+            scrollAnimationRef.current = requestAnimationFrame(animation);
+          } else {
+            scrollAnimationRef.current = null;
+          }
+        };
+
+        scrollAnimationRef.current = requestAnimationFrame(animation);
       }
     }
   }, [currentLyricIndex]);
@@ -355,13 +400,15 @@ const ExpandedSyncedLyrics = ({
     );
   }
 
-  // Scrollable lyrics mode - ĐÃ CHO PHÉP XUỐNG DÒNG
+  // Scrollable lyrics mode
   const fontStyle =
     '-apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif';
 
   return (
     <Box
       ref={containerRef}
+      onWheel={handleManualScroll}
+      onTouchMove={handleManualScroll}
       className={`${className} custom-lyrics-scroll`}
       style={{
         width: "100%",
@@ -370,7 +417,7 @@ const ExpandedSyncedLyrics = ({
         position: "relative",
         overflow: "auto",
         padding: "45% 32px 35%",
-        scrollBehavior: "smooth",
+        scrollBehavior: "auto",
       }}
     >
       {/* Lyrics list */}
@@ -385,10 +432,9 @@ const ExpandedSyncedLyrics = ({
             ? "rgba(255, 255, 255, 1)"
             : "rgba(255, 255, 255, 0.8)";
 
-          // THAY ĐỔI: Cho phép chữ xuống dòng
           const wordWrapStyle = {
-            whiteSpace: "normal", // Cho phép xuống dòng
-            wordWrap: "break-word", // Tự động ngắt từ
+            whiteSpace: "normal",
+            wordWrap: "break-word",
             maxWidth: "100%",
             display: "block",
           };
@@ -430,7 +476,7 @@ const ExpandedSyncedLyrics = ({
 
                   fontSize: 30,
                   fontWeight: 655,
-                  lineHeight: 1.35, // Tăng nhẹ line height cho dễ đọc khi xuống dòng
+                  lineHeight: 1.35,
 
                   textShadow: isActive
                     ? "0 2px 10px rgba(0,0,0,0.5)"
@@ -440,7 +486,7 @@ const ExpandedSyncedLyrics = ({
                   position: "relative",
                   zIndex: 1,
 
-                  ...wordWrapStyle, // Áp dụng style xuống dòng
+                  ...wordWrapStyle,
                 }}
               >
                 {lyric.text}

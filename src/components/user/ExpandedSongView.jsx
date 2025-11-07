@@ -1,7 +1,8 @@
 // ExpandedSongView.jsx (Đã lọc màu sáng + Thêm lại logic Random)
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Box, Text } from "@mantine/core";
+// --- THAY ĐỔI: Thêm Menu ---
+import { Box, Text, Menu } from "@mantine/core";
 import {
   IconX,
   IconHeart,
@@ -12,13 +13,18 @@ import {
   IconPlayerSkipForwardFilled,
   IconPlayerSkipBackFilled,
   IconPalette,
+  // --- MỚI: Thêm các icon ---
+  IconVolume,
+  IconVolumeOff,
+  IconRepeat,
+  IconRepeatOnce,
 } from "@tabler/icons-react";
 import ExpandedSyncedLyrics from "./ExpandedSyncedLyrics";
 import { useAudio } from "../../utils/audioContext";
 import { motion, AnimatePresence } from "framer-motion";
 import ColorPalettePopup from "./ColorPalettePopup";
 
-// --- MiniPlayerControls Component (Không thay đổi) ---
+// --- MiniPlayerControls Component (ĐÃ THAY ĐỔI) ---
 const MiniPlayerControls = ({
   theme,
   currentTime,
@@ -32,6 +38,12 @@ const MiniPlayerControls = ({
   handleProgressTouchStart,
   progressRef,
   isDragging,
+  // --- MỚI: Thêm props cho Âm lượng và Lặp lại ---
+  volume,
+  setVolume,
+  repeatMode,
+  toggleRepeat,
+  getRepeatIcon,
 }) => {
   const { isPlaying } = useAudio();
   const formatTime = (time) => {
@@ -47,7 +59,7 @@ const MiniPlayerControls = ({
       style={{ minHeight: "100px" }}
     >
       <div className="relative z-20 flex flex-col items-center">
-        {/* Progress Bar */}
+        {/* Progress Bar (Giữ nguyên) */}
         <div className="w-full flex items-center gap-2 mb-4">
           <span className="text-xs text-white/70 font-medium min-w-[32px] text-right">
             {formatTime(currentTime)}
@@ -61,7 +73,10 @@ const MiniPlayerControls = ({
           >
             <div
               className={`h-full rounded-full relative transition-colors pointer-events-none`}
-              style={{ width: `${progressPercent}%`, backgroundColor: progressColors.thumbColor }}
+              style={{
+                width: `${progressPercent}%`,
+                backgroundColor: progressColors.thumbColor,
+              }}
             >
               <div
                 className={`absolute right-0 top-1/2 transform -translate-y-1/2 w-3 h-3 rounded-full shadow-xl transition-all duration-200`}
@@ -78,8 +93,48 @@ const MiniPlayerControls = ({
           </span>
         </div>
 
-        {/* Playback Buttons */}
-        <div className="flex items-center gap-6">
+        {/* Playback Buttons (ĐÃ THAY ĐỔI: Thêm nút 2 bên) */}
+        <div className="flex items-center justify-center gap-4 md:gap-5 w-full">
+          {/* --- MỚI: Nút Âm lượng (Bên trái) --- */}
+          <Menu
+            shadow="lg"
+            position="top-start"
+            offset={15}
+            zIndex={20001} // Đảm bảo cao hơn nền
+            classNames={{
+              dropdown: `bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-0 overflow-hidden`,
+            }}
+          >
+            <Menu.Target>
+              <button
+                className="text-white/70 hover:text-white transition-colors p-2"
+                title="Âm lượng"
+              >
+                {volume == 0 ? (
+                  <IconVolumeOff size={24} />
+                ) : (
+                  <IconVolume size={24} />
+                )}
+              </button>
+            </Menu.Target>
+            <Menu.Dropdown>
+              {/* Wrapper cho thanh trượt dọc */}
+              <div className="flex justify-center items-center w-12 h-40 p-4">
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="1" // Để kéo mượt
+                  value={volume}
+                  onChange={(e) => setVolume(Number(e.target.value))}
+                  // Dùng transform rotate để xoay dọc
+                  className="w-32 h-2 cursor-pointer transform -rotate-90 vertical-slider"
+                />
+              </div>
+            </Menu.Dropdown>
+          </Menu>
+
+          {/* --- Cụm nút điều khiển chính (Ở giữa) --- */}
           <button
             className="text-white/70 hover:text-white transition-colors p-2"
             onClick={playBackSong}
@@ -104,14 +159,34 @@ const MiniPlayerControls = ({
           >
             <IconPlayerSkipForwardFilled size={24} />
           </button>
+
+          {/* --- MỚI: Nút Lặp lại (Bên phải) --- */}
+          <button
+            className={`transition-colors p-2 ${
+              repeatMode === "none"
+                ? "text-white/50 hover:text-white/70" // Màu khi không kích hoạt
+                : "text-white hover:text-white/80" // Màu khi kích hoạt (all, one)
+            }`}
+            onClick={toggleRepeat}
+            title={`Lặp lại: ${
+              repeatMode === "none"
+                ? "Không"
+                : repeatMode === "all"
+                ? "Tất cả"
+                : "Một bài"
+            }`}
+          >
+            {getRepeatIcon()}
+          </button>
         </div>
       </div>
     </div>
   );
 };
 
-// --- DANH SÁCH GRADIENT CỐ ĐỊNH (ĐÃ LỌC BỎ CÁC MÀU QUÁ SÁNG) ---
+// --- DANH SÁCH GRADIENT CỐ ĐỊNH (Giữ nguyên) ---
 const PREDEFINED_GRADIENTS = [
+  // ... (danh sách gradient của bạn giữ nguyên)
   { id: 'default', name: 'Mặc định', c1: 'hsl(220, 80%, 30%)', c2: 'hsl(290, 70%, 25%)', c3: 'hsl(330, 75%, 30%)' },
   { id: 'sunset', name: 'Hoàng hôn', c1: '#4c114e', c2: '#a4364c', c3: '#f78a3a' },
   { id: 'ocean', name: 'Đại dương', c1: '#0d324d', c2: '#1b5f70', c3: '#76dbd1' },
@@ -120,9 +195,7 @@ const PREDEFINED_GRADIENTS = [
   { id: 'dream', name: 'Mơ màng', c1: '#1f1c2c', c2: '#928dab', c3: '#a79ab2' },
   { id: 'dark_neon', name: 'Neon tối', c1: '#000000', c2: '#0b3c53', c3: '#d900ff' },
   { id: 'vintage', name: 'Cổ điển', c1: '#6D5D4B', c2: '#B09B71', c3: '#D8C8A8' },
-  // Đã lọc bỏ 4 màu sáng: 'light_sky', 'light_peach', 'light_mint', 'rose'
 ];
-
 
 // --- ExpandedSongView Component ---
 
@@ -137,23 +210,21 @@ const ExpandedSongView = ({
   const [showLyrics, setShowLyrics] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
 
-  // --- START: Logic nền động (ĐÃ THAY ĐỔI) ---
-  // State để hiển thị/ẩn popup
+  // --- Logic nền động (Giữ nguyên) ---
   const [showColorPalette, setShowColorPalette] = useState(false);
-  // State cho gradient đã chọn, khởi đầu là màu đầu tiên
-  const [selectedGradient, setSelectedGradient] = useState(PREDEFINED_GRADIENTS[0]);
-
-  // --- MỚI: Thêm lại logic chọn màu ngẫu nhiên khi mở ---
+  const [selectedGradient, setSelectedGradient] = useState(
+    PREDEFINED_GRADIENTS[0]
+  );
   useEffect(() => {
-    // Chỉ chọn màu ngẫu nhiên khi component bắt đầu hiển thị
     if (isVisible && !isClosing) {
-      const randomIndex = Math.floor(Math.random() * PREDEFINED_GRADIENTS.length);
+      const randomIndex = Math.floor(
+        Math.random() * PREDEFINED_GRADIENTS.length
+      );
       setSelectedGradient(PREDEFINED_GRADIENTS[randomIndex]);
     }
-  }, [isVisible, isClosing]); // Phụ thuộc vào isVisible và isClosing
-  // --- END: Logic nền động ---
-  
-  // Lấy dữ liệu từ useAudio
+  }, [isVisible, isClosing]);
+
+  // --- THAY ĐỔI: Lấy thêm data từ useAudio ---
   const {
     currentTime,
     duration,
@@ -161,7 +232,37 @@ const ExpandedSongView = ({
     playNextSong,
     playBackSong,
     setIsPlaying,
+    // --- MỚI ---
+    volume,
+    setVolume,
+    repeatMode,
+    setRepeatMode,
   } = useAudio();
+  
+  // --- MỚI: Thêm logic cho nút Lặp lại ---
+  // Chuyển đổi giữa 3 chế độ: none -> all -> one -> none
+  const toggleRepeat = () => {
+    if (repeatMode === 'none') {
+      setRepeatMode('all');
+    } else if (repeatMode === 'all') {
+      setRepeatMode('one');
+    } else { // 'one'
+      setRepeatMode('none');
+    }
+  };
+
+  // --- MỚI: Lấy icon Lặp lại tương ứng ---
+  const getRepeatIcon = () => {
+    switch (repeatMode) {
+      case "one":
+        return <IconRepeatOnce size={24} />;
+      default:
+        // 'all' và 'none' đều dùng icon IconRepeat
+        // (Màu sắc đã được xử lý ở className của button)
+        return <IconRepeat size={24} />;
+    }
+  };
+
 
   // Tái tạo logic progress colors (Giữ nguyên)
   const getProgressColorsLocal = () => {
@@ -185,14 +286,15 @@ const ExpandedSongView = ({
     }
   };
   const progressColors = getProgressColorsLocal();
-  
+
   // Logic Progress Bar (Giữ nguyên)
   const progressRef = useRef(null);
   const [isDragging, setIsDragging] = useState(false);
-  
+
   // ... (Toàn bộ logic kéo thanh Progress Bar được giữ nguyên)
   const isValidDuration = duration && !isNaN(duration) && duration > 0;
-  const isValidCurrentTime = currentTime && !isNaN(currentTime) && currentTime >= 0;
+  const isValidCurrentTime =
+    currentTime && !isNaN(currentTime) && currentTime >= 0;
   const progressPercent =
     isValidDuration && isValidCurrentTime ? (currentTime / duration) * 100 : 0;
 
@@ -208,50 +310,65 @@ const ExpandedSongView = ({
     });
   };
 
-  const handleProgressChange = useCallback((e) => {
-    if (!progressRef.current || !isValidDuration) return;
-    try {
-      const rect = progressRef.current.getBoundingClientRect();
-      let clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      if (clientX === undefined) return;
+  const handleProgressChange = useCallback(
+    (e) => {
+      if (!progressRef.current || !isValidDuration) return;
+      try {
+        const rect = progressRef.current.getBoundingClientRect();
+        let clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        if (clientX === undefined) return;
 
-      const clickX = clientX - rect.left;
-      const width = rect.width;
-      if (width <= 0) return;
-      
-      const percentage = Math.max(0, Math.min(clickX / width, 1));
-      const newTime = percentage * duration;
-      setPlaybackTime(Math.round(newTime));
-    } catch (error) {
-      console.error("Error in handleProgressChange:", error);
-    }
-  }, [isValidDuration, duration, setPlaybackTime]);
+        const clickX = clientX - rect.left;
+        const width = rect.width;
+        if (width <= 0) return;
 
-  const handleProgressMouseDown = useCallback((e) => {
-    e.preventDefault();
-    if (!isValidDuration) return;
-    setIsDragging(true);
-    handleProgressChange(e);
-  }, [isValidDuration, handleProgressChange]);
+        const percentage = Math.max(0, Math.min(clickX / width, 1));
+        const newTime = percentage * duration;
+        setPlaybackTime(Math.round(newTime));
+      } catch (error) {
+        console.error("Error in handleProgressChange:", error);
+      }
+    },
+    [isValidDuration, duration, setPlaybackTime]
+  );
 
-  const handleProgressTouchStart = useCallback((e) => {
-    e.stopPropagation();
-    if (!isValidDuration) return;
-    setIsDragging(true);
-    handleProgressChange(e);
-  }, [isValidDuration, handleProgressChange]);
+  const handleProgressMouseDown = useCallback(
+    (e) => {
+      e.preventDefault();
+      if (!isValidDuration) return;
+      setIsDragging(true);
+      handleProgressChange(e);
+    },
+    [isValidDuration, handleProgressChange]
+  );
 
-  const handleProgressMouseMove = useCallback((e) => {
-    if (!isDragging) return;
-    handleProgressChange(e);
-  }, [isDragging, handleProgressChange]);
+  const handleProgressTouchStart = useCallback(
+    (e) => {
+      e.stopPropagation();
+      if (!isValidDuration) return;
+      setIsDragging(true);
+      handleProgressChange(e);
+    },
+    [isValidDuration, handleProgressChange]
+  );
 
-  const handleProgressTouchMove = useCallback((e) => {
-    if (!isDragging) return;
-    e.preventDefault();
-    e.stopPropagation();
-    handleProgressChange(e);
-  }, [isDragging, handleProgressChange]);
+  const handleProgressMouseMove = useCallback(
+    (e) => {
+      if (!isDragging) return;
+      handleProgressChange(e);
+    },
+    [isDragging, handleProgressChange]
+  );
+
+  const handleProgressTouchMove = useCallback(
+    (e) => {
+      if (!isDragging) return;
+      e.preventDefault();
+      e.stopPropagation();
+      handleProgressChange(e);
+    },
+    [isDragging, handleProgressChange]
+  );
 
   const handleProgressUp = useCallback(() => {
     setIsDragging(false);
@@ -269,7 +386,7 @@ const ExpandedSongView = ({
     } else {
       document.body.classList.remove("dragging");
     }
-    
+
     return () => {
       document.body.classList.remove("dragging");
       window.removeEventListener("mousemove", handleProgressMouseMove);
@@ -278,14 +395,16 @@ const ExpandedSongView = ({
       window.removeEventListener("touchend", handleProgressUp);
     };
   }, [
-    isDragging, 
-    handleProgressMouseMove, 
-    handleProgressUp, 
+    isDragging,
+    handleProgressMouseMove,
+    handleProgressUp,
     handleProgressTouchMove,
   ]);
   // --- END Logic kéo thanh Progress ---
 
-  const hasLyrics = currentSong?.lyrics && currentSong.lyrics.trim().length > 0;
+  // (Các logic khác giữ nguyên)
+  const hasLyrics =
+    currentSong?.lyrics && currentSong.lyrics.trim().length > 0;
   const hasTimestamps =
     hasLyrics &&
     currentSong.lyrics.includes("[") &&
@@ -302,7 +421,7 @@ const ExpandedSongView = ({
     setTimeout(() => {
       onClose();
       // Reset lại isClosing sau khi đã đóng
-      setTimeout(() => setIsClosing(false), 50); 
+      setTimeout(() => setIsClosing(false), 50);
     }, 300);
   };
 
@@ -310,6 +429,7 @@ const ExpandedSongView = ({
 
   return (
     <div
+      // ... (Phần Nền Động và Header giữ nguyên)
       className={`fixed inset-0 z-[20000] transition-all duration-300 ease-out ${
         isVisible && !isClosing ? "opacity-100 scale-100" : "opacity-0 scale-95"
       }`}
@@ -358,11 +478,12 @@ const ExpandedSongView = ({
       <div className="absolute top-0 left-0 right-0 z-10 p-4 md:p-6">
         <div className="flex items-center justify-end">
           <div className="flex items-center space-x-3">
-            
             <button
               onClick={() => setShowColorPalette(true)}
               className={`p-3 rounded-full transition-all duration-200 backdrop-blur-sm border border-white/20 hover:bg-white/15 text-white/70 hover:text-white hover:scale-105 ${
-                showColorPalette ? "bg-white/25 text-white shadow-lg scale-105" : ""
+                showColorPalette
+                  ? "bg-white/25 text-white shadow-lg scale-105"
+                  : ""
               }`}
               title="Đổi Nền"
             >
@@ -392,7 +513,7 @@ const ExpandedSongView = ({
         </div>
       </div>
 
-      {/* Main Content */}
+      {/* Main Content (Giữ nguyên) */}
       <div className="flex flex-col md:flex-row items-center md:items-start h-full p-4 pt-20 pb-16 md:p-8 md:pt-24 md:pb-20">
         <div
           className={`flex flex-col md:flex-row items-center md:items-start w-full h-full max-w-7xl mx-auto transition-all duration-500 gap-4 md:gap-8 ${
@@ -415,9 +536,7 @@ const ExpandedSongView = ({
               />
 
               {/* Main Album Art Container */}
-              <div
-                className="relative mx-auto aspect-square rounded-3xl overflow-hidden shadow-2xl border border-white/10 transition-all duration-300 group-hover:shadow-3xl group-hover:scale-105 w-full max-w-xs sm:max-w-sm md:max-w-none md:w-[325px] md:h-[325px]" 
-              >
+              <div className="relative mx-auto aspect-square rounded-3xl overflow-hidden shadow-2xl border border-white/10 transition-all duration-300 group-hover:shadow-3xl group-hover:scale-105 w-full max-w-xs sm:max-w-sm md:max-w-none md:w-[325px] md:h-[325px]">
                 <img
                   src={currentSong.image}
                   alt={currentSong.song_name}
@@ -472,7 +591,7 @@ const ExpandedSongView = ({
               </div>
             </div>
 
-            {/* MINI PLAYER CONTROLS */}
+            {/* MINI PLAYER CONTROLS (ĐÃ THAY ĐỔI: Truyền props mới) */}
             <MiniPlayerControls
               theme={theme}
               currentTime={currentTime}
@@ -486,19 +605,24 @@ const ExpandedSongView = ({
               handleProgressTouchStart={handleProgressTouchStart}
               progressRef={progressRef}
               isDragging={isDragging}
+              // --- MỚI ---
+              volume={volume}
+              setVolume={setVolume}
+              repeatMode={repeatMode}
+              toggleRepeat={toggleRepeat}
+              getRepeatIcon={getRepeatIcon}
             />
-
           </div>
 
-          {/* Lyrics Section */}
+          {/* Lyrics Section (Giữ nguyên) */}
           {showLyrics && hasLyrics && (
             <div className="flex-1 h-full min-w-0 flex flex-col w-full">
-              <div className="h-full flex flex-col overflow-hidden"> 
+              <div className="h-full flex flex-col overflow-hidden">
                 {/* Lyrics Container */}
                 <div className="flex-1 min-h-0 relative overflow-hidden">
                   <div className="h-full w-full rounded-2xl overflow-hidden flex justify-center">
                     {hasTimestamps ? (
-                      <div className="h-full w-full p-1 overflow-hidden max-w-3xl mx-auto"> 
+                      <div className="h-full w-full p-1 overflow-hidden max-w-3xl mx-auto">
                         <ExpandedSyncedLyrics
                           lyricsText={currentSong.lyrics}
                           audioElement={audio}
@@ -556,8 +680,8 @@ const ExpandedSongView = ({
           )}
         </div>
       </div>
-      
-      {/* RENDER POPUP BẢNG MÀU */}
+
+      {/* RENDER POPUP BẢNG MÀU (Giữ nguyên) */}
       <ColorPalettePopup
         isVisible={showColorPalette}
         onClose={() => setShowColorPalette(false)}
@@ -566,9 +690,9 @@ const ExpandedSongView = ({
         onSelectGradient={setSelectedGradient}
       />
 
-
+      {/* --- THAY ĐỔI: Thêm style cho thanh trượt dọc --- */}
       <style jsx>{`
-        /* Giữ nguyên tất cả các style jsx... */
+        /* Giữ nguyên tất cả các style jsx cũ... */
         .custom-scrollbar {
           scrollbar-width: none;
           -ms-overflow-style: none;
@@ -577,8 +701,8 @@ const ExpandedSongView = ({
           display: none;
         }
         :global(body.dragging) {
-            overflow: hidden;
-            touch-action: none;
+          overflow: hidden;
+          touch-action: none;
         }
         @keyframes swirl {
           0% {
@@ -622,6 +746,43 @@ const ExpandedSongView = ({
         }
         .group:hover .animate-bounce {
           animation: float 2s ease-in-out infinite;
+        }
+
+        /* --- MỚI: Style cho thanh trượt âm lượng dọc --- */
+        .vertical-slider {
+          -webkit-appearance: none;
+          appearance: none;
+          background: rgba(255, 255, 255, 0.3); /* Màu của rãnh trượt */
+          border-radius: 5px;
+          outline: none;
+          transition: background 0.3s;
+        }
+        .vertical-slider:hover {
+          background: rgba(255, 255, 255, 0.4);
+        }
+
+        /* Nút tròn (thumb) cho Webkit (Chrome, Safari) */
+        .vertical-slider::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 20px; /* Tăng kích thước để dễ bấm/kéo */
+          height: 20px;
+          border-radius: 50%;
+          background: ${progressColors.thumbColor}; /* Dùng màu thumb của theme */
+          cursor: ns-resize; /* Con trỏ kéo dọc */
+          border: 3px solid white;
+          box-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Nút tròn (thumb) cho Firefox */
+        .vertical-slider::-moz-range-thumb {
+          width: 20px;
+          height: 20px;
+          border-radius: 50%;
+          background: ${progressColors.thumbColor};
+          cursor: ns-resize;
+          border: 3px solid white;
+          box-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
         }
       `}</style>
     </div>
