@@ -428,8 +428,8 @@ const ExpandedSyncedLyrics = ({
 
                   textAlign: "left",
 
-                  fontSize: 35,
-                  fontWeight: 640,
+                  fontSize: 30,
+                  fontWeight: 655,
                   lineHeight: 1.35, // Tăng nhẹ line height cho dễ đọc khi xuống dòng
 
                   textShadow: isActive
