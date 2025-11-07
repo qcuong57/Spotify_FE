@@ -1,15 +1,17 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import { Box, Text } from "@mantine/core";
 import { IconMusic, IconMicrophone } from "@tabler/icons-react";
 
 // Định nghĩa ngưỡng để xác định dòng lyrics có đang "được xem" hay không
-const VISIBILITY_THRESHOLD = 0.5;
+// const VISIBILITY_THRESHOLD = 0.5; // (Không còn dùng trong logic cuộn mới)
 
-// --- MỚI: Hàm Easing (ease-out-cubic) cho cảm giác mượt mà ---
-// Bắt đầu nhanh và chậm dần (cảm giác "phone-like")
-const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
-// Thời gian animation
-const ANIMATION_DURATION = 600; // 600ms
+// --- ĐÃ XÓA: Hàm Easing và DURATION (chuyển sang CSS) ---
 
 const ExpandedSyncedLyrics = ({
   lyricsText,
@@ -20,22 +22,26 @@ const ExpandedSyncedLyrics = ({
   const [lyrics, setLyrics] = useState([]);
   const [currentLyricIndex, setCurrentLyricIndex] = useState(-1);
   const [currentTime, setCurrentTime] = useState(0);
-  
+
   const containerRef = useRef(null); // Container (viewport)
-  // --- MỚI: Ref cho wrapper chứa list lyric ---
   const listWrapperRef = useRef(null); // List (sẽ được transform)
-  // --- MỚI: Ref để lưu trữ ID animation và vị trí Y hiện tại ---
-  const scrollAnimationRef = useRef(null);
+  
+  // --- ĐÃ XÓA: Ref animation (không cần nữa) ---
+  // const scrollAnimationRef = useRef(null);
+  
   const currentTranslateYRef = useRef(0);
-  // --- MỚI: Ref để xử lý việc người dùng tự cuộn ---
   const isUserScrollingRef = useRef(false);
   const userScrollTimeoutRef = useRef(null);
 
+  // --- MỚI: Tối ưu hóa: Tính toán mảng này 1 lần ---
+  const syncedLyrics = useMemo(() => {
+    if (!lyricsText) return [];
+    return lyrics.filter((l) => l.time !== null);
+  }, [lyrics, lyricsText]);
 
   const hasTimestamps = useMemo(() => {
-    if (!lyricsText) return false;
-    return lyrics.some((lyric) => lyric.time !== null);
-  }, [lyrics, lyricsText]);
+    return syncedLyrics.length > 0;
+  }, [syncedLyrics]);
 
   // Parse lyrics từ LRC format (Giữ nguyên)
   const parseLyricsFromText = (lyricsText) => {
@@ -129,14 +135,14 @@ const ExpandedSyncedLyrics = ({
       }
 
       const time = audioElement.currentTime;
-      
+
       if (isSingleLyricMode) {
         setCurrentTime(time);
       }
-
-      const syncedLyrics = lyrics.filter((l) => l.time !== null);
-      const newIndex = findActiveLyricIndex(time, syncedLyrics);
       
+      // --- THAY ĐỔI: Dùng biến memoized 'syncedLyrics' ---
+      const newIndex = findActiveLyricIndex(time, syncedLyrics);
+
       if (newIndex !== currentLyricIndex) {
         setCurrentLyricIndex(newIndex);
       }
@@ -149,28 +155,31 @@ const ExpandedSyncedLyrics = ({
     return () => {
       cancelAnimationFrame(animationFrameId);
     };
-  }, [audioElement, isPlaying, lyrics, currentLyricIndex, hasTimestamps, lyrics.length]); 
+    // --- THAY ĐỔI: Thêm 'syncedLyrics' vào dependency array ---
+  }, [audioElement, isPlaying, lyrics, currentLyricIndex, hasTimestamps, syncedLyrics, lyrics.length]);
 
   // Seek to specific lyric (Giữ nguyên)
   const seekToLyric = useCallback(
     (time) => {
       if (audioElement && time !== null) {
-        // --- MỚI: Tắt cờ "user scrolling" khi bấm vào lyric ---
         isUserScrollingRef.current = false;
         clearTimeout(userScrollTimeoutRef.current);
-        // ---
         audioElement.currentTime = time;
       }
     },
     [audioElement]
   );
-  
-  // --- THAY ĐỔI HOÀN TOÀN: Logic AUTO SCROLL (Dùng `transform`) ---
+
+  // --- THAY ĐỔI HOÀN TOÀN: Logic AUTO SCROLL (Dùng CSS Transition) ---
   useEffect(() => {
     // Nếu người dùng đang tự cuộn, không tự động cuộn
     if (isUserScrollingRef.current) return;
-    
-    if (currentLyricIndex >= 0 && containerRef.current && listWrapperRef.current) {
+
+    if (
+      currentLyricIndex >= 0 &&
+      containerRef.current &&
+      listWrapperRef.current
+    ) {
       const container = containerRef.current;
       const listWrapper = listWrapperRef.current;
       const currentElement = container.querySelector(
@@ -181,8 +190,8 @@ const ExpandedSyncedLyrics = ({
         const containerHeight = container.clientHeight;
         const elementHeight = currentElement.clientHeight;
         // Vị trí của top element so với list wrapper
-        const elementTopInWrapper = currentElement.offsetTop; 
-        
+        const elementTopInWrapper = currentElement.offsetTop;
+
         // Vị trí Y mục tiêu (căn giữa theo 35% viewport)
         const targetPositionRatio = 0.35;
         const targetYPositionForElement = containerHeight * targetPositionRatio;
@@ -193,73 +202,80 @@ const ExpandedSyncedLyrics = ({
           targetYPositionForElement +
           elementHeight / 2
         );
-        
-        // Hủy animation cũ (nếu có)
-        if (scrollAnimationRef.current) {
-          cancelAnimationFrame(scrollAnimationRef.current);
-        }
 
-        const startTranslateY = currentTranslateYRef.current;
-        const distance = targetTranslateY - startTranslateY;
-        const duration = ANIMATION_DURATION;
-        let startTime = null;
-
-        const animation = (currentTime) => {
-          if (startTime === null) startTime = currentTime;
-          const timeElapsed = currentTime - startTime;
-          const progress = Math.min(timeElapsed / duration, 1);
-          const easedProgress = easeOutCubic(progress); // Dùng ease-out
-
-          const newY = startTranslateY + distance * easedProgress;
-          
-          listWrapper.style.transform = `translateY(${newY}px)`;
-          currentTranslateYRef.current = newY; // Lưu lại vị trí Y hiện tại
-
-          if (timeElapsed < duration) {
-            scrollAnimationRef.current = requestAnimationFrame(animation);
-          } else {
-            scrollAnimationRef.current = null;
-          }
-        };
-
-        scrollAnimationRef.current = requestAnimationFrame(animation);
+        // --- THAY THẾ: Chỉ cần set giá trị, CSS transition sẽ lo animation ---
+        listWrapper.style.transform = `translateY(${targetTranslateY}px)`;
+        currentTranslateYRef.current = targetTranslateY; // Lưu lại vị trí Y mục tiêu
       }
     }
-  // Thêm `isUserScrollingRef.current` vào dependency để check lại khi người dùng ngừng cuộn
-  }, [currentLyricIndex, isUserScrollingRef.current]); 
-  
-  
-  // --- MỚI: Hủy cuộn tự động khi người dùng tương tác ---
+  }, [currentLyricIndex]); // Bỏ isUserScrollingRef.current
+
+  // --- THAY ĐỔI: Hủy cuộn tự động khi người dùng tương tác (CSS version) ---
   const handleManualInteraction = () => {
-    // Bật cờ "đang cuộn"
-    isUserScrollingRef.current = true;
+    if (!listWrapperRef.current) return;
     
-    // Hủy animation tự động ngay lập tức
-    if (scrollAnimationRef.current) {
-      cancelAnimationFrame(scrollAnimationRef.current);
-      scrollAnimationRef.current = null;
+    const listWrapper = listWrapperRef.current;
+
+    // 1. Lấy vị trí Y hiện tại (ngay cả khi đang transition)
+    const computedStyle = window.getComputedStyle(listWrapper);
+    const currentTransform = computedStyle.transform;
+
+    // 2. Tắt transition và 3. Set transform về vị trí vừa lấy
+    listWrapper.style.transition = "none";
+    listWrapper.style.transform = currentTransform;
+
+    // Cập nhật ref vị trí Y (quan trọng)
+    try {
+      // currentTransform sẽ là 'matrix(..., Y)'
+      // Chúng ta parse nó để lấy giá trị Y
+      const matrix = new DOMMatrixReadOnly(currentTransform);
+      currentTranslateYRef.current = matrix.m42; // m42 là giá trị translateY
+    } catch (e) {
+      // Fallback
+      currentTranslateYRef.current = 0;
     }
-    
-    // Hủy timeout cũ (nếu có)
+
+    // 4. Bật cờ "đang cuộn"
+    isUserScrollingRef.current = true;
+
+    // Hủy timeout cũ
     clearTimeout(userScrollTimeoutRef.current);
-    
-    // Đặt timeout: nếu người dùng ngừng cuộn 3 giây, bật lại auto-scroll
+
+    // 5. Đặt timeout:
     userScrollTimeoutRef.current = setTimeout(() => {
       isUserScrollingRef.current = false;
+
+      // 5a. Bật lại transition
+      if (listWrapperRef.current) {
+        listWrapperRef.current.style.transition =
+          "transform 0.6s cubic-bezier(0.215, 0.61, 0.355, 1)";
+      }
     }, 3000); // 3 giây
   };
-  
-  // --- MỚI: Reset vị trí cuộn khi đổi bài hát ---
+
+  // --- THAY ĐỔI: Reset vị trí cuộn khi đổi bài hát (CSS version) ---
   useEffect(() => {
     if (listWrapperRef.current) {
-      listWrapperRef.current.style.transition = 'none'; // Tắt transition
-      listWrapperRef.current.style.transform = `translateY(0px)`; // Reset
+      const listWrapper = listWrapperRef.current;
+
+      listWrapper.style.transition = "none"; // Tắt transition
+      listWrapper.style.transform = `translateY(0px)`; // Reset
       currentTranslateYRef.current = 0;
       isUserScrollingRef.current = false;
       clearTimeout(userScrollTimeoutRef.current);
+
+      // Bật lại transition sau một khoảng trễ rất nhỏ
+      // để trình duyệt áp dụng `transform: 0px` ngay lập tức
+      const reenableTransition = () => {
+        if (listWrapperRef.current) {
+          listWrapperRef.current.style.transition =
+            "transform 0.6s cubic-bezier(0.215, 0.61, 0.355, 1)";
+        }
+      };
+      
+      setTimeout(reenableTransition, 50);
     }
   }, [lyricsText]); // Dùng lyricsText làm trigger đổi bài
-
 
   // Empty state & Single Lyric Mode (Giữ nguyên)
   if (!lyrics.length || !hasTimestamps || lyrics.length <= 3) {
@@ -425,21 +441,20 @@ const ExpandedSyncedLyrics = ({
         height: "100%",
         background: "transparent",
         position: "relative",
-        // --- THAY ĐỔI: Ẩn thanh cuộn ---
         overflow: "hidden",
-        padding: "0 32px", // Chỉ padding trái phải, trên dưới sẽ do list wrapper xử lý
+        padding: "0 32px",
       }}
     >
       {/* --- MỚI: Thêm List Wrapper --- */}
-      <div 
+      <div
         ref={listWrapperRef}
         style={{
-          // --- MỚI: Thêm 2 thuộc tính này để trình duyệt "biết" là sẽ có transform
-          // Giúp tối ưu hóa (GPU)
-          willChange: 'transform',
-          transform: 'translateY(0px)',
-          // Thêm padding (thay cho padding của container)
+          willChange: "transform",
+          transform: "translateY(0px)",
           padding: "45% 0 35%",
+          
+          // --- THAY ĐỔI: Thêm CSS Transition ---
+          transition: "transform 0.6s cubic-bezier(0.215, 0.61, 0.355, 1)",
         }}
       >
         {lyrics.map((lyric, index) => {
@@ -449,7 +464,7 @@ const ExpandedSyncedLyrics = ({
           const color = isActive
             ? "rgba(255, 255, 255, 1)"
             : "rgba(255, 255, 255, 0.8)";
-          
+
           const textShadow = isActive
             ? "0 2px 10px rgba(0,0,0,0.5)"
             : "0 1px 5px rgba(0,0,0,0.3)";
@@ -502,8 +517,7 @@ const ExpandedSyncedLyrics = ({
         @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
 
         .custom-lyrics-scroll {
-          /* --- THAY ĐỔI: Tắt thanh cuộn --- */
-          overflow: hidden; 
+          overflow: hidden;
           scrollbar-width: none;
           -ms-overflow-style: none;
         }
