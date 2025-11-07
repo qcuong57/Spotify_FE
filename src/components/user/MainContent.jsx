@@ -451,31 +451,36 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
       exit="exit"
     >
       {/* Genre Filter Section */}
+      {/* --- SỬA LỖI: TÁCH KHỐI ANIMATEPRESENCE --- */}
       <AnimatePresence>
         {validGenres.length > 0 && (
           <GenreFilter
+            key="genre-filter" // Thêm key tường minh
             genres={validGenres}
             selectedGenre={selectedGenre}
             onGenreSelect={handleGenreSelect}
             isLoading={genreFilterLoading}
           />
         )}
-        {/* --- THÊM KHU VỰC PLAYLIST MỚI TẠI ĐÂY --- */}
-        <AnimatePresence>
-          {playlists.length > 0 && (
-            <PlaylistSection
-              playlists={playlists}
-              setCurrentView={setCurrentView}
-            />
-          )}
-        </AnimatePresence>
-        {/* --- KẾT THÚC KHU VỰC MỚI --- */}
       </AnimatePresence>
+      
+      {/* --- SỬA LỖI: ĐÂY LÀ KHỐI MỚI ĐƯỢC TÁCH RA --- */}
+      <AnimatePresence>
+        {playlists.length > 0 && (
+          <PlaylistSection
+            key="playlist-section" // Thêm key tường minh
+            playlists={playlists}
+            setCurrentView={setCurrentView}
+          />
+        )}
+      </AnimatePresence>
+      {/* --- KẾT THÚC SỬA LỖI --- */}
 
       {/* Filtered Songs Section (when genre is selected) */}
       <AnimatePresence>
         {selectedGenre && (
           <Section
+            key={selectedGenre.id} // Sử dụng key động
             title={`${selectedGenre.name}`}
             emoji="🎵"
             onViewAll={() =>
@@ -504,7 +509,8 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
       {/* Show other sections only when no genre is selected */}
       <AnimatePresence>
         {!selectedGenre && (
-          <>
+          // Thêm key tường minh cho fragment
+          <React.Fragment key="main-content-sections"> 
             {/* Trending Songs Section */}
             {trendingSongs.length > 0 && (
               <TrendingSection
@@ -592,7 +598,7 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
             {/* Genres Sections */}
             {validGenres.map((genre, idx) => (
               <Section
-                key={genre.id}
+                key={genre.id} // Key này đã OK
                 title={genre.name}
                 onViewAll={() =>
                   handleGenreViewAll(genre.songs, genre.name, genre.id)
@@ -610,7 +616,7 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
                 />
               </Section>
             ))}
-          </>
+          </React.Fragment>
         )}
       </AnimatePresence>
 
@@ -622,6 +628,7 @@ const MainContent = ({ setCurrentView, setListSongsDetail }) => {
           validGenres.length === 0 &&
           !loading && (
             <motion.div
+              key="empty-state" // Thêm key tường minh
               className={`flex flex-col items-center justify-center h-64 text-${theme.colors.text}`}
               variants={emptyStateVariants}
               initial="initial"
