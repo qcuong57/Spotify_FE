@@ -3,7 +3,7 @@ import { createContext, useContext, useState, useEffect, useRef } from "react";
 // Tạo Context
 const AudioContext = createContext();
 
-// Giữ nguyên logic override console của bạn
+// --- GIỮ NGUYÊN LOGIC OVERRIDE CONSOLE ---
 const originalWarn = console.warn;
 const originalError = console.error;
 
@@ -45,13 +45,12 @@ export const AudioProvider = ({ children }) => {
     useState(false);
   const [repeatMode, setRepeatMode] = useState("all");
 
-  // --- REFS (FIX: Dùng để lưu giá trị mới nhất cho MediaSession chạy nền) ---
+  // --- REFS: GIỮ GIÁ TRỊ MỚI NHẤT CHO MEDIASESSION ---
   const audioRef = useRef(audio);
   const playlistRef = useRef(playlist);
   const indexRef = useRef(currentSongIndex);
   const repeatModeRef = useRef(repeatMode);
 
-  // Cập nhật Refs mỗi khi State thay đổi
   useEffect(() => {
     audioRef.current = audio;
   }, [audio]);
@@ -65,7 +64,7 @@ export const AudioProvider = ({ children }) => {
     repeatModeRef.current = repeatMode;
   }, [repeatMode]);
 
-  // --- LOGIC CHUYỂN BÀI (Sử dụng Ref để đảm bảo hoạt động khi tắt màn hình) ---
+  // --- LOGIC CHUYỂN BÀI (Sử dụng Ref) ---
   const handleNextSong = () => {
     const currentPlaylist = playlistRef.current;
     const currentIndex = indexRef.current;
@@ -74,7 +73,7 @@ export const AudioProvider = ({ children }) => {
 
     let nextIndex = currentIndex + 1;
     if (nextIndex >= currentPlaylist.length) {
-      nextIndex = 0; // Quay lại đầu
+      nextIndex = 0;
     }
 
     setCurrentSongIndex(nextIndex);
@@ -89,17 +88,16 @@ export const AudioProvider = ({ children }) => {
 
     let nextIndex = currentIndex - 1;
     if (nextIndex < 0) {
-      nextIndex = currentPlaylist.length - 1; // Quay về cuối
+      nextIndex = currentPlaylist.length - 1;
     }
 
     setCurrentSongIndex(nextIndex);
     setCurrentSong(currentPlaylist[nextIndex]);
   };
 
-  // --- SETUP MEDIA SESSION ---
+  // --- SETUP MEDIA SESSION (ĐÃ FIX CHO IPHONE) ---
   const setupMediaSession = (song, activeAudio) => {
     if ("mediaSession" in navigator) {
-      // 1. Set Metadata
       navigator.mediaSession.metadata = new MediaMetadata({
         title: song.song_name || song.title || "Unknown Title",
         artist: song.singer_name || song.artist || "Unknown Artist",
@@ -123,7 +121,6 @@ export const AudioProvider = ({ children }) => {
         ],
       });
 
-      // 2. Set Action Handlers
       // Play
       navigator.mediaSession.setActionHandler("play", () => {
         const targetAudio = activeAudio || audioRef.current;
@@ -148,11 +145,11 @@ export const AudioProvider = ({ children }) => {
         }
       });
 
-      // Next & Previous (Gọi hàm xử lý qua Ref)
+      // Previoustrack & Nexttrack (QUAN TRỌNG ĐỂ HIỆN NÚT CHUYỂN BÀI)
       navigator.mediaSession.setActionHandler("previoustrack", handleBackSong);
       navigator.mediaSession.setActionHandler("nexttrack", handleNextSong);
 
-      // Seek
+      // Seekto (Để kéo thanh thời gian)
       navigator.mediaSession.setActionHandler("seekto", (details) => {
         const targetAudio = activeAudio || audioRef.current;
         if (details.seekTime !== undefined && targetAudio) {
@@ -162,33 +159,13 @@ export const AudioProvider = ({ children }) => {
         }
       });
 
-      navigator.mediaSession.setActionHandler("seekbackward", (details) => {
-        const skipTime = details.seekOffset || 10;
-        const targetAudio = activeAudio || audioRef.current;
-        if (targetAudio) {
-          targetAudio.currentTime = Math.max(
-            targetAudio.currentTime - skipTime,
-            0
-          );
-          updateMediaSessionPosition(targetAudio);
-        }
-      });
-
-      navigator.mediaSession.setActionHandler("seekforward", (details) => {
-        const skipTime = details.seekOffset || 10;
-        const targetAudio = activeAudio || audioRef.current;
-        if (targetAudio) {
-          targetAudio.currentTime = Math.min(
-            targetAudio.currentTime + skipTime,
-            targetAudio.duration
-          );
-          updateMediaSessionPosition(targetAudio);
-        }
-      });
+      // --- QUAN TRỌNG: XÓA HANDLER TUA ĐỂ IPHONE HIỆN NÚT NEXT/PREV ---
+      navigator.mediaSession.setActionHandler("seekbackward", null);
+      navigator.mediaSession.setActionHandler("seekforward", null);
     }
   };
 
-  // Helper update position state
+  // Helper update position
   const updateMediaSessionPosition = (targetAudio = audio) => {
     if ("mediaSession" in navigator && targetAudio) {
       if (!isNaN(targetAudio.duration) && isFinite(targetAudio.duration)) {
@@ -201,7 +178,7 @@ export const AudioProvider = ({ children }) => {
     }
   };
 
-  // --- CÁC HÀM PUBLIC (Dùng trong component) ---
+  // --- CÁC HÀM PUBLIC ---
   const togglePlay = () => {
     if (audio) {
       if (isPlaying) {
@@ -226,7 +203,6 @@ export const AudioProvider = ({ children }) => {
     }
   };
 
-  // Hàm public gọi lại logic chung
   const playNextSong = () => handleNextSong();
   const playBackSong = () => handleBackSong();
 
@@ -257,13 +233,11 @@ export const AudioProvider = ({ children }) => {
     }
   };
 
-  // --- EFFECT: KHỞI TẠO AUDIO MỚI ---
+  // --- EFFECT: TẠO AUDIO MỚI ---
   useEffect(() => {
     if (currentSong) {
-      // Cleanup audio cũ
       if (audio) {
         audio.pause();
-        // Xóa event listener cũ để tránh leak
         audio.onended = null;
         audio.ontimeupdate = null;
         audio.onloadedmetadata = null;
@@ -272,7 +246,7 @@ export const AudioProvider = ({ children }) => {
       const newAudio = new Audio(currentSong.url_audio);
       newAudio.volume = isMute ? 0 : volume / 100;
 
-      // FIX: Setup MediaSession NGAY LẬP TỨC với newAudio
+      // Setup MediaSession NGAY LẬP TỨC
       setupMediaSession(currentSong, newAudio);
 
       newAudio
@@ -285,10 +259,9 @@ export const AudioProvider = ({ children }) => {
         .catch((error) => console.error("Playback failed:", error));
 
       setAudio(newAudio);
-      audioRef.current = newAudio; // Update ref ngay
+      audioRef.current = newAudio;
     }
   }, [currentSong]);
-  // Lưu ý: Bỏ 'playlist' khỏi dependency array này để tránh reload nhạc khi chỉ thay đổi danh sách chờ
 
   // --- EFFECT: LOADED METADATA ---
   useEffect(() => {
@@ -308,25 +281,23 @@ export const AudioProvider = ({ children }) => {
     if (audio) {
       const handleTimeUpdate = () => {
         setCurrentTime(Math.round(audio.currentTime));
-        // Không updateMediaSessionPosition liên tục ở đây để tối ưu performance
       };
       audio.addEventListener("timeupdate", handleTimeUpdate);
       return () => audio.removeEventListener("timeupdate", handleTimeUpdate);
     }
   }, [audio]);
 
-  // --- EFFECT: ENDED (Xử lý repeat/next) ---
+  // --- EFFECT: ENDED ---
   useEffect(() => {
     if (audio) {
       const handleEnded = () => {
-        const currentRepeatMode = repeatModeRef.current; // Dùng Ref để lấy mode mới nhất
+        const currentRepeatMode = repeatModeRef.current;
         console.log("Ended. Mode:", currentRepeatMode);
 
         if ("mediaSession" in navigator)
           navigator.mediaSession.playbackState = "paused";
 
         if (currentRepeatMode === "one") {
-          // Phát lại bài hiện tại
           audio.currentTime = 0;
           audio
             .play()
@@ -337,7 +308,6 @@ export const AudioProvider = ({ children }) => {
             })
             .catch((e) => console.error("Replay failed", e));
         } else {
-          // Tự động next
           handleNextSong();
         }
       };
@@ -345,16 +315,16 @@ export const AudioProvider = ({ children }) => {
       audio.addEventListener("ended", handleEnded);
       return () => audio.removeEventListener("ended", handleEnded);
     }
-  }, [audio]); // Chỉ cần phụ thuộc vào audio instance
+  }, [audio]);
 
-  // --- EFFECT: VOLUME CONTROL ---
+  // --- EFFECT: VOLUME ---
   useEffect(() => {
     if (audio) {
       audio.volume = isMute ? 0 : volume / 100;
     }
   }, [volume, isMute, audio]);
 
-  // --- CLEANUP KHI UNMOUNT ---
+  // --- CLEANUP ---
   useEffect(() => {
     return () => {
       if (audio) {
@@ -367,6 +337,8 @@ export const AudioProvider = ({ children }) => {
         navigator.mediaSession.setActionHandler("previoustrack", null);
         navigator.mediaSession.setActionHandler("nexttrack", null);
         navigator.mediaSession.setActionHandler("seekto", null);
+        navigator.mediaSession.setActionHandler("seekbackward", null);
+        navigator.mediaSession.setActionHandler("seekforward", null);
       }
     };
   }, []);
