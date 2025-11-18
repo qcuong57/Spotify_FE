@@ -24,6 +24,13 @@ html {
   text-rendering: optimizeLegibility;
 }
 
+html,
+body,
+#root {
+  touch-action: manipulation; /* Tắt chức năng zoom khi double tap */
+  overscroll-behavior: none; /* Ngăn hiệu ứng "kéo quá đà" (bounce) trên iOS */
+}
+
 /* ============ ULTRA-OPTIMIZED SCROLLBAR STYLES ============ */
 
 .scrollbar-spotify {
