@@ -1,8 +1,9 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useRef } from "react";
 
 // Tạo Context
 const AudioContext = createContext();
 
+// Giữ nguyên logic override console của bạn
 const originalWarn = console.warn;
 const originalError = console.error;
 
@@ -30,6 +31,7 @@ console.error = (...args) => {
 
 // Provider Component
 export const AudioProvider = ({ children }) => {
+  // --- STATE ---
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentSong, setCurrentSong] = useState(null);
   const [audio, setAudio] = useState(null);
@@ -43,214 +45,202 @@ export const AudioProvider = ({ children }) => {
     useState(false);
   const [repeatMode, setRepeatMode] = useState("all");
 
-  // Setup Media Session API
-  const setupMediaSession = (song) => {
+  // --- REFS (FIX: Dùng để lưu giá trị mới nhất cho MediaSession chạy nền) ---
+  const audioRef = useRef(audio);
+  const playlistRef = useRef(playlist);
+  const indexRef = useRef(currentSongIndex);
+  const repeatModeRef = useRef(repeatMode);
+
+  // Cập nhật Refs mỗi khi State thay đổi
+  useEffect(() => {
+    audioRef.current = audio;
+  }, [audio]);
+  useEffect(() => {
+    playlistRef.current = playlist;
+  }, [playlist]);
+  useEffect(() => {
+    indexRef.current = currentSongIndex;
+  }, [currentSongIndex]);
+  useEffect(() => {
+    repeatModeRef.current = repeatMode;
+  }, [repeatMode]);
+
+  // --- LOGIC CHUYỂN BÀI (Sử dụng Ref để đảm bảo hoạt động khi tắt màn hình) ---
+  const handleNextSong = () => {
+    const currentPlaylist = playlistRef.current;
+    const currentIndex = indexRef.current;
+
+    if (currentPlaylist.length === 0) return;
+
+    let nextIndex = currentIndex + 1;
+    if (nextIndex >= currentPlaylist.length) {
+      nextIndex = 0; // Quay lại đầu
+    }
+
+    setCurrentSongIndex(nextIndex);
+    setCurrentSong(currentPlaylist[nextIndex]);
+  };
+
+  const handleBackSong = () => {
+    const currentPlaylist = playlistRef.current;
+    const currentIndex = indexRef.current;
+
+    if (currentPlaylist.length === 0) return;
+
+    let nextIndex = currentIndex - 1;
+    if (nextIndex < 0) {
+      nextIndex = currentPlaylist.length - 1; // Quay về cuối
+    }
+
+    setCurrentSongIndex(nextIndex);
+    setCurrentSong(currentPlaylist[nextIndex]);
+  };
+
+  // --- SETUP MEDIA SESSION ---
+  const setupMediaSession = (song, activeAudio) => {
     if ("mediaSession" in navigator) {
-      // Set metadata cho notification panel - sử dụng đúng field names
+      // 1. Set Metadata
       navigator.mediaSession.metadata = new MediaMetadata({
         title: song.song_name || song.title || "Unknown Title",
         artist: song.singer_name || song.artist || "Unknown Artist",
         album: song.album || "",
         artwork: [
           {
-            src:
-              song.image ||
-              song.artwork ||
-              "https://via.placeholder.com/512x512/4f46e5/ffffff?text=Music",
+            src: song.image || "https://via.placeholder.com/96",
             sizes: "96x96",
             type: "image/jpeg",
           },
           {
-            src:
-              song.image ||
-              song.artwork ||
-              "https://via.placeholder.com/512x512/4f46e5/ffffff?text=Music",
+            src: song.image || "https://via.placeholder.com/128",
             sizes: "128x128",
             type: "image/jpeg",
           },
           {
-            src:
-              song.image ||
-              song.artwork ||
-              "https://via.placeholder.com/512x512/4f46e5/ffffff?text=Music",
-            sizes: "192x192",
-            type: "image/jpeg",
-          },
-          {
-            src:
-              song.image ||
-              song.artwork ||
-              "https://via.placeholder.com/512x512/4f46e5/ffffff?text=Music",
-            sizes: "256x256",
-            type: "image/jpeg",
-          },
-          {
-            src:
-              song.image ||
-              song.artwork ||
-              "https://via.placeholder.com/512x512/4f46e5/ffffff?text=Music",
-            sizes: "384x384",
-            type: "image/jpeg",
-          },
-          {
-            src:
-              song.image ||
-              song.artwork ||
-              "https://via.placeholder.com/512x512/4f46e5/ffffff?text=Music",
+            src: song.image || "https://via.placeholder.com/512",
             sizes: "512x512",
             type: "image/jpeg",
           },
         ],
       });
 
-      // Set action handlers cho các nút điều khiển
+      // 2. Set Action Handlers
+      // Play
       navigator.mediaSession.setActionHandler("play", () => {
-        console.log("Media Session: Play button pressed");
-        if (audio && !isPlaying) {
-          audio
+        const targetAudio = activeAudio || audioRef.current;
+        if (targetAudio) {
+          targetAudio
             .play()
             .then(() => {
               setIsPlaying(true);
               navigator.mediaSession.playbackState = "playing";
             })
-            .catch((error) => console.error("Play failed:", error));
+            .catch((err) => console.error("MediaSession Play failed:", err));
         }
       });
 
+      // Pause
       navigator.mediaSession.setActionHandler("pause", () => {
-        console.log("Media Session: Pause button pressed");
-        if (audio && isPlaying) {
-          audio.pause();
+        const targetAudio = activeAudio || audioRef.current;
+        if (targetAudio) {
+          targetAudio.pause();
           setIsPlaying(false);
           navigator.mediaSession.playbackState = "paused";
         }
       });
 
-      // Luôn luôn set next/previous handlers
-      navigator.mediaSession.setActionHandler("previoustrack", () => {
-        playBackSong();
-      });
+      // Next & Previous (Gọi hàm xử lý qua Ref)
+      navigator.mediaSession.setActionHandler("previoustrack", handleBackSong);
+      navigator.mediaSession.setActionHandler("nexttrack", handleNextSong);
 
-      navigator.mediaSession.setActionHandler("nexttrack", () => {
-        playNextSong();
+      // Seek
+      navigator.mediaSession.setActionHandler("seekto", (details) => {
+        const targetAudio = activeAudio || audioRef.current;
+        if (details.seekTime !== undefined && targetAudio) {
+          targetAudio.currentTime = details.seekTime;
+          setCurrentTime(Math.round(details.seekTime));
+          updateMediaSessionPosition(targetAudio);
+        }
       });
 
       navigator.mediaSession.setActionHandler("seekbackward", (details) => {
         const skipTime = details.seekOffset || 10;
-        if (audio) {
-          const newTime = Math.max(0, audio.currentTime - skipTime);
-          setPlaybackTime(newTime);
+        const targetAudio = activeAudio || audioRef.current;
+        if (targetAudio) {
+          targetAudio.currentTime = Math.max(
+            targetAudio.currentTime - skipTime,
+            0
+          );
+          updateMediaSessionPosition(targetAudio);
         }
       });
 
       navigator.mediaSession.setActionHandler("seekforward", (details) => {
         const skipTime = details.seekOffset || 10;
-        if (audio) {
-          const newTime = Math.min(
-            audio.duration,
-            audio.currentTime + skipTime
+        const targetAudio = activeAudio || audioRef.current;
+        if (targetAudio) {
+          targetAudio.currentTime = Math.min(
+            targetAudio.currentTime + skipTime,
+            targetAudio.duration
           );
-          setPlaybackTime(newTime);
+          updateMediaSessionPosition(targetAudio);
         }
       });
-
-      navigator.mediaSession.setActionHandler("seekto", (details) => {
-        if (details.seekTime && audio) {
-          setPlaybackTime(details.seekTime);
-        }
-      });
-
-      // Update position state cho progress bar trên notification
-      // Update position state cho progress bar trên notification
-      if (audio && !isNaN(audio.duration) && isFinite(audio.duration)) {
-        navigator.mediaSession.setPositionState({
-          duration: audio.duration,
-          playbackRate: audio.playbackRate || 1,
-          position: audio.currentTime || 0,
-        });
-      } else {
-        console.warn(
-          "MediaSession: duration is not ready yet, skipping setPositionState"
-        );
-      }
     }
   };
 
-  // Update Media Session position
-  const updateMediaSessionPosition = () => {
-    if ("mediaSession" in navigator && audio) {
-      if (!isNaN(audio.duration) && isFinite(audio.duration)) {
+  // Helper update position state
+  const updateMediaSessionPosition = (targetAudio = audio) => {
+    if ("mediaSession" in navigator && targetAudio) {
+      if (!isNaN(targetAudio.duration) && isFinite(targetAudio.duration)) {
         navigator.mediaSession.setPositionState({
-          duration: audio.duration,
-          playbackRate: audio.playbackRate || 1,
-          position: audio.currentTime || 0,
+          duration: targetAudio.duration,
+          playbackRate: targetAudio.playbackRate || 1,
+          position: targetAudio.currentTime || 0,
         });
       }
     }
   };
 
-  // Hàm để phát/tạm dừng bài hát
+  // --- CÁC HÀM PUBLIC (Dùng trong component) ---
   const togglePlay = () => {
     if (audio) {
       if (isPlaying) {
         audio.pause();
         setIsPlaying(false);
-        navigator.mediaSession.playbackState = "paused";
+        if ("mediaSession" in navigator)
+          navigator.mediaSession.playbackState = "paused";
       } else {
         audio.play().catch((error) => console.error("Playback failed:", error));
         setIsPlaying(true);
-        navigator.mediaSession.playbackState = "playing";
+        if ("mediaSession" in navigator)
+          navigator.mediaSession.playbackState = "playing";
       }
     }
   };
 
-  // Hàm để set thời gian phát
   const setPlaybackTime = (timeInSeconds) => {
     if (audio) {
       audio.currentTime = timeInSeconds;
       setCurrentTime(Math.round(timeInSeconds));
-      updateMediaSessionPosition();
+      updateMediaSessionPosition(audio);
     }
   };
 
-  // Hàm để phát bài hát tiếp theo
-  const playNextSong = () => {
-    if (playlist.length === 0) return;
+  // Hàm public gọi lại logic chung
+  const playNextSong = () => handleNextSong();
+  const playBackSong = () => handleBackSong();
 
-    let nextIndex = currentSongIndex + 1;
-    if (nextIndex >= playlist.length) {
-      nextIndex = 0;
-    }
-
-    setCurrentSongIndex(nextIndex);
-    setCurrentSong(playlist[nextIndex]);
-  };
-
-  const playBackSong = () => {
-    if (playlist.length === 0) return;
-
-    let nextIndex = currentSongIndex - 1;
-    if (nextIndex < 0) {
-      nextIndex = playlist.length - 1;
-    }
-
-    setCurrentSongIndex(nextIndex);
-    setCurrentSong(playlist[nextIndex]);
-  };
-
-  // Hàm để phát single song (không cần playlist)
   const playSingleSong = (song) => {
     setSongDescriptionAvailable(true);
     if (audio) {
       audio.pause();
       setIsPlaying(false);
     }
-    setPlaylist([song]); // Tạo playlist với 1 bài
+    setPlaylist([song]);
     setCurrentSongIndex(0);
     setCurrentSong(song);
   };
 
-  // Hàm để thêm danh sách bài hát
   const setNewPlaylist = (newPlaylist, startIndex = 0) => {
     setSongDescriptionAvailable(true);
     if (audio) {
@@ -267,112 +257,115 @@ export const AudioProvider = ({ children }) => {
     }
   };
 
-  // Tạo audio mới khi bài hát thay đổi
+  // --- EFFECT: KHỞI TẠO AUDIO MỚI ---
   useEffect(() => {
     if (currentSong) {
+      // Cleanup audio cũ
       if (audio) {
         audio.pause();
+        // Xóa event listener cũ để tránh leak
+        audio.onended = null;
+        audio.ontimeupdate = null;
+        audio.onloadedmetadata = null;
       }
+
       const newAudio = new Audio(currentSong.url_audio);
       newAudio.volume = isMute ? 0 : volume / 100;
 
-      // Setup Media Session cho bài hát mới
-      setupMediaSession(currentSong);
+      // FIX: Setup MediaSession NGAY LẬP TỨC với newAudio
+      setupMediaSession(currentSong, newAudio);
 
       newAudio
         .play()
+        .then(() => {
+          setIsPlaying(true);
+          if ("mediaSession" in navigator)
+            navigator.mediaSession.playbackState = "playing";
+        })
         .catch((error) => console.error("Playback failed:", error));
+
       setAudio(newAudio);
-      setIsPlaying(true);
-
-      // Set playback state
-      if ("mediaSession" in navigator) {
-        navigator.mediaSession.playbackState = "playing";
-      }
+      audioRef.current = newAudio; // Update ref ngay
     }
-  }, [currentSong, playlist]); // Thêm playlist vào dependencies để re-setup khi playlist thay đổi
+  }, [currentSong]);
+  // Lưu ý: Bỏ 'playlist' khỏi dependency array này để tránh reload nhạc khi chỉ thay đổi danh sách chờ
 
-  // Lấy duration của bài hát
+  // --- EFFECT: LOADED METADATA ---
   useEffect(() => {
     if (audio) {
-      const updateDuration = () => {
+      const handleLoadedMetadata = () => {
         setDuration(Math.round(audio.duration));
-        updateMediaSessionPosition();
+        updateMediaSessionPosition(audio);
       };
-      audio.addEventListener("loadedmetadata", updateDuration);
-      if (audio.duration) {
-        setDuration(Math.round(audio.duration));
-        updateMediaSessionPosition();
-      }
-      return () => audio.removeEventListener("loadedmetadata", updateDuration);
+      audio.addEventListener("loadedmetadata", handleLoadedMetadata);
+      return () =>
+        audio.removeEventListener("loadedmetadata", handleLoadedMetadata);
     }
   }, [audio]);
 
-  // Cập nhật currentTime khi audio đang phát
+  // --- EFFECT: TIME UPDATE ---
   useEffect(() => {
     if (audio) {
-      const updateTime = () => {
+      const handleTimeUpdate = () => {
         setCurrentTime(Math.round(audio.currentTime));
-        updateMediaSessionPosition();
+        // Không updateMediaSessionPosition liên tục ở đây để tối ưu performance
       };
-      audio.addEventListener("timeupdate", updateTime);
-      return () => audio.removeEventListener("timeupdate", updateTime);
+      audio.addEventListener("timeupdate", handleTimeUpdate);
+      return () => audio.removeEventListener("timeupdate", handleTimeUpdate);
     }
   }, [audio]);
 
-  // Xử lý khi bài hát kết thúc
+  // --- EFFECT: ENDED (Xử lý repeat/next) ---
   useEffect(() => {
     if (audio) {
       const handleEnded = () => {
-        console.log("Audio ended, repeat mode:", repeatMode);
-        navigator.mediaSession.playbackState = "paused";
+        const currentRepeatMode = repeatModeRef.current; // Dùng Ref để lấy mode mới nhất
+        console.log("Ended. Mode:", currentRepeatMode);
 
-        if (repeatMode === "one") {
-          setTimeout(() => {
-            if (audio && !isNaN(audio.duration) && audio.duration > 0) {
-              audio.currentTime = 0;
-              setPlaybackTime(0);
-              audio
-                .play()
-                .catch((error) => console.error("Repeat failed:", error));
+        if ("mediaSession" in navigator)
+          navigator.mediaSession.playbackState = "paused";
+
+        if (currentRepeatMode === "one") {
+          // Phát lại bài hiện tại
+          audio.currentTime = 0;
+          audio
+            .play()
+            .then(() => {
               setIsPlaying(true);
-              navigator.mediaSession.playbackState = "playing";
-            }
-          }, 100);
+              if ("mediaSession" in navigator)
+                navigator.mediaSession.playbackState = "playing";
+            })
+            .catch((e) => console.error("Replay failed", e));
         } else {
-          setTimeout(() => {
-            playNextSong();
-          }, 100);
+          // Tự động next
+          handleNextSong();
         }
       };
 
       audio.addEventListener("ended", handleEnded);
       return () => audio.removeEventListener("ended", handleEnded);
     }
-  }, [audio, repeatMode]);
+  }, [audio]); // Chỉ cần phụ thuộc vào audio instance
 
-  // Cập nhật volume và mute
+  // --- EFFECT: VOLUME CONTROL ---
   useEffect(() => {
     if (audio) {
       audio.volume = isMute ? 0 : volume / 100;
     }
   }, [volume, isMute, audio]);
 
-  // Cleanup khi component unmount
+  // --- CLEANUP KHI UNMOUNT ---
   useEffect(() => {
     return () => {
       if (audio) {
         audio.pause();
       }
-      // Clear media session
       if ("mediaSession" in navigator) {
         navigator.mediaSession.metadata = null;
         navigator.mediaSession.setActionHandler("play", null);
         navigator.mediaSession.setActionHandler("pause", null);
         navigator.mediaSession.setActionHandler("previoustrack", null);
         navigator.mediaSession.setActionHandler("nexttrack", null);
-        navigator.mediaSession.setActionHandler("seekbackward", null);
-        navigator.mediaSession.setActionHandler("seekforward", null);
         navigator.mediaSession.setActionHandler("seekto", null);
       }
     };
@@ -413,7 +406,7 @@ export const AudioProvider = ({ children }) => {
   );
 };
 
-// Custom Hook để sử dụng Context
+// Custom Hook
 export const useAudio = () => {
   const context = useContext(AudioContext);
   if (!context) {
