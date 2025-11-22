@@ -1,14 +1,14 @@
-// src/containers/user/SongDetail.jsx
-
 import React, {
   useState,
   useEffect,
   useCallback,
   memo,
   useMemo,
-  useRef, // <-- 1. THÊM MỚI
+  useRef,
 } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom"; // [QUAN TRỌNG] Dùng để đổi ID trên link
+import { Helmet } from "react-helmet-async"; // [QUAN TRỌNG] Dùng để hiện tên bài khi share
 import {
   IconPlayerPlayFilled,
   IconPlayerPauseFilled,
@@ -17,18 +17,15 @@ import {
   IconX,
 } from "@tabler/icons-react";
 
-// Imports từ Context và Service
 import { useTheme } from "../../context/themeContext";
 import { useAudio } from "../../utils/audioContext";
 import { getSongNameById, getRelatedSongs } from "../../services/SongsService";
-// import { toggleLikeService } from '../../services/SongPlaylistService'; // Giả định API like
 
-// Imports từ Components
-import RelatedSongsSection from "./RelatedSongsSection"; // ĐỔI TÊN ĐƯỜNG DẪN NẾU CẦN
+import RelatedSongsSection from "./RelatedSongsSection";
 import LoadingState from "../../components/user/main/LoadingState";
 import ErrorState from "../../components/user/main/ErrorState";
 
-// --- Helper Components (Giữ nguyên) ---
+// --- Helper Components ---
 const PlayButton = memo(
   ({ isCurrentSong, isPlaying, handlePlayPause, theme }) => {
     return (
@@ -74,9 +71,9 @@ const LikeButton = memo(({ isLiked, onToggleLike, theme }) => {
 });
 
 // --- Main Component ---
-
 const SongDetail = ({ songId, onClose }) => {
   const { theme } = useTheme();
+  const navigate = useNavigate(); // Hook để điều hướng URL
   const {
     currentSong: audioCurrentSong,
     setNewPlaylist,
@@ -84,9 +81,7 @@ const SongDetail = ({ songId, onClose }) => {
     togglePlay,
   } = useAudio();
 
-  // --- 2. THÊM STATE MỚI VÀ REF ---
-  const [currentDisplayId, setCurrentDisplayId] = useState(songId); // ID bài hát đang hiển thị
-  const scrollRef = useRef(null); // Ref cho div cuộn
+  const scrollRef = useRef(null); // Ref để cuộn lên đầu khi đổi bài
 
   const [currentSongDetail, setCurrentSongDetail] = useState(null);
   const [relatedSongs, setRelatedSongs] = useState([]);
@@ -100,6 +95,7 @@ const SongDetail = ({ songId, onClose }) => {
     y: 0,
     song: null,
   });
+
   const handleCloseContextMenu = useCallback(() => {
     setContextMenu((prev) => ({ ...prev, show: false }));
   }, []);
@@ -107,18 +103,18 @@ const SongDetail = ({ songId, onClose }) => {
   const isCurrentSong =
     audioCurrentSong && audioCurrentSong.id === currentSongDetail?.id;
 
-  // --- LOGIC FETCH ALL DATA ---
-  // (Không thay đổi logic bên trong, chỉ thay đổi cách nó được gọi)
+  // --- 1. FETCH DATA ---
   const fetchAllData = useCallback(async (id) => {
+    if (!id) return;
     setIsLoading(true);
     setError(null);
-    setCurrentSongDetail(null); // Reset để kích hoạt loading
+    setCurrentSongDetail(null);
     setRelatedSongs([]);
 
     try {
       const [detailData, relatedResponse] = await Promise.all([
         getSongNameById(id),
-        getRelatedSongs(id, 12), // Vẫn lấy 12, service sẽ giới hạn 8
+        getRelatedSongs(id, 12),
       ]);
 
       if (detailData) {
@@ -131,79 +127,59 @@ const SongDetail = ({ songId, onClose }) => {
       if (relatedResponse?.data?.results) {
         setRelatedSongs(relatedResponse.data.results);
       }
-
     } catch (err) {
-      console.error("❌ Lỗi khi fetch dữ liệu:", err);
-      setError(err.message || "Không thể tải dữ liệu. Vui lòng thử lại.");
+      console.error("Error fetching data:", err);
+      setError(err.message || "Không thể tải dữ liệu.");
     } finally {
       setIsLoading(false);
     }
-  }, []); // Bỏ [fetchAllData] khỏi dependency array nếu nó được định nghĩa bên trong
+  }, []);
 
-  // --- CẬP NHẬT useEffects ---
-
-  // Effect 1: Đồng bộ prop `songId` vào state `currentDisplayId`
-  // (Khi modal được mở lại với 1 bài hát khác từ bên ngoài)
+  // --- 2. EFFECT: Tự động tải lại khi songId thay đổi ---
   useEffect(() => {
-    if (songId !== currentDisplayId) {
-      setCurrentDisplayId(songId);
+    if (songId) {
+      fetchAllData(songId);
+      // Cuộn lên đầu trang mỗi khi ID đổi
+      if (scrollRef.current) {
+        scrollRef.current.scrollTo({ top: 0, behavior: "smooth" });
+      }
     }
-  }, [songId]);
+  }, [songId, fetchAllData]);
 
-  // Effect 2: Tải dữ liệu bất cứ khi nào `currentDisplayId` thay đổi
-  useEffect(() => {
-    if (currentDisplayId) {
-      fetchAllData(currentDisplayId);
-    }
-  }, [currentDisplayId, fetchAllData]);
-
-  // --- LOGIC PHÁT NHẠC (Giữ nguyên) ---
   const handlePlayPause = useCallback(
     (e) => {
       e.stopPropagation();
       if (!currentSongDetail) return;
       if (!isCurrentSong) {
-        if (setNewPlaylist) {
-          setNewPlaylist([currentSongDetail], 0);
-        }
+        if (setNewPlaylist) setNewPlaylist([currentSongDetail], 0);
       } else {
-        if (typeof togglePlay === "function") {
-          togglePlay();
-        }
+        if (togglePlay) togglePlay();
       }
     },
     [currentSongDetail, isCurrentSong, setNewPlaylist, togglePlay]
   );
 
-  // --- LOGIC NÚT ĐÓNG (Giữ nguyên) ---
   const handleClose = useCallback(() => {
-    if (onClose) {
-      onClose();
-    }
+    if (onClose) onClose(); // Gọi hàm đóng từ wrapper (sẽ navigate về '/')
   }, [onClose]);
 
-  // --- Logic Xử lý Like (Giữ nguyên) ---
   const handleToggleLike = useCallback((e) => {
     e.stopPropagation();
     setIsLiked((prev) => !prev);
   }, []);
 
-  // --- 3. HÀM MỚI: XỬ LÝ CLICK BÀI HÁT LIÊN QUAN ---
+  // --- 3. XỬ LÝ CHUYỂN BÀI (Đổi link URL) ---
   const handleRelatedSongSelect = useCallback(
     (newSongId) => {
-      if (newSongId !== currentDisplayId) {
-        // Cuộn modal lên đầu
-        if (scrollRef.current) {
-          scrollRef.current.scrollTo({ top: 0, behavior: "smooth" });
-        }
-        // Thay đổi ID, việc này sẽ kích hoạt Effect 2
-        setCurrentDisplayId(newSongId);
+      if (newSongId !== songId) {
+        // Lệnh này sẽ đổi URL thành /song/ID_MỚI
+        // App.jsx sẽ bắt được URL mới -> Render lại SongDetail với ID mới
+        navigate(`/song/${newSongId}`);
       }
     },
-    [currentDisplayId]
+    [songId, navigate]
   );
 
-  // --- Render Logic ---
   const headerBackground = useMemo(
     () => `bg-gradient-to-b from-${theme.colors.cardHover}/60 to-transparent`,
     [theme.colors.cardHover]
@@ -215,7 +191,21 @@ const SongDetail = ({ songId, onClose }) => {
       role="dialog"
       aria-modal="true"
     >
-      {/* 1. BACKDROP (Lớp mờ) */}
+      {/* --- HELMET: Cập nhật thẻ meta để share link --- */}
+      {currentSongDetail && (
+        <Helmet>
+          <title>{`${currentSongDetail.song_name} - ${currentSongDetail.singer_name}`}</title>
+          <meta property="og:title" content={currentSongDetail.song_name} />
+          <meta
+            property="og:description"
+            content={`Trình bày bởi: ${currentSongDetail.singer_name}`}
+          />
+          <meta property="og:image" content={currentSongDetail.image} />
+          <meta property="og:url" content={window.location.href} />
+          <meta property="og:type" content="music.song" />
+        </Helmet>
+      )}
+
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -225,8 +215,9 @@ const SongDetail = ({ songId, onClose }) => {
         onClick={handleClose}
       />
 
-      {/* 2. MODAL PANEL (Khung nội dung) */}
       <motion.div
+        // Thêm key để Animation kích hoạt lại khi đổi bài
+        key={songId}
         initial={{ opacity: 0, scale: 0.9, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -236,18 +227,15 @@ const SongDetail = ({ songId, onClose }) => {
                     rounded-lg overflow-hidden flex flex-col 
                     shadow-2xl shadow-${theme.colors.songShadow}`}
       >
-        {/* NÚT ĐÓNG */}
         <button
           onClick={handleClose}
           className={`absolute top-3 right-3 z-50 p-2 rounded-full backdrop-blur-md transition-colors duration-200 
                 bg-white/10 hover:bg-white/20 text-${theme.colors.text} hover:text-white 
                 shadow-lg transform hover:scale-105 active:scale-95`}
-          title="Đóng chi tiết bài hát"
         >
           <IconX className="w-6 h-6" />
         </button>
 
-        {/* 3. NỘI DUNG (Loading, Error, Content) */}
         <AnimatePresence mode="wait">
           {isLoading ? (
             <motion.div
@@ -255,17 +243,9 @@ const SongDetail = ({ songId, onClose }) => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className={`text-${theme.colors.text} flex-1 overflow-y-auto scrollbar-spotify pt-12 flex items-center justify-center`}
+              className={`text-${theme.colors.text} flex-1 flex items-center justify-center`}
             >
-              {/* Giữ nội dung cũ để đỡ giật, hoặc hiển thị loading nhỏ */}
-              {currentSongDetail ? (
-                <div className="opacity-50">
-                  <LoadingState message="Đang tải bài hát mới..." />
-                </div>
-              ) : (
-                <LoadingState message={`Đang tải chi tiết bài hát...`} />
-              )}
+              <LoadingState message={`Đang tải...`} />
             </motion.div>
           ) : error || !currentSongDetail ? (
             <motion.div
@@ -273,35 +253,26 @@ const SongDetail = ({ songId, onClose }) => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className={`text-${theme.colors.text} flex-1 overflow-y-auto scrollbar-spotify pt-12 flex items-center justify-center`}
+              className={`text-${theme.colors.text} flex-1 flex items-center justify-center`}
             >
               <ErrorState message={error} />
             </motion.div>
           ) : (
-            // PHẦN NỘI DUNG CHÍNH (Làm cho nó cuộn được)
             <motion.div
-              key={currentDisplayId} // <-- THAY ĐỔI KEY ĐỂ RESET ANIMATION
-              ref={scrollRef} // <-- GÁN REF VÀO ĐÂY
+              key={`content-${songId}`}
+              ref={scrollRef}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
               className={`text-${theme.colors.text} flex-1 overflow-y-auto scrollbar-spotify`}
             >
-              {/* Thêm padding ở đây */}
               <div
                 className={`min-h-full p-4 md:p-8 space-y-8 ${headerBackground}`}
               >
-                {/* A. PHẦN HEADER VÀ THÔNG TIN BÀI HÁT */}
+                {/* Header Section */}
                 <header className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-6 items-start pt-8">
-                  {/* Album Art */}
-                  <motion.div
-                    className="flex justify-center md:justify-start md:col-span-1"
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.3 }}
-                  >
+                  <motion.div className="flex justify-center md:justify-start md:col-span-1">
                     <img
                       src={currentSongDetail.image}
                       alt={currentSongDetail.song_name}
@@ -309,31 +280,19 @@ const SongDetail = ({ songId, onClose }) => {
                     />
                   </motion.div>
 
-                  {/* Info & Controls */}
-                  <motion.div
-                    className="md:col-span-2 xl:col-span-3 flex flex-col justify-start min-w-0 mt-4 md:mt-0"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    {/* Tên bài hát */}
+                  <motion.div className="md:col-span-2 xl:col-span-3 flex flex-col justify-start min-w-0 mt-4 md:mt-0">
                     <h1
-                      className={`text-4xl sm:text-5xl lg:text-5xl font-extrabold line-clamp-2 
-                                text-${theme.colors.title || "white"} mb-2`}
-                      title={currentSongDetail.song_name}
+                      className={`text-4xl sm:text-5xl font-extrabold line-clamp-2 text-${
+                        theme.colors.title || "white"
+                      } mb-2`}
                     >
                       {currentSongDetail.song_name}
                     </h1>
-
-                    {/* Ca sĩ */}
                     <p
-                      className={`text-lg sm:text-xl font-semibold 
-                                text-${theme.colors.text}`}
+                      className={`text-lg sm:text-xl font-semibold text-${theme.colors.text}`}
                     >
                       {currentSongDetail.singer_name}
                     </p>
-
-                    {/* Album và Lượt nghe */}
                     <p
                       className={`text-sm opacity-60 mt-1 text-${theme.colors.text}/70`}
                     >
@@ -344,7 +303,6 @@ const SongDetail = ({ songId, onClose }) => {
                       {currentSongDetail.play_count?.toLocaleString() || 0}
                     </p>
 
-                    {/* B. PHẦN ĐIỀU KHIỂN & TƯƠNG TÁC */}
                     <section className="flex items-center space-x-6 pt-4">
                       <PlayButton
                         isCurrentSong={isCurrentSong}
@@ -352,7 +310,6 @@ const SongDetail = ({ songId, onClose }) => {
                         handlePlayPause={handlePlayPause}
                         theme={theme}
                       />
-
                       <LikeButton
                         isLiked={isLiked}
                         onToggleLike={handleToggleLike}
@@ -364,22 +321,15 @@ const SongDetail = ({ songId, onClose }) => {
 
                 <hr className={`my-8 border-${theme.colors.border}`} />
 
-                {/* C. PHẦN GỢI Ý BÀI HÁT LIÊN QUAN */}
                 {relatedSongs.length > 0 && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: 0.2 }}
-                  >
-                    <RelatedSongsSection
-                      songs={relatedSongs}
-                      songGenreName={currentSongDetail.genre_name}
-                      contextMenu={contextMenu}
-                      setContextMenu={setContextMenu}
-                      handleCloseContextMenu={handleCloseContextMenu}
-                      onSongSelect={handleRelatedSongSelect} // <-- 4. TRUYỀN HÀM XUỐNG
-                    />
-                  </motion.div>
+                  <RelatedSongsSection
+                    songs={relatedSongs}
+                    songGenreName={currentSongDetail.genre_name}
+                    contextMenu={contextMenu}
+                    setContextMenu={setContextMenu}
+                    handleCloseContextMenu={handleCloseContextMenu}
+                    onSongSelect={handleRelatedSongSelect} // [QUAN TRỌNG] Truyền hàm xử lý điều hướng
+                  />
                 )}
               </div>
             </motion.div>

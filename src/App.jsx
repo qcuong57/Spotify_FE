@@ -1,7 +1,16 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  useParams,
+  useNavigate,
+  Outlet,
+} from "react-router-dom";
 import { MantineProvider } from "@mantine/core";
 import { ModalsProvider } from "@mantine/modals";
 import { Notifications } from "@mantine/notifications";
+import { HelmetProvider } from "react-helmet-async"; // [QUAN TRỌNG] Thêm thư viện này
+
 import HomePage from "./components/HomePage";
 import Login from "./components/user/Login";
 import Admin from "./components/admin/Admin";
@@ -26,71 +35,118 @@ import ProtectedAdminRoute from "./components/ProtectedAdminRoute";
 import ThemeProvider from "./context/ThemeProvider";
 import SongDetail from "./components/user/SongDetail";
 
+// [LAYOUT] Giữ HomePage luôn hiển thị làm nền, SongDetail sẽ hiện đè lên (Outlet)
+const HomeLayout = () => {
+  return (
+    <div style={{ position: "relative", width: "100%", height: "100%" }}>
+      <HomePage />
+      {/* Outlet là nơi SongDetailWrapper sẽ được render vào */}
+      <Outlet />
+    </div>
+  );
+};
+
+// [WRAPPER] Xử lý logic lấy ID và đóng Modal
+const SongDetailWrapper = () => {
+  const { songId } = useParams();
+  const navigate = useNavigate();
+
+  // Nếu không có ID thì không render gì cả
+  if (!songId) return null;
+
+  return (
+    <SongDetail
+      songId={songId}
+      onClose={() => {
+        // Khi đóng modal, quay về trang chủ ('/')
+        // Nhờ Nested Route, HomePage sẽ KHÔNG bị reload
+        navigate("/");
+      }}
+    />
+  );
+};
+
 function App() {
   return (
-    <ThemeProvider>
-      <PlayListProvider>
-        <MantineProvider>
-          <ModalsProvider>
-            <Notifications />
-            <AuthProvider>
-              <BrowserRouter>
-                <AudioProvider>
-                  <Routes>
-                    <Route path="/" element={<HomePage />} />
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/signup" element={<SignUp />} />
-                    <Route path="/auth/callback" element={<OAuthCallback />} />
-                    <Route path="/song/:songId" element={<SongDetail />} />
-                    {/* Bảo vệ route /admin và các route con */}
-                    <Route element={<ProtectedAdminRoute />}>
-                      <Route path="admin" element={<Admin />}>
-                        <Route path="users" element={<User />} />
+    <HelmetProvider>
+      <ThemeProvider>
+        <PlayListProvider>
+          <MantineProvider>
+            <ModalsProvider>
+              <Notifications />
+              <AuthProvider>
+                <BrowserRouter>
+                  <AudioProvider>
+                    <Routes>
+                      {/* [USER ROUTES] Cấu hình lồng nhau để giữ trạng thái HomePage */}
+                      <Route path="/" element={<HomeLayout />}>
+                        {/* Khi vào /song/123, component này sẽ hiện đè lên HomePage */}
                         <Route
-                          path="users/create"
-                          element={<CreateUserForm />}
-                        />
-                        <Route
-                          path="users/update/:userId"
-                          element={<UpdateUserForm />}
-                        />
-                        <Route path="songs" element={<Song />} />
-                        <Route
-                          path="songs/create"
-                          element={<CreateSongForm />}
-                        />
-                        <Route
-                          path="songs/update/:id"
-                          element={<UpdateSongForm />}
-                        />
-                        <Route path="genres" element={<Genre />} />
-                        <Route
-                          path="genres/create"
-                          element={<CreateGenreForm />}
-                        />
-                        <Route
-                          path="genres/update/:id"
-                          element={<UpdateGenreForm />}
-                        />
-                        <Route path="playlists" element={<Playlist />} />
-                        <Route
-                          path="playlists/create"
-                          element={<CreatePlaylistForm />}
-                        />
-                        <Route
-                          path="playlists/update/:id"
-                          element={<UpdatePlaylistForm />}
+                          path="song/:songId"
+                          element={<SongDetailWrapper />}
                         />
                       </Route>
-                    </Route>
-                  </Routes>
-                </AudioProvider>
-              </BrowserRouter>
-            </AuthProvider>
-          </ModalsProvider>
-        </MantineProvider>
-      </PlayListProvider>
-    </ThemeProvider>
+
+                      <Route path="/login" element={<Login />} />
+                      <Route path="/signup" element={<SignUp />} />
+                      <Route
+                        path="/auth/callback"
+                        element={<OAuthCallback />}
+                      />
+
+                      {/* [ADMIN ROUTES] */}
+                      <Route element={<ProtectedAdminRoute />}>
+                        <Route path="admin" element={<Admin />}>
+                          <Route path="users" element={<User />} />
+                          <Route
+                            path="users/create"
+                            element={<CreateUserForm />}
+                          />
+                          <Route
+                            path="users/update/:userId"
+                            element={<UpdateUserForm />}
+                          />
+
+                          <Route path="songs" element={<Song />} />
+                          <Route
+                            path="songs/create"
+                            element={<CreateSongForm />}
+                          />
+                          <Route
+                            path="songs/update/:id"
+                            element={<UpdateSongForm />}
+                          />
+
+                          <Route path="genres" element={<Genre />} />
+                          <Route
+                            path="genres/create"
+                            element={<CreateGenreForm />}
+                          />
+                          <Route
+                            path="genres/update/:id"
+                            element={<UpdateGenreForm />}
+                          />
+
+                          <Route path="playlists" element={<Playlist />} />
+                          <Route
+                            path="playlists/create"
+                            element={<CreatePlaylistForm />}
+                          />
+                          <Route
+                            path="playlists/update/:id"
+                            element={<UpdatePlaylistForm />}
+                          />
+                        </Route>
+                      </Route>
+                    </Routes>
+                  </AudioProvider>
+                </BrowserRouter>
+              </AuthProvider>
+            </ModalsProvider>
+          </MantineProvider>
+        </PlayListProvider>
+      </ThemeProvider>
+    </HelmetProvider>
   );
 }
 

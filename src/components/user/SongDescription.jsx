@@ -12,14 +12,12 @@ import {
   IconMicrophone,
   IconMaximize,
   IconEye,
+  IconShare,
 } from "@tabler/icons-react";
 import { Box, Text } from "@mantine/core";
-// BỎ: import { useNavigate } from "react-router-dom";
 
-// CẬP NHẬT: Nhận 'onOpenDetail' từ props
 const SongDescription = ({ onOpenDetail }) => {
   const { theme } = useTheme();
-  // BỎ: const navigate = useNavigate();
   const {
     currentSong,
     audio,
@@ -49,7 +47,6 @@ const SongDescription = ({ onOpenDetail }) => {
 
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
-  // ... (Tất cả các useEffect dài (từ dòng 51 đến 286) giữ nguyên) ...
   useEffect(() => {
     const videoElement = videoRef.current;
     if (!videoElement || !currentSong) return;
@@ -271,7 +268,6 @@ const SongDescription = ({ onOpenDetail }) => {
     }
   }, [currentTime, videoError, isVideoFullscreen]);
 
-
   const handleClose = () => {
     setIsClosing(true);
 
@@ -310,12 +306,50 @@ const SongDescription = ({ onOpenDetail }) => {
     setShowExpandedView(false);
   };
 
-  // CẬP NHẬT: Handler cho nút xem chi tiết
   const handleDetailsClick = (e) => {
     e.stopPropagation();
-    // Gọi prop onOpenDetail thay vì navigate
     if (currentSong?.id && onOpenDetail) {
       onOpenDetail(currentSong.id);
+    }
+  };
+
+  // [SỬA ĐỔI] Cập nhật logic lấy URL kèm ID
+  const handleShare = async (e) => {
+    e.stopPropagation();
+    if (!currentSong) return;
+
+    // 1. Lấy domain (ví dụ: http://localhost:3000 hoặc https://webcuaban.com)
+    const origin = window.location.origin;
+
+    // 2. Lấy ID bài hát
+    const songId = currentSong.id || currentSong._id; // Dự phòng trường hợp dùng _id
+
+    if (!songId) {
+      console.error("Song ID not found");
+      return;
+    }
+
+    // 3. Tạo đường dẫn đầy đủ.
+    // QUAN TRỌNG: Hãy đổi '/song/' thành route thực tế của bạn (VD: '/bai-hat/', '/detail/')
+    const shareUrl = `${origin}/song/${songId}`;
+
+    const shareData = {
+      title: currentSong.song_name,
+      text: `Nghe bài hát ${currentSong.song_name} trình bày bởi ${currentSong.singer_name}`,
+      url: shareUrl,
+    };
+
+    try {
+      // Sử dụng Web Share API nếu trình duyệt hỗ trợ
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        // Fallback: Copy link vào clipboard
+        await navigator.clipboard.writeText(shareUrl);
+        alert(`Đã copy link: ${shareUrl}`);
+      }
+    } catch (err) {
+      console.log("User cancelled share or error:", err);
     }
   };
 
@@ -338,7 +372,7 @@ const SongDescription = ({ onOpenDetail }) => {
             : "translate-y-full opacity-0 md:translate-y-0 md:translate-x-full"
         }`}
       >
-        {/* ... (Phần header trên mobile giữ nguyên) ... */}
+        {/* Header Mobile */}
         <div
           className={`flex items-center justify-between p-4 md:hidden transition-all duration-300 delay-100 bg-gradient-to-r ${
             theme.colors.backgroundOverlay
@@ -353,7 +387,10 @@ const SongDescription = ({ onOpenDetail }) => {
             onClick={handleClose}
             className={`p-2 rounded-full hover:bg-${theme.colors.primary}-600/50 transition-colors z-[10002]`}
           >
-            <IconChevronDown size={24} className={`text-${theme.colors.text}`} />
+            <IconChevronDown
+              size={24}
+              className={`text-${theme.colors.text}`}
+            />
           </button>
           <span className={`text-sm text-${theme.colors.text} font-medium`}>
             {isVideoFullscreen ? "Video Playing" : "Now Playing"}
@@ -367,7 +404,7 @@ const SongDescription = ({ onOpenDetail }) => {
           </button>
         </div>
 
-        {/* ... (Phần header trên desktop giữ nguyên) ... */}
+        {/* Header Desktop */}
         <div
           className={`hidden md:flex items-center justify-between p-3 border-b border-${
             theme.colors.border
@@ -394,7 +431,7 @@ const SongDescription = ({ onOpenDetail }) => {
         </div>
 
         <div className="flex-1 flex flex-col overflow-hidden">
-          {/* ... (Phần Video/Ảnh bìa giữ nguyên) ... */}
+          {/* Video Container */}
           <div
             className={`flex-shrink-0 p-3 md:p-4 transition-all duration-500 delay-200 ${
               isVisible && !isClosing
@@ -456,7 +493,10 @@ const SongDescription = ({ onOpenDetail }) => {
                 className="absolute top-3 right-3 p-2 rounded-full bg-black/30 hover:bg-black/50 transition-colors backdrop-blur-sm"
                 title="Expand view"
               >
-                <IconMaximize size={16} className="text-white/80 hover:text-white" />
+                <IconMaximize
+                  size={16}
+                  className="text-white/80 hover:text-white"
+                />
               </button>
             </div>
           </div>
@@ -469,7 +509,6 @@ const SongDescription = ({ onOpenDetail }) => {
             }`}
           >
             <div className="text-center md:text-left">
-              {/* ... (Tên bài hát, ca sĩ giữ nguyên) ... */}
               <h3
                 className={`font-bold text-white leading-tight mb-1 line-clamp-1 ${
                   showLyrics && hasLyrics ? "text-base" : "text-xl md:text-lg"
@@ -486,7 +525,7 @@ const SongDescription = ({ onOpenDetail }) => {
               </p>
 
               <div className="flex items-center justify-center md:justify-start space-x-3">
-                {/* ... (Nút Like, Nút Lyrics giữ nguyên) ... */}
+                {/* Nút Like */}
                 <button
                   onClick={handleLike}
                   className={`p-2 rounded-full hover:bg-${theme.colors.primary}-600/50 transition-colors`}
@@ -505,6 +544,7 @@ const SongDescription = ({ onOpenDetail }) => {
                   )}
                 </button>
 
+                {/* Nút Lyrics */}
                 {hasLyrics && (
                   <button
                     onClick={() => setShowLyrics(!showLyrics)}
@@ -519,7 +559,16 @@ const SongDescription = ({ onOpenDetail }) => {
                   </button>
                 )}
 
-                {/* Nút xem chi tiết (Con mắt) - Đã được cập nhật handleDetailsClick */}
+                {/* Nút Share */}
+                <button
+                  onClick={handleShare}
+                  className={`p-2 rounded-full hover:bg-${theme.colors.primary}-600/50 transition-colors text-${theme.colors.text} hover:text-${theme.colors.textHover}`}
+                  title="Chia sẻ bài hát"
+                >
+                  <IconShare size={18} />
+                </button>
+
+                {/* Nút Xem chi tiết */}
                 <button
                   onClick={handleDetailsClick}
                   className={`p-2 rounded-full hover:bg-${theme.colors.primary}-600/50 transition-colors text-${theme.colors.text} hover:text-${theme.colors.textHover}`}
@@ -528,6 +577,7 @@ const SongDescription = ({ onOpenDetail }) => {
                   <IconEye size={18} />
                 </button>
 
+                {/* Nút Expand */}
                 <button
                   onClick={handleExpandClick}
                   className={`p-2 rounded-full hover:bg-${theme.colors.primary}-600/50 transition-colors text-${theme.colors.text} hover:text-${theme.colors.textHover}`}
@@ -539,7 +589,7 @@ const SongDescription = ({ onOpenDetail }) => {
             </div>
           </div>
 
-          {/* ... (Phần hiển thị Lyrics giữ nguyên) ... */}
+          {/* Phần hiển thị Lyrics */}
           {showLyrics && hasLyrics && (
             <div
               className={`flex-1 mx-3 md:mx-4 mb-3 md:mb-4 transition-all duration-500 delay-400 ${
@@ -594,8 +644,8 @@ const SongDescription = ({ onOpenDetail }) => {
             </div>
           )}
 
-          {/* ... (Phần text "Vuốt xuống để đóng" giữ nguyên) ... */}
-           {(!showLyrics || !hasLyrics) && (
+          {/* Phần text "Vuốt xuống để đóng" */}
+          {(!showLyrics || !hasLyrics) && (
             <div
               className={`text-center md:hidden mt-auto p-4 transition-all duration-500 delay-400 ${
                 isVisible && !isClosing
