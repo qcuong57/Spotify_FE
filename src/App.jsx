@@ -43,7 +43,7 @@ const GlobalSongTitle = () => {
   if (!currentSong) {
     return (
       <Helmet>
-        <title>Music App - Nghe nhạc mọi lúc mọi nơi</title>
+        <title>UIA Music - Nghe nhạc mọi lúc mọi nơi</title>
       </Helmet>
     );
   }

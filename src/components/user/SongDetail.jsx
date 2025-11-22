@@ -7,7 +7,7 @@ import React, {
   useRef,
 } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useNavigate, useLocation } from "react-router-dom"; // [THÊM] useLocation
+import { useNavigate, useLocation } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import {
   IconPlayerPlayFilled,
@@ -74,7 +74,7 @@ const LikeButton = memo(({ isLiked, onToggleLike, theme }) => {
 const SongDetail = ({ songId, onClose }) => {
   const { theme } = useTheme();
   const navigate = useNavigate();
-  const location = useLocation(); // [MỚI] Dùng để kiểm tra URL hiện tại
+  const location = useLocation();
   const {
     currentSong: audioCurrentSong,
     setNewPlaylist,
@@ -83,6 +83,13 @@ const SongDetail = ({ songId, onClose }) => {
   } = useAudio();
 
   const scrollRef = useRef(null);
+
+  // [MỚI - SỬA 1] Lưu lại đường dẫn gốc lúc component vừa được render
+  // Nếu người dùng refresh trang tại /song/... thì mặc định quay về trang chủ '/'
+  // Nếu người dùng từ playlist bấm vào, nó sẽ lưu đường dẫn playlist đó
+  const originalPath = useRef(
+    location.pathname.startsWith("/song/") ? "/" : location.pathname
+  );
 
   const [currentSongDetail, setCurrentSongDetail] = useState(null);
   const [relatedSongs, setRelatedSongs] = useState([]);
@@ -140,11 +147,10 @@ const SongDetail = ({ songId, onClose }) => {
   useEffect(() => {
     if (songId) {
       fetchAllData(songId);
-      
-      // [MỚI] Cập nhật URL nếu nó chưa khớp với songId hiện tại
+
+      // Cập nhật URL thành /song/:id để người dùng có thể copy link
       const expectedPath = `/song/${songId}`;
       if (location.pathname !== expectedPath) {
-        // Dùng window.history.pushState để đổi URL mà không reload hay gây conflict router
         window.history.pushState(null, "", expectedPath);
       }
 
@@ -167,9 +173,13 @@ const SongDetail = ({ songId, onClose }) => {
     [currentSongDetail, isCurrentSong, setNewPlaylist, togglePlay]
   );
 
+  // [MỚI - SỬA 2] Cập nhật hàm đóng modal để quay về link cũ
   const handleClose = useCallback(() => {
+    // Quay về đường dẫn gốc đã lưu ở trên
+    navigate(originalPath.current, { replace: true });
+
     if (onClose) onClose();
-  }, [onClose]);
+  }, [onClose, navigate]);
 
   const handleToggleLike = useCallback((e) => {
     e.stopPropagation();
