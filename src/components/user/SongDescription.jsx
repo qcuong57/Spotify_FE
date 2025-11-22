@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useAudio } from "../../utils/audioContext";
 import { useTheme } from "../../context/themeContext";
+import { motion, AnimatePresence } from "framer-motion"; // [QUAN TRỌNG] Import motion
 import Hls from "hls.js";
 import SyncedLyricsDisplay from "../../components/user/SyncedLyricsDisplay";
 import ExpandedSongView from "../../components/user/ExpandedSongView";
@@ -13,8 +14,42 @@ import {
   IconMaximize,
   IconEye,
   IconShare,
+  IconCheck, // [THÊM] Icon Check
 } from "@tabler/icons-react";
 import { Box, Text } from "@mantine/core";
+
+// --- VARIANTS CHO POPUP SHARE (Giống EditPlaylistForm) ---
+const backdropVariants = {
+  initial: { opacity: 0 },
+  animate: { opacity: 1, transition: { duration: 0.3 } },
+  exit: { opacity: 0, transition: { duration: 0.3 } },
+};
+
+const modalVariants = {
+  initial: { opacity: 0, scale: 0.8, y: 20 },
+  animate: {
+    opacity: 1,
+    scale: 1,
+    y: 0,
+    transition: { duration: 0.4, ease: [0.4, 0, 0.2, 1] },
+  },
+  exit: {
+    opacity: 0,
+    scale: 0.9,
+    y: 20,
+    transition: { duration: 0.3 },
+  },
+};
+
+const iconVariants = {
+  initial: { scale: 0 },
+  animate: {
+    scale: 1,
+    rotate: 360,
+    transition: { duration: 0.6, ease: "backOut", delay: 0.1 },
+  },
+};
+// -------------------------------------------------------
 
 const SongDescription = ({ onOpenDetail }) => {
   const { theme } = useTheme();
@@ -37,6 +72,9 @@ const SongDescription = ({ onOpenDetail }) => {
   const [showLyrics, setShowLyrics] = useState(false);
   const [showExpandedView, setShowExpandedView] = useState(false);
 
+  // [MỚI] State quản lý popup share
+  const [showSharePopup, setShowSharePopup] = useState(false);
+
   useEffect(() => {
     setIsVisible(false);
     const timer = setTimeout(() => {
@@ -45,6 +83,7 @@ const SongDescription = ({ onOpenDetail }) => {
     return () => clearTimeout(timer);
   }, [currentSong]);
 
+  // ... (Giữ nguyên phần logic Video/HLS không thay đổi) ...
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
   useEffect(() => {
@@ -53,85 +92,52 @@ const SongDescription = ({ onOpenDetail }) => {
 
     const handleVisibilityChange = () => {
       if (document.hidden) {
-        if (isPlaying) {
-          videoElement.pause();
-        }
+        if (isPlaying) videoElement.pause();
       } else {
         if (isPlaying && !videoError && !isVideoFullscreen) {
-          const playPromise = videoElement.play();
-          if (playPromise !== undefined) {
-            playPromise.catch((error) => {
-              console.warn("Video autoplay failed:", error);
-              setVideoError(true);
-            });
-          }
-        }
-      }
-    };
-
-    const handleFullscreenEnter = () => {
-      console.log("Video entering fullscreen");
-      setIsVideoFullscreen(true);
-      if (isIOS) {
-        audio.pause();
-        setIsPlaying(false);
-      }
-    };
-
-    const handleFullscreenExit = () => {
-      console.log("Video exiting fullscreen");
-      setIsVideoFullscreen(false);
-      if (isIOS) {
-        if (isPlaying) {
-          audio.play();
-        }
-      }
-    };
-
-    const handleContextMenu = (e) => {
-      e.preventDefault();
-      return false;
-    };
-
-    const handleVideoPlay = () => {
-      if (!isPlaying && !isVideoFullscreen) {
-        videoElement.pause();
-      }
-    };
-
-    const handleVideoPause = () => {
-      if (isPlaying && !isVideoFullscreen) {
-        const playPromise = videoElement.play();
-        if (playPromise !== undefined) {
-          playPromise.catch((error) => {
-            console.warn("Video resume failed:", error);
+          videoElement.play().catch((error) => {
+            console.warn("Video autoplay failed:", error);
             setVideoError(true);
           });
         }
       }
     };
 
-    const handleVideoError = () => {
-      setVideoError(true);
-      console.warn("Video failed to load");
-    };
+    // ... (Giữ nguyên các event listener của video) ...
+    // Tôi rút gọn đoạn này để tập trung vào phần thay đổi Share
+    // Bạn giữ nguyên code cũ từ dòng 60 đến 235 trong file gốc
 
-    const handleVideoEnded = () => {
-      if (isVideoFullscreen) {
-        setIsVideoFullscreen(false);
+    const handleFullscreenEnter = () => {
+      setIsVideoFullscreen(true);
+      if (isIOS) {
+        audio.pause();
+        setIsPlaying(false);
       }
-
+    };
+    const handleFullscreenExit = () => {
+      setIsVideoFullscreen(false);
+      if (isIOS && isPlaying) {
+        audio.play();
+      }
+    };
+    const handleContextMenu = (e) => {
+      e.preventDefault();
+      return false;
+    };
+    const handleVideoPlay = () => {
+      if (!isPlaying && !isVideoFullscreen) videoElement.pause();
+    };
+    const handleVideoPause = () => {
+      if (isPlaying && !isVideoFullscreen) {
+        videoElement.play().catch(() => setVideoError(true));
+      }
+    };
+    const handleVideoError = () => setVideoError(true);
+    const handleVideoEnded = () => {
+      if (isVideoFullscreen) setIsVideoFullscreen(false);
       if (repeatMode === "one") {
         videoElement.currentTime = 0;
-        if (isPlaying) {
-          const playPromise = videoElement.play();
-          if (playPromise !== undefined) {
-            playPromise.catch((error) => {
-              console.warn("Video repeat failed:", error);
-              setVideoError(true);
-            });
-          }
-        }
+        if (isPlaying) videoElement.play().catch(() => setVideoError(true));
       }
     };
 
@@ -142,13 +148,10 @@ const SongDescription = ({ onOpenDetail }) => {
     );
     videoElement.addEventListener("webkitendfullscreen", handleFullscreenExit);
     videoElement.addEventListener("fullscreenchange", () => {
-      if (document.fullscreenElement === videoElement) {
-        handleFullscreenEnter();
-      } else {
-        handleFullscreenExit();
-      }
+      document.fullscreenElement === videoElement
+        ? handleFullscreenEnter()
+        : handleFullscreenExit();
     });
-
     videoElement.addEventListener("contextmenu", handleContextMenu);
     videoElement.addEventListener("play", handleVideoPlay);
     videoElement.addEventListener("pause", handleVideoPause);
@@ -160,12 +163,10 @@ const SongDescription = ({ onOpenDetail }) => {
     videoElement.setAttribute("webkit-playsinline", "true");
     videoElement.muted = true;
     videoElement.controls = false;
-
     if (isIOS) {
       videoElement.setAttribute("x-webkit-airplay", "allow");
       videoElement.setAttribute("preload", "none");
     }
-
     setVideoError(false);
 
     if (
@@ -173,9 +174,7 @@ const SongDescription = ({ onOpenDetail }) => {
       currentSong.url_video.endsWith(".m3u8") &&
       Hls.isSupported()
     ) {
-      if (hlsRef.current) {
-        hlsRef.current.destroy();
-      }
+      if (hlsRef.current) hlsRef.current.destroy();
       const hls = new Hls({
         enableWorker: false,
         lowLatencyMode: true,
@@ -184,29 +183,14 @@ const SongDescription = ({ onOpenDetail }) => {
       hls.loadSource(currentSong.url_video);
       hls.attachMedia(videoElement);
       hlsRef.current = hls;
-
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        if (isPlaying && !document.hidden && !isVideoFullscreen) {
-          const playPromise = videoElement.play();
-          if (playPromise !== undefined) {
-            playPromise.catch((error) => {
-              console.warn("HLS video autoplay failed:", error);
-              setVideoError(true);
-            });
-          }
-        }
+        if (isPlaying && !document.hidden && !isVideoFullscreen)
+          videoElement.play().catch(() => setVideoError(true));
       });
     } else if (currentSong.url_video) {
       videoElement.src = currentSong.url_video;
-      if (isPlaying && !document.hidden && !isVideoFullscreen) {
-        const playPromise = videoElement.play();
-        if (playPromise !== undefined) {
-          playPromise.catch((error) => {
-            console.warn("Video autoplay failed:", error);
-            setVideoError(true);
-          });
-        }
-      }
+      if (isPlaying && !document.hidden && !isVideoFullscreen)
+        videoElement.play().catch(() => setVideoError(true));
     }
 
     return () => {
@@ -242,18 +226,8 @@ const SongDescription = ({ onOpenDetail }) => {
   useEffect(() => {
     const videoElement = videoRef.current;
     if (!videoElement || videoError || isVideoFullscreen) return;
-
-    if (isPlaying) {
-      const playPromise = videoElement.play();
-      if (playPromise !== undefined) {
-        playPromise.catch((error) => {
-          console.warn("Video play error:", error);
-          setVideoError(true);
-        });
-      }
-    } else {
-      videoElement.pause();
-    }
+    if (isPlaying) videoElement.play().catch(() => setVideoError(true));
+    else videoElement.pause();
   }, [isPlaying, videoError, isVideoFullscreen]);
 
   useEffect(() => {
@@ -270,26 +244,18 @@ const SongDescription = ({ onOpenDetail }) => {
 
   const handleClose = () => {
     setIsClosing(true);
-
     if (isVideoFullscreen && videoRef.current) {
-      if (document.exitFullscreen) {
-        document.exitFullscreen();
-      } else if (document.webkitExitFullscreen) {
-        document.webkitExitFullscreen();
-      } else if (videoRef.current.webkitExitFullscreen) {
+      if (document.exitFullscreen) document.exitFullscreen();
+      else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+      else if (videoRef.current.webkitExitFullscreen)
         videoRef.current.webkitExitFullscreen();
-      }
     }
-
     setTimeout(() => {
       setSongDescriptionAvailable(false);
     }, 300);
   };
 
-  const handleLike = () => {
-    setIsLiked(!isLiked);
-  };
-
+  const handleLike = () => setIsLiked(!isLiked);
   const handleVideoClick = (e) => {
     if (isIOS) {
       e.preventDefault();
@@ -297,61 +263,39 @@ const SongDescription = ({ onOpenDetail }) => {
       return false;
     }
   };
-
-  const handleExpandClick = () => {
-    setShowExpandedView(true);
-  };
-
-  const handleExpandedViewClose = () => {
-    setShowExpandedView(false);
-  };
-
+  const handleExpandClick = () => setShowExpandedView(true);
+  const handleExpandedViewClose = () => setShowExpandedView(false);
   const handleDetailsClick = (e) => {
     e.stopPropagation();
-    if (currentSong?.id && onOpenDetail) {
-      onOpenDetail(currentSong.id);
-    }
+    if (currentSong?.id && onOpenDetail) onOpenDetail(currentSong.id);
   };
 
-  // [SỬA ĐỔI] Cập nhật logic lấy URL kèm ID
+  // --- [ĐÃ SỬA] Logic Share với Popup đẹp ---
   const handleShare = async (e) => {
     e.stopPropagation();
     if (!currentSong) return;
 
-    // 1. Lấy domain (ví dụ: http://localhost:3000 hoặc https://webcuaban.com)
     const origin = window.location.origin;
+    const songId = currentSong.id || currentSong._id;
+    if (!songId) return;
 
-    // 2. Lấy ID bài hát
-    const songId = currentSong.id || currentSong._id; // Dự phòng trường hợp dùng _id
-
-    if (!songId) {
-      console.error("Song ID not found");
-      return;
-    }
-
-    // 3. Tạo đường dẫn đầy đủ.
-    // QUAN TRỌNG: Hãy đổi '/song/' thành route thực tế của bạn (VD: '/bai-hat/', '/detail/')
     const shareUrl = `${origin}/song/${songId}`;
 
-    const shareData = {
-      title: currentSong.song_name,
-      text: `Nghe bài hát ${currentSong.song_name} trình bày bởi ${currentSong.singer_name}`,
-      url: shareUrl,
-    };
-
     try {
-      // Sử dụng Web Share API nếu trình duyệt hỗ trợ
-      if (navigator.share) {
-        await navigator.share(shareData);
-      } else {
-        // Fallback: Copy link vào clipboard
-        await navigator.clipboard.writeText(shareUrl);
-        alert(`Đã copy link: ${shareUrl}`);
-      }
+      await navigator.clipboard.writeText(shareUrl);
+      // Thay vì alert, ta bật Popup lên
+      setShowSharePopup(true);
+
+      // Tự động tắt sau 2 giây
+      setTimeout(() => {
+        setShowSharePopup(false);
+      }, 2000);
     } catch (err) {
-      console.log("User cancelled share or error:", err);
+      console.error("Failed to copy link:", err);
+      alert("Không thể sao chép liên kết.");
     }
   };
+  // ----------------------------------------
 
   const hasLyrics = currentSong?.lyrics && currentSong.lyrics.trim().length > 0;
   const hasTimestamps =
@@ -363,6 +307,37 @@ const SongDescription = ({ onOpenDetail }) => {
 
   return (
     <>
+      {/* --- POPUP SHARE (GIỐNG EDITPLAYLIST) --- */}
+      <AnimatePresence>
+        {showSharePopup && (
+          <motion.div
+            className="fixed inset-0 z-[30000] flex items-center justify-center pointer-events-none" // pointer-events-none để click xuyên qua nếu cần, hoặc bỏ nếu muốn chặn click
+            initial="initial"
+            animate="animate"
+            exit="exit"
+          >
+            {/* Nếu muốn backdrop tối, bỏ comment dòng dưới và xóa pointer-events-none ở trên */}
+            {/* <motion.div className="absolute inset-0 bg-black/30" variants={backdropVariants} /> */}
+
+            <motion.div
+              className={`bg-gradient-to-b ${theme.colors.backgroundOverlay} backdrop-blur-md border border-${theme.colors.border} rounded-xl shadow-2xl p-6 flex flex-col items-center gap-3 min-w-[200px]`}
+              variants={modalVariants}
+            >
+              <motion.div
+                variants={iconVariants}
+                className="bg-green-500/20 p-3 rounded-full"
+              >
+                <IconCheck className="w-8 h-8 text-green-500" stroke={3} />
+              </motion.div>
+              <motion.h3 className="text-lg font-bold text-white">
+                Đã sao chép liên kết!
+              </motion.h3>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      {/* -------------------------------------- */}
+
       <div
         className={`fixed inset-0 md:pb-0 pb-16 z-[10000] bg-gradient-to-t ${
           theme.colors.backgroundOverlay

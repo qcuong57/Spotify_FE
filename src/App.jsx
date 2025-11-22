@@ -9,7 +9,7 @@ import {
 import { MantineProvider } from "@mantine/core";
 import { ModalsProvider } from "@mantine/modals";
 import { Notifications } from "@mantine/notifications";
-import { HelmetProvider } from "react-helmet-async"; // [QUAN TRỌNG] Thêm thư viện này
+import { HelmetProvider, Helmet } from "react-helmet-async"; // [THÊM] Helmet
 
 import HomePage from "./components/HomePage";
 import Login from "./components/user/Login";
@@ -26,7 +26,7 @@ import UpdateGenreForm from "./components/admin/Genre/Update/UpdateGenreForm";
 import Playlist from "./components/admin/Playlists/Playlists";
 import CreatePlaylistForm from "./components/admin/Playlists/Create/CreatePlaylistForm";
 import UpdatePlaylistForm from "./components/admin/Playlists/Update/UpdatePlaylistForm";
-import { AudioProvider } from "./utils/audioContext";
+import { AudioProvider, useAudio } from "./utils/audioContext"; // [THÊM] useAudio
 import SignUp from "./components/user/SignUp";
 import OAuthCallback from "./components/auth/OAuthCallback";
 import AuthProvider from "./context/auth/AuthProvider";
@@ -35,31 +35,50 @@ import ProtectedAdminRoute from "./components/ProtectedAdminRoute";
 import ThemeProvider from "./context/ThemeProvider";
 import SongDetail from "./components/user/SongDetail";
 
-// [LAYOUT] Giữ HomePage luôn hiển thị làm nền, SongDetail sẽ hiện đè lên (Outlet)
+// --- [COMPONENT MỚI] TỰ ĐỘNG ĐỔI TÊN TAB THEO BÀI HÁT ---
+const GlobalSongTitle = () => {
+  const { currentSong, isPlaying } = useAudio();
+
+  // Nếu chưa có bài hát, hiển thị tên mặc định
+  if (!currentSong) {
+    return (
+      <Helmet>
+        <title>Music App - Nghe nhạc mọi lúc mọi nơi</title>
+      </Helmet>
+    );
+  }
+
+  // Nếu đang phát, hiển thị tên bài hát
+  return (
+    <Helmet>
+      <title>
+        {isPlaying ? "" : ""} {currentSong.song_name} -{" "}
+        {currentSong.singer_name}
+      </title>
+    </Helmet>
+  );
+};
+// ---------------------------------------------------------
+
 const HomeLayout = () => {
   return (
     <div style={{ position: "relative", width: "100%", height: "100%" }}>
       <HomePage />
-      {/* Outlet là nơi SongDetailWrapper sẽ được render vào */}
       <Outlet />
     </div>
   );
 };
 
-// [WRAPPER] Xử lý logic lấy ID và đóng Modal
 const SongDetailWrapper = () => {
   const { songId } = useParams();
   const navigate = useNavigate();
 
-  // Nếu không có ID thì không render gì cả
   if (!songId) return null;
 
   return (
     <SongDetail
       songId={songId}
       onClose={() => {
-        // Khi đóng modal, quay về trang chủ ('/')
-        // Nhờ Nested Route, HomePage sẽ KHÔNG bị reload
         navigate("/");
       }}
     />
@@ -77,10 +96,11 @@ function App() {
               <AuthProvider>
                 <BrowserRouter>
                   <AudioProvider>
+                    {/* [QUAN TRỌNG] Đặt GlobalSongTitle ở đây để nó luôn chạy */}
+                    <GlobalSongTitle />
+
                     <Routes>
-                      {/* [USER ROUTES] Cấu hình lồng nhau để giữ trạng thái HomePage */}
                       <Route path="/" element={<HomeLayout />}>
-                        {/* Khi vào /song/123, component này sẽ hiện đè lên HomePage */}
                         <Route
                           path="song/:songId"
                           element={<SongDetailWrapper />}
@@ -94,7 +114,6 @@ function App() {
                         element={<OAuthCallback />}
                       />
 
-                      {/* [ADMIN ROUTES] */}
                       <Route element={<ProtectedAdminRoute />}>
                         <Route path="admin" element={<Admin />}>
                           <Route path="users" element={<User />} />

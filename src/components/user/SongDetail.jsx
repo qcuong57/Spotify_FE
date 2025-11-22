@@ -7,8 +7,8 @@ import React, {
   useRef,
 } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useNavigate } from "react-router-dom"; // [QUAN TRỌNG] Dùng để đổi ID trên link
-import { Helmet } from "react-helmet-async"; // [QUAN TRỌNG] Dùng để hiện tên bài khi share
+import { useNavigate, useLocation } from "react-router-dom"; // [THÊM] useLocation
+import { Helmet } from "react-helmet-async";
 import {
   IconPlayerPlayFilled,
   IconPlayerPauseFilled,
@@ -25,7 +25,7 @@ import RelatedSongsSection from "./RelatedSongsSection";
 import LoadingState from "../../components/user/main/LoadingState";
 import ErrorState from "../../components/user/main/ErrorState";
 
-// --- Helper Components ---
+// --- Helper Components (Giữ nguyên) ---
 const PlayButton = memo(
   ({ isCurrentSong, isPlaying, handlePlayPause, theme }) => {
     return (
@@ -73,7 +73,8 @@ const LikeButton = memo(({ isLiked, onToggleLike, theme }) => {
 // --- Main Component ---
 const SongDetail = ({ songId, onClose }) => {
   const { theme } = useTheme();
-  const navigate = useNavigate(); // Hook để điều hướng URL
+  const navigate = useNavigate();
+  const location = useLocation(); // [MỚI] Dùng để kiểm tra URL hiện tại
   const {
     currentSong: audioCurrentSong,
     setNewPlaylist,
@@ -81,7 +82,7 @@ const SongDetail = ({ songId, onClose }) => {
     togglePlay,
   } = useAudio();
 
-  const scrollRef = useRef(null); // Ref để cuộn lên đầu khi đổi bài
+  const scrollRef = useRef(null);
 
   const [currentSongDetail, setCurrentSongDetail] = useState(null);
   const [relatedSongs, setRelatedSongs] = useState([]);
@@ -135,16 +136,23 @@ const SongDetail = ({ songId, onClose }) => {
     }
   }, []);
 
-  // --- 2. EFFECT: Tự động tải lại khi songId thay đổi ---
+  // --- 2. EFFECT: Tự động tải lại + UPDATE URL ---
   useEffect(() => {
     if (songId) {
       fetchAllData(songId);
-      // Cuộn lên đầu trang mỗi khi ID đổi
+      
+      // [MỚI] Cập nhật URL nếu nó chưa khớp với songId hiện tại
+      const expectedPath = `/song/${songId}`;
+      if (location.pathname !== expectedPath) {
+        // Dùng window.history.pushState để đổi URL mà không reload hay gây conflict router
+        window.history.pushState(null, "", expectedPath);
+      }
+
       if (scrollRef.current) {
         scrollRef.current.scrollTo({ top: 0, behavior: "smooth" });
       }
     }
-  }, [songId, fetchAllData]);
+  }, [songId, fetchAllData, location.pathname]);
 
   const handlePlayPause = useCallback(
     (e) => {
@@ -160,7 +168,7 @@ const SongDetail = ({ songId, onClose }) => {
   );
 
   const handleClose = useCallback(() => {
-    if (onClose) onClose(); // Gọi hàm đóng từ wrapper (sẽ navigate về '/')
+    if (onClose) onClose();
   }, [onClose]);
 
   const handleToggleLike = useCallback((e) => {
@@ -168,12 +176,10 @@ const SongDetail = ({ songId, onClose }) => {
     setIsLiked((prev) => !prev);
   }, []);
 
-  // --- 3. XỬ LÝ CHUYỂN BÀI (Đổi link URL) ---
+  // --- 3. XỬ LÝ CHUYỂN BÀI ---
   const handleRelatedSongSelect = useCallback(
     (newSongId) => {
       if (newSongId !== songId) {
-        // Lệnh này sẽ đổi URL thành /song/ID_MỚI
-        // App.jsx sẽ bắt được URL mới -> Render lại SongDetail với ID mới
         navigate(`/song/${newSongId}`);
       }
     },
@@ -191,7 +197,7 @@ const SongDetail = ({ songId, onClose }) => {
       role="dialog"
       aria-modal="true"
     >
-      {/* --- HELMET: Cập nhật thẻ meta để share link --- */}
+      {/* HELMET */}
       {currentSongDetail && (
         <Helmet>
           <title>{`${currentSongDetail.song_name} - ${currentSongDetail.singer_name}`}</title>
@@ -216,7 +222,6 @@ const SongDetail = ({ songId, onClose }) => {
       />
 
       <motion.div
-        // Thêm key để Animation kích hoạt lại khi đổi bài
         key={songId}
         initial={{ opacity: 0, scale: 0.9, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -328,7 +333,7 @@ const SongDetail = ({ songId, onClose }) => {
                     contextMenu={contextMenu}
                     setContextMenu={setContextMenu}
                     handleCloseContextMenu={handleCloseContextMenu}
-                    onSongSelect={handleRelatedSongSelect} // [QUAN TRỌNG] Truyền hàm xử lý điều hướng
+                    onSongSelect={handleRelatedSongSelect}
                   />
                 )}
               </div>
