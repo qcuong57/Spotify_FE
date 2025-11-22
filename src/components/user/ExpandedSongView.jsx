@@ -407,7 +407,7 @@ const ExpandedSongView = ({
 
   return (
     <div
-      className={`fixed inset-0 z-[20000] transition-all duration-300 ease-out ${
+      className={`fixed inset-0 z-[20000] overflow-hidden transition-all duration-300 ease-out ${
         isVisible && !isClosing ? "opacity-100 scale-100" : "opacity-0 scale-95"
       }`}
     >
@@ -415,7 +415,10 @@ const ExpandedSongView = ({
       <canvas
         ref={canvasRef}
         className="absolute inset-0 w-full h-full pointer-events-none -z-10"
-        style={{ isolation: "isolate" }}
+        style={{
+          isolation: "isolate",
+          transform: "scale(1.02)", // <-- THÊM DÒNG NÀY (Zoom 2% để che chữ NEAT)
+        }}
       />
 
       {/* Overlay mờ */}
