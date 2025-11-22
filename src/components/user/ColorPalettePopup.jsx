@@ -1,4 +1,4 @@
-// ColorPalettePopup.jsx
+// ColorPalettePopup.jsx (Đã cập nhật)
 
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -40,14 +40,17 @@ const ColorPalettePopup = ({
 
           {/* Nội dung Modal */}
           <motion.div
-            className="relative z-10 w-full max-w-lg p-6 bg-gray-800/80 backdrop-blur-xl border border-white/20 rounded-2xl shadow-xl"
+            // --- THAY ĐỔI 1: Tăng chiều rộng ---
+            className="relative z-10 w-full max-w-lg p-6 bg-gray-800/80 backdrop-blur-xl border border-white/20 rounded-2xl shadow-xl" // max-w-md đổi thành max-w-lg
             variants={modalVariants}
             transition={{ duration: 0.3, ease: "easeOut" }}
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()} 
           >
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-white">Chọn Nền 3D</h2>
+              <h2 className="text-xl font-bold text-white">
+                Chọn Nền
+              </h2>
               <button
                 onClick={onClose}
                 className="p-2 -mr-2 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-colors"
@@ -64,19 +67,18 @@ const ColorPalettePopup = ({
                   className="flex flex-col items-center gap-2 cursor-pointer group"
                   onClick={() => {
                     onSelectGradient(grad);
-                    onClose(); // Tự động đóng popup khi chọn
+                    onClose(); // --- THAY ĐỔI 2: Tự động đóng khi chọn ---
                   }}
                 >
-                  {/* Ô màu preview */}
                   <div
+                    // --- THAY ĐỔI 3: Bỏ scale-105 để fix lỗi scroll ---
                     className={`w-full aspect-square rounded-lg border-2 transition-all duration-200 ${
                       currentGradient.id === grad.id
-                        ? "border-white shadow-lg"
-                        : "border-transparent group-hover:border-white/50"
+                        ? "border-white shadow-lg" // Đã bỏ scale-105
+                        : "border-transparent group-hover:border-white/50" // Đã bỏ group-hover:scale-105
                     }`}
                     style={{
-                      // SỬ DỤNG cssBackground TỪ FILE CẤU HÌNH MỚI
-                      background: grad.cssBackground,
+                      background: `linear-gradient(135deg, ${grad.c1}, ${grad.c2})`,
                     }}
                   ></div>
                   <span className="text-xs text-white/80 text-center truncate w-full">
@@ -92,7 +94,7 @@ const ColorPalettePopup = ({
   );
 };
 
-// Style cho thanh cuộn
+// Style cho thanh cuộn (Không thay đổi)
 const styles = `
 .custom-scrollbar-thin {
   scrollbar-width: thin;
