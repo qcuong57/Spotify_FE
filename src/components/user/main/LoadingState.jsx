@@ -27,7 +27,39 @@ const LoadingState = () => {
         <div className="spoke" />
       </div>
 
+      {/* --- PHẦN TEXT MỚI THÊM --- */}
+      <div className="mt-12 text-center">
+        <h3 className="text-xl md:text-2xl font-bold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-gray-500 to-orange-500 drop-shadow-sm loading-text">
+          Đợi một tí nhá
+          <span className="dot">.</span>
+          <span className="dot">.</span>
+          <span className="dot">.</span>
+        </h3>
+      </div>
+
       <style>{`
+        /* CSS cho Text */
+        .loading-text {
+          font-family: system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, Cantarell, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+        }
+
+        .dot {
+          display: inline-block;
+          animation: bounce 1.4s infinite ease-in-out both;
+          margin-left: 2px;
+          color: #f97316; /* Màu cam */
+        }
+
+        .dot:nth-child(1) { animation-delay: -0.32s; }
+        .dot:nth-child(2) { animation-delay: -0.16s; }
+        .dot:nth-child(3) { animation-delay: 0s; }
+
+        @keyframes bounce {
+          0%, 80%, 100% { transform: scale(0); }
+          40% { transform: scale(1); }
+        }
+
+        /* CSS Cũ của Hamster */
         .wheel-and-hamster {
           --dur: 1s;
           position: relative;
